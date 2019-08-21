@@ -7,6 +7,8 @@
 #include <DarkHelp.hpp>
 #include <fstream>
 #include <cmath>
+#include <ctime>
+#include <darknet.h>
 
 
 DarkHelp::~DarkHelp()
@@ -39,9 +41,11 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 		throw std::runtime_error("darknet failed to load the configuration, the weights, or both");
 	}
 
+	network * nw = reinterpret_cast<network*>(net);
+
 	// what do these 2 calls do?
-	fuse_conv_batchnorm(*net);
-	calculate_binary_weights(*net);
+	fuse_conv_batchnorm(*nw);
+	calculate_binary_weights(*nw);
 
 	// pick some reasonable default values
 	threshold							= 0.5f;
@@ -50,6 +54,8 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	annotation_colour					= cv::Scalar(255, 0, 255);
 	annotation_font_scale				= 0.5;
 	annotation_font_thickness			= 1;
+	annotation_include_duration			= true;
+	annotation_include_timestamp		= false;
 
 	if (not names_filename.empty())
 	{
@@ -96,6 +102,7 @@ DarkHelp::PredictionResults DarkHelp::predict(cv::Mat mat, const float new_thres
 }
 
 
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
 DarkHelp::PredictionResults DarkHelp::predict(image img, const float new_threshold)
 {
 	/* This is inefficient since we eventually need a Darknet "image", but we're going to convert the image back to a
@@ -110,9 +117,10 @@ DarkHelp::PredictionResults DarkHelp::predict(image img, const float new_thresho
 
 	return predict(mat, new_threshold);
 }
+#endif
 
 
-cv::Mat DarkHelp::annotate(const float new_threshold, const bool include_duraton)
+cv::Mat DarkHelp::annotate(const float new_threshold)
 {
 	if (original_image.empty())
 	{
@@ -138,27 +146,45 @@ cv::Mat DarkHelp::annotate(const float new_threshold, const bool include_duraton
 
 			const cv::Size text_size = cv::getTextSize(pred.name, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
-			cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height), cv::Size(text_size.width + 2, text_size.height + 2));
+			cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height - 2), cv::Size(text_size.width + 2, text_size.height + 2));
 			cv::rectangle(annotated_image, r, annotation_colour, CV_FILLED);
 			cv::putText(annotated_image, pred.name, cv::Point(r.x + 1, r.y + text_size.height), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 		}
 	}
 
-	if (include_duraton)
+	if (annotation_include_duration)
 	{
 		const std::string str		= duration_string();
 		const cv::Size text_size	= cv::getTextSize(str, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
-		cv::Rect r(cv::Point(2, 2), cv::Size(text_size.width + 4, text_size.height + 4));
+		cv::Rect r(cv::Point(2, 2), cv::Size(text_size.width + 2, text_size.height + 2));
 		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
-		cv::putText(annotated_image, str, cv::Point(2, text_size.height + 3), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::putText(annotated_image, str, cv::Point(r.x + 1, r.y + text_size.height), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+	}
+
+	if (annotation_include_timestamp)
+	{
+		const std::time_t tt = std::time(nullptr);
+		char timestamp[100];
+		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", std::localtime(&tt));
+		std::cout << "timestamp=" << timestamp << std::endl;
+
+		const cv::Size text_size	= cv::getTextSize(timestamp, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+
+		cv::Rect r(cv::Point(2, annotated_image.rows - text_size.height - 4), cv::Size(text_size.width + 2, text_size.height + 2));
+		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
+		cv::putText(annotated_image, timestamp, cv::Point(r.x + 1, r.y + text_size.height), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 	}
 
 	return annotated_image;
 }
 
 
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
 image DarkHelp::convert_opencv_mat_to_darknet_image(cv::Mat mat)
+#else
+static inline image convert_opencv_mat_to_darknet_image(cv::Mat mat)
+#endif
 {
 	// this function is taken/inspired directly from Darknet:  image_opencv.cpp, mat_to_image()
 
@@ -192,7 +218,11 @@ image DarkHelp::convert_opencv_mat_to_darknet_image(cv::Mat mat)
 }
 
 
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
 cv::Mat DarkHelp::convert_darknet_image_to_opencv_mat(const image img)
+#else
+static inline cv::Mat convert_darknet_image_to_opencv_mat(const image img)
+#endif
 {
 	// this function is taken/inspired directly from Darknet:  image_opencv.cpp, image_to_mat()
 
@@ -259,24 +289,26 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 		threshold = new_threshold;
 	}
 
+	network * nw = reinterpret_cast<network*>(net);
+
 	cv::Mat resized_image;
-	cv::resize(original_image, resized_image, cv::Size(net->w, net->h));
+	cv::resize(original_image, resized_image, cv::Size(nw->w, nw->h));
 	image img = convert_opencv_mat_to_darknet_image(resized_image);
 
 	float * X = img.data;
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
-	network_predict(*net, X);
+	network_predict(*nw, X);
 	const auto t2 = std::chrono::high_resolution_clock::now();
 	duration = t2 - t1;
 
 	int nboxes = 0;
 	const int use_letterbox = 0;
-	auto darknet_results = get_network_boxes(net, original_image.cols, original_image.rows, threshold, hierchy_threshold, 0, 1, &nboxes, use_letterbox);
+	auto darknet_results = get_network_boxes(nw, original_image.cols, original_image.rows, threshold, hierchy_threshold, 0, 1, &nboxes, use_letterbox);
 
 	if (non_maximal_suppression_threshold)
 	{
-		auto nw_layer = net->layers[net->n - 1];
+		auto nw_layer = nw->layers[nw->n - 1];
 		do_nms_sort(darknet_results, nboxes, nw_layer.classes, non_maximal_suppression_threshold);
 	}
 
@@ -313,7 +345,7 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 				pr.rect			= cv::Rect(cv::Point(x, y), cv::Size(w, h));
 				pr.class_id		= det.sort_class;
 				pr.probability	= det.prob[class_idx];
-				if (static_cast<int>(names.size()) >= pr.class_id)
+				if (static_cast<int>(names.size()) > pr.class_id)
 				{
 					pr.name = names.at(pr.class_id);
 				}
@@ -330,27 +362,4 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 	free_image(img);
 
 	return prediction_results;
-}
-
-
-int main()
-{
-	DarkHelp dark_help("stone_barcodes_yolov3-tiny.cfg", "stone_barcodes_yolov3-tiny_final.weights", "stone_barcodes.names");
-
-	for (int counter = 0; counter < 10; counter ++)
-	{
-		const std::string filename = "barcode_" + std::to_string(counter) + ".jpg";
-		cv::Mat mat = cv::imread(filename);
-		cv::Mat resized;
-		cv::resize(mat, resized, cv::Size(640, 640));
-
-		dark_help.predict(resized);
-		dark_help.annotate();
-
-
-		cv::imshow("test", dark_help.annotated_image);
-		cv::waitKey();
-	}
-
-	return 0;
 }

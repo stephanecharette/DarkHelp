@@ -4,11 +4,29 @@
  * $Id$
  */
 
-#include <darknet.h>
+#pragma once
+
 #include <chrono>
 #include <string>
 #include <vector>
 #include <opencv2/opencv.hpp>
+
+
+/** @file
+ * DarkHelp is a C++ helper layer for accessing Darknet.  It was developed and tested with AlexeyAB's fork of the
+ * popular Darknet project:  https://github.com/AlexeyAB/darknet
+ *
+ * @note The original darknet.h header file defines structures in the global namespace with names such as "image" and
+ * "network" which are likely to cause problems in large existing projects.  For this reason, the DarkHelp class uses
+ * a void* for the network and will only include darknet.h if explicitly told it can.
+ *
+ * Unless you are using darknet's "image" class directly in your application, it is probably best to NOT define this
+ * macro, and not include darknet.h.  (The header is included by DarkHelp.cpp, so you definitely still need to have it,
+ * but the scope of where it is needed is confined to that one .cpp file.)
+ */
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
+#include <darknet.h>
+#endif
 
 
 /** Instantiate one of these objects by giving it the name of the .cfg and .weights file,
@@ -16,12 +34,17 @@
  * For example:
  * ~~~~
  * DarkHelp darkhelp("my_neural_network.cfg", "my_neural_network.weights", "my_neural_network.names");
- * darkhelp.predict("test_image_01.jpg");
- * cv::imshow("prediction", darkhelp.annotate());
- * cv::waitKey();
+ *
+ * for (const auto & filename : {"image_0.jpg", "image_1.jpg", "image_2.jpg"})
+ * {
+ *     darkhelp.predict(filename);
+ *     cv::Mat mat = darkhelp.annotate();
+ *     cv::imshow("prediction", mat);
+ *     cv::waitKey();
+ * }
  * ~~~~
  *
- * Instead of calling @ref annotate(), you can also get the detection results and iterate through them:
+ * Instead of calling @ref annotate(), you can get the detection results and iterate through them:
  * ~~~~
  * DarkHelp darkhelp("my_neural_network.cfg", "my_neural_network.weights", "my_neural_network.names");
  * for (const auto & det : darkhelp.predict("test_image_01.jpg"))
@@ -70,6 +93,7 @@ class DarkHelp
 		 */
 		virtual PredictionResults predict(cv::Mat mat, const float new_threshold = -1.0f);
 
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
 		/** Use the neural network to predict what is contained in this image.
 		 * @param [in] mat A Darknet-style image object which has already been loaded and which needs to be analyzed.
 		 * The member @ref original_image will be set to this image.
@@ -78,17 +102,26 @@ class DarkHelp
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(image img, const float new_threshold = -1.0f);
+#endif
 
 		/** Takes the most recent @ref prediction_results, and applies them to the most recent @ref original_image.
 		 * the output annotated image is stored in @ref annotated_image as well as returned to the caller.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 		 * If >= 0, then @ref threshold will be set to this new value.
-		 * @param [in] include_duration If set to @p true, will call @ref duration_string() and display on the image
-		 * the length of time @ref predict() took to process the image.
-		 * @see @ref annotation_colour  @see @ref annotation_font_scale  @see @ref annotation_font_thickness
+		 * @see @ref annotation_colour
+		 * @see @ref annotation_font_scale
+		 * @see @ref annotation_font_thickness
+		 * @see @ref annotation_include_duration
+		 * @see @ref annotation_include_timestamp
 		 */
-		virtual cv::Mat annotate(const float new_threshold = -1.0f, const bool include_duraton = true);
+		virtual cv::Mat annotate(const float new_threshold = -1.0f);
 
+		/** Return the @ref duration as a text string which can then be added to the image during annotation.
+		 * @see @ref annotate()
+		 */
+		std::string duration_string();
+
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
 		/** Static function to convert the OpenCV @p cv::Mat objects to Darknet's internal @p image format.
 		 * Provided for convenience in case you need to call into one of Darknet's functions.
 		 * @see @ref convert_darknet_image_to_opencv_mat()
@@ -101,15 +134,16 @@ class DarkHelp
 		 */
 		static cv::Mat convert_darknet_image_to_opencv_mat(const image img);
 
-		/** Return the @ref duration as a text string which can then be added to the image during annotation.
-		 * @see @ref annotate()
-		 */
-		std::string duration_string();
-
 		/** The Darknet network.  This is setup in the constructor.
 		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated.
 		 */
 		network * net;
+#else
+		/** The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
+		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated.
+		 */
+		void * net;
+#endif
 
 		/** A vector of names corresponding to the identified classes.  This is typically setup in the constructor,
 		 * but can be manually set afterwards.
@@ -145,6 +179,14 @@ class DarkHelp
 
 		/// Thickness of the font in @ref annotate().  Defaults to 1.
 		int annotation_font_thickness;
+
+		/** If set to @p true then @ref annotate() will call @ref duration_string() and display on the image the length
+		 * of time @ref predict() took to process the image.  Defaults to true.
+		 */
+		bool annotation_include_duration;
+
+		/// If set to @p true then @ref annotate() will display a timestamp on the image.  Defaults to false.
+		bool annotation_include_timestamp;
 
 		/// The most recent image handled by @ref predict().
 		cv::Mat original_image;
