@@ -56,6 +56,7 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	annotation_font_thickness			= 1;
 	annotation_include_duration			= true;
 	annotation_include_timestamp		= false;
+	names_include_percentage			= true;
 
 	if (not names_filename.empty())
 	{
@@ -139,9 +140,9 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 
 	for (const auto & pred : prediction_results)
 	{
-		if (pred.probability >= threshold)
+		if (pred.best_probability >= threshold)
 		{
-			std::cout << "class id=" << pred.class_id << ", probability=" << pred.probability << ", point=(" << pred.rect.x << "," << pred.rect.y << ")" << std::endl;
+			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << ")" << std::endl;
 			cv::rectangle(annotated_image, pred.rect, annotation_colour, 2);
 
 			const cv::Size text_size = cv::getTextSize(pred.name, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
@@ -316,45 +317,77 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 	{
 		const auto & det = darknet_results[detection_idx];
 
+		if (names.empty())
+		{
+			// we weren't given a names file to parse, but we know how many classes are defined in the network
+			// so we can invest a few dummy names to use based on the class index
+			for (int i = 0; i < det.classes; i++)
+			{
+				names.push_back("#" + std::to_string(i));
+			}
+		}
+
+		/* The "det" object has an array called det.prob[].  That array is large enough for 1 entry per class in the network.
+		 * Each entry will be set to 0.0, except for the ones that correspond to the class that was detected.  Note that it
+		 * is possible that multiple entries are non-zero!  We need to look at every entry and remember which ones are set.
+		 */
+
+		PredictionResult pr;
+		pr.best_class = 0;
+		pr.best_probability = 0.0f;
+		
 		for (int class_idx = 0; class_idx < det.classes; class_idx ++)
 		{
 			if (det.prob[class_idx] >= threshold)
 			{
-				const int w = std::round(det.bbox.w * original_image.cols);
-				const int h = std::round(det.bbox.h * original_image.rows);
-				const int x = std::round(det.bbox.x * original_image.cols - w/2.0);
-				const int y = std::round(det.bbox.y * original_image.rows - h/2.0);
+				// remember this probability since it is higher than the threshold
+				pr.all_probabilities[class_idx] = det.prob[class_idx];
 
-#if 0
-				std::cout	<< "detection index=" << detection_idx
-							<< " probability=" << (100.0 * det.prob[class_idx]) << "%"
-							<< " class index=" << class_idx
-							<< " box (x=" << det.bbox.x << " y=" << det.bbox.y << " w=" << det.bbox.w << " h=" << det.bbox.h << ")"
-							<< " classes=" << det.classes
-							<< " prob=" << (det.prob == nullptr ? "unknown" : std::to_string(*det.prob))
-							<< " mask=" << (det.mask == nullptr ? "unknown" : std::to_string(*det.mask))
-							<< " objectness=" << det.objectness
-							<< " sort_class=" << det.sort_class
-							<< " image (x=" << x
-							<< " y=" << y
-							<< " w=" << w
-							<< " h=" << h << ")"
-							<< std::endl;
-#endif
-				PredictionResult pr;
-				pr.rect			= cv::Rect(cv::Point(x, y), cv::Size(w, h));
-				pr.class_id		= det.sort_class;
-				pr.probability	= det.prob[class_idx];
-				if (static_cast<int>(names.size()) > pr.class_id)
+				// see if this is the highest probability we've seen
+				if (det.prob[class_idx] > pr.best_probability)
 				{
-					pr.name = names.at(pr.class_id);
+					pr.best_class		= class_idx;
+					pr.best_probability	= det.prob[class_idx];
 				}
-				else
-				{
-					pr.name = "#" + std::to_string(pr.class_id);
-				}
-				prediction_results.push_back(pr);
 			}
+		}
+
+		if (pr.best_probability >= threshold)
+		{
+			// at least 1 class is beyong the threshold, so remember this object
+
+			const int w = std::round(det.bbox.w * original_image.cols);
+			const int h = std::round(det.bbox.h * original_image.rows);
+			const int x = std::round(det.bbox.x * original_image.cols - w/2.0);
+			const int y = std::round(det.bbox.y * original_image.rows - h/2.0);
+			pr.rect = cv::Rect(cv::Point(x, y), cv::Size(w, h));
+
+			// now we come up with a decent name to use for this object
+			pr.name = names.at(pr.best_class);
+			if (names_include_percentage)
+			{
+				const int percentage = std::round(100.0 * pr.best_probability);
+				pr.name += " " + std::to_string(percentage) + "%";
+			}
+			if (pr.all_probabilities.size() > 1)
+			{
+				// we have multiple probabilities!
+				for (auto iter : pr.all_probabilities)
+				{
+					const int & key = iter.first;
+					if (key != pr.best_class)
+					{
+						pr.name += ", " + names.at(key);
+						if (names_include_percentage)
+						{
+							const int percentage = std::round(100.0 * iter.second);
+							pr.name += " " + std::to_string(percentage) + "%";
+						}
+					}
+				}
+			}
+
+			prediction_results.push_back(pr);
 		}
 	}
 

@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <string>
+#include <map>
 #include <vector>
 #include <opencv2/opencv.hpp>
 
@@ -60,13 +61,25 @@ class DarkHelp
 		/// Vector of text strings.  Typically used to store the class names.
 		typedef std::vector<std::string> VStr;
 
+		/** Map of a class ID to a probability that this object belongs to that class.
+		 * The key is the zero-based index of the class, while the value is the probability
+		 * that the object belongs to that class.
+		 */
+		typedef std::map<int, float> MClassProbabilities;
+
+		/** Structure used to store interesting information on predictions.  A vector of these is created and returned to the
+		 * caller every time @ref predict() is called.  The most recent predictions are also stored in @ref prediction_results.
+		 */
 		struct PredictionResult
 		{
-			cv::Rect rect;
-			int class_id;
-			float probability;
-			std::string name;
+			cv::Rect rect;							///< OpenCV rectangle which describes where the object is located in the original image.
+			int best_class;							///< The class that obtained the highest probability.  @see @ref all_probabilities
+			float best_probability;					///< The probability for the class that obtained the highest value.  @see @ref all_probabilities
+			MClassProbabilities all_probabilities;	///< This is only useful if you have multiple classes, and an object may be one of several possible classes.  This will contain all <em>non-zero</em> class/probability pairs.
+			std::string name;						///< A name to use for the object.  The highest probability will be listed first.
 		};
+
+		/// A vector of predictions for the image analyzed by @ref predict().  @see @ref prediction_results
 		typedef std::vector<PredictionResult> PredictionResults;
 
 		/// Destructor.
@@ -168,8 +181,14 @@ class DarkHelp
 		 */
 		float non_maximal_suppression_threshold;
 
-		/// The most recent results after applying the neural network to an image.  This is set by @ref predict().
+		/// A copy of the most recent results after applying the neural network to an image.  This is set by @ref predict().
 		PredictionResults prediction_results;
+
+		/** Determines if the name given to each prediction includes the percentage.  For example, the name for a prediction
+		 * might be @p "dog" when this flag is set to @p false, or it might be @p "dog 98%" when set to @p true.
+		 * Defaults to true.
+		 */
+		bool names_include_percentage;
 
 		/// The colour to use in @ref annotate().  Defaults to purple @p "(255, 0, 255)".
 		cv::Scalar annotation_colour;

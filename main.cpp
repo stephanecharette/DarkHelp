@@ -18,47 +18,64 @@ int main(int argc, char *argv[])
 	std::string config	= argv[1];
 	std::string weights	= argv[2];
 	std::string names	= argv[3];
-	int image_idx		= -1;
+	int first_image_idx	= -1;
 
 	// the .names file is optional, so we need to see if we have one
 	if (names.find("name") == std::string::npos)
 	{
 		// we probably don't have a names file, so the 3rd index must be the first image
 		names = "";
-		image_idx = 3;
+		first_image_idx = 3;
 	}
 	else
 	{
 		// looks like we have a names file, so the image must be the 4th index
-		image_idx = 4;
+		first_image_idx = 4;
 	}
 
 	DarkHelp dark_help(config, weights, names);
 	std::cout << "-> loading network took " << dark_help.duration_string() << std::endl;
 
-	while (image_idx < argc)
+	dark_help.names_include_percentage		= true;
+	dark_help.annotation_include_duration	= true;
+	dark_help.annotation_include_timestamp	= false;
+	dark_help.annotation_font_scale			= 1.0;
+
+	for (int idx = first_image_idx; idx < argc; idx ++)
 	{
-		const std::string filename = argv[image_idx];
+		const std::string filename = argv[idx];
 		std::cout << "loading \"" << filename << "\"" << std::endl;
-		cv::Mat mat = cv::imread(filename);
+		cv::Mat mat;
+
+		try
+		{
+			mat = cv::imread(filename);
+		}
+		catch (const std::exception & e)
+		{
+			std::cout << "Caught a C++ exception: " << e.what() << std::endl;
+		}
+
 		if (mat.empty())
 		{
 			std::cout << "Failed to read the image named \"" << filename << "\"" << std::endl;
-			image_idx ++;
 			continue;
 		}
 
-		cv::Mat resized;
-		cv::resize(mat, resized, cv::Size(512, 512));
-
-		dark_help.predict(resized);
+		dark_help.predict(mat);
 		std::cout << "-> prediction took " << dark_help.duration_string() << std::endl;
 		dark_help.annotate();
 
-		cv::imshow("prediction", dark_help.annotated_image);
-		cv::waitKey();
+		cv::Mat image_to_show = dark_help.annotated_image;
+		if (image_to_show.cols > 768 || image_to_show.rows > 768)
+		{
+			cv::Mat resized;
+			cv::resize(image_to_show, resized, cv::Size(768, 768));
+			image_to_show = resized;
+		}
 
-		image_idx ++;
+		cv::imshow("prediction", image_to_show);
+		cv::waitKey();
 	}
 
 	return 0;
