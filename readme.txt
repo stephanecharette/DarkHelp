@@ -4,6 +4,9 @@
 # $Id$
 
 
+Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
+
+
 # ------------------
 # SETTING UP DARKNET
 # ------------------
