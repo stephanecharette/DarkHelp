@@ -34,12 +34,14 @@
  * then call @ref predict() as often as necessary to determine what the images contain.
  * For example:
  * ~~~~
- * DarkHelp darkhelp("my_neural_network.cfg", "my_neural_network.weights", "my_neural_network.names");
+ * DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
  *
- * for (const auto & filename : {"image_0.jpg", "image_1.jpg", "image_2.jpg"})
+ * const auto image_filenames = {"image_0.jpg", "image_1.jpg", "image_2.jpg"};
+ *
+ * for (const auto & filename : image_filenames)
  * {
  *     darkhelp.predict(filename);
- *     cv::Mat mat = darkhelp.annotate();
+ *     cv::Mat mat = darkhelp.annotate(); // annotates the most recent image seen by predict()
  *     cv::imshow("prediction", mat);
  *     cv::waitKey();
  * }
@@ -47,10 +49,13 @@
  *
  * Instead of calling @ref annotate(), you can get the detection results and iterate through them:
  * ~~~~
- * DarkHelp darkhelp("my_neural_network.cfg", "my_neural_network.weights", "my_neural_network.names");
- * for (const auto & det : darkhelp.predict("test_image_01.jpg"))
+ * DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
+ *
+ * const auto results = darkhelp.predict("test_image_01.jpg");
+ *
+ * for (const auto & det : results)
  * {
- *     std::cout << det.name << ": " << 100.0 * det.probability << "%" << std::endl;
+ *     std::cout << det.name << " (" << 100.0 * det.best_probability << "% chance that this is class #" << det.best_class << ")" << std::endl;
  * }
  * ~~~~
  */
@@ -72,14 +77,56 @@ class DarkHelp
 		 */
 		struct PredictionResult
 		{
-			cv::Rect rect;							///< OpenCV rectangle which describes where the object is located in the original image.
-			int best_class;							///< The class that obtained the highest probability.  @see @ref all_probabilities
-			float best_probability;					///< The probability for the class that obtained the highest value.  @see @ref all_probabilities
-			MClassProbabilities all_probabilities;	///< This is only useful if you have multiple classes, and an object may be one of several possible classes.  This will contain all <em>non-zero</em> class/probability pairs.
-			std::string name;						///< A name to use for the object.  The highest probability will be listed first.
+			/// OpenCV rectangle which describes where the object is located in the original image.
+			cv::Rect rect;
+
+			/** This is only useful if you have multiple classes, and an object may be one of several possible classes.
+			 * This will contain all <em>non-zero</em> class/probability pairs.
+			 *
+			 * For example, if your classes in your @p names file are defined like this:
+			 * ~~~~{.txt}
+			 * car
+			 * person
+			 * truck
+			 * bus
+			 * ~~~~
+			 *
+			 * Then an image of a truck may be 10.5% car, 0% person, 95.8% truck, and 60.3% bus, in which case this map would contain the following:
+			 * @li 0 -> 0.105 // car
+			 * @li 2 -> 0.958 // truck
+			 * @li 3 -> 0.603 // bus
+			 *
+			 * The best results will always be stored in @ref best_class and @ref best_probability, which in this example would contain the values representing the truck:
+			 * @li best_class == 1
+			 * @li best_probability == 0.958
+			 */
+			MClassProbabilities all_probabilities;
+
+			/** The class that obtained the highest probability.  For example, if an object is predicted to be 80% car
+			 * or 60% truck, then the class id of the car would be stored in this variable.
+			 * @see @ref best_probability
+			 * @see @ref all_probabilities
+			 */
+			int best_class;
+
+			/** The probability of the class that obtained the highest value.  For example, if an object is predicted to
+			 * be 80% car or 60% truck, then the value of 0.80 would be stored in this variable.
+			 * @see @ref best_class
+			 * @see @ref all_probabilities
+			 */
+			float best_probability;
+
+			/** A name to use for the object.  If an object has multiple probabilities, then the one with the highest
+			 * probability will be listed first.  For example, a name could be @p "car 80%, truck 60%".  The @p name
+			 * is used as a label when calling @ref annotate().  @see @ref names_include_percentage
+			 */
+			std::string name;
 		};
 
-		/// A vector of predictions for the image analyzed by @ref predict().  @see @ref prediction_results
+		/** A vector of predictions for the image analyzed by @ref predict().
+		 * @see @ref PredictionResult
+		 * @see @ref prediction_results
+		 */
 		typedef std::vector<PredictionResult> PredictionResults;
 
 		/// Destructor.
@@ -118,7 +165,11 @@ class DarkHelp
 #endif
 
 		/** Takes the most recent @ref prediction_results, and applies them to the most recent @ref original_image.
-		 * the output annotated image is stored in @ref annotated_image as well as returned to the caller.
+		 * The output annotated image is stored in @ref annotated_image as well as returned to the caller.
+		 *
+		 * This is an example of what an annotated image looks like:
+		 * @image html barcode_100_percent.png
+		 *
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 		 * If >= 0, then @ref threshold will be set to this new value.
 		 * @see @ref annotation_colour
@@ -148,12 +199,12 @@ class DarkHelp
 		static cv::Mat convert_darknet_image_to_opencv_mat(const image img);
 
 		/** The Darknet network.  This is setup in the constructor.
-		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated.
+		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
 		 */
 		network * net;
 #else
 		/** The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
-		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated.
+		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
 		 */
 		void * net;
 #endif
@@ -163,7 +214,7 @@ class DarkHelp
 		 */
 		VStr names;
 
-		/** The length of time it took to initially load the network and weights (after the DarkHelp object has been
+		/** The length of time it took to initially load the network and weights (after the %DarkHelp object has been
 		 * constructed), or the length of time @ref predict() took to run on the last image to be processed.
 		 * @see @ref duration_string()
 		 */
@@ -172,7 +223,9 @@ class DarkHelp
 		/// Image prediction threshold.  Defaults to 0.5.  @see @ref predict()  @see @ref annotate()
 		float threshold;
 
-		/// Used during prediction.  Defaults to 0.5.  @see @ref predict()  @todo need more details on this one.
+		/** Used during prediction.  Defaults to 0.5.  @see @ref predict()
+		 * @todo Need to find more details on how this setting works in Darknet.
+		 */
 		float hierchy_threshold;
 
 		/** Non-Maximal Suppression (NMS) threshold suppresses overlapping bounding boxes and only retains the bounding
@@ -184,13 +237,17 @@ class DarkHelp
 		/// A copy of the most recent results after applying the neural network to an image.  This is set by @ref predict().
 		PredictionResults prediction_results;
 
-		/** Determines if the name given to each prediction includes the percentage.  For example, the name for a prediction
-		 * might be @p "dog" when this flag is set to @p false, or it might be @p "dog 98%" when set to @p true.
-		 * Defaults to true.
+		/** Determines if the name given to each prediction includes the percentage.
+		 *
+		 * For example, the name for a prediction might be @p "dog" when this flag is set to @p false, or it might be
+		 * @p "dog 98%" when set to @p true.  Defaults to true.
 		 */
 		bool names_include_percentage;
 
-		/// The colour to use in @ref annotate().  Defaults to purple @p "(255, 0, 255)".
+		/** The colour to use in @ref annotate().  Defaults to purple @p "(255, 0, 255)".
+		 *
+		 * Remember that OpenCV uses BGR, not RGB.  So pure red would be @p "(0, 0, 255)".
+		 */
 		cv::Scalar annotation_colour;
 
 		/// Scaling factor used for the font in @ref annotate().  Defaults to 0.5.
@@ -199,12 +256,20 @@ class DarkHelp
 		/// Thickness of the font in @ref annotate().  Defaults to 1.
 		int annotation_font_thickness;
 
-		/** If set to @p true then @ref annotate() will call @ref duration_string() and display on the image the length
-		 * of time @ref predict() took to process the image.  Defaults to true.
+		/** If set to @p true then @ref annotate() will call @ref duration_string() and display on the top-left of the
+		 * image the length of time @ref predict() took to process the image.  Defaults to true.
+		 *
+		 * When enabed, the duration may look similar to this:
+		 * @image html barcode_100_percent.png
 		 */
 		bool annotation_include_duration;
 
-		/// If set to @p true then @ref annotate() will display a timestamp on the image.  Defaults to false.
+		/** If set to @p true then @ref annotate() will display a timestamp on the bottom-left corner of the image.
+		 * Defaults to false.
+		 *
+		 * When enabled, the timestamp may look similar to this:
+		 * @image html barcode_with_timestamp.png
+		 */
 		bool annotation_include_timestamp;
 
 		/// The most recent image handled by @ref predict().

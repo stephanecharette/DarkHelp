@@ -1,0 +1,44 @@
+/** @page Summary Summary
+
+@note <b>This document assumes you already have Darknet installed, and you have a neural net that works.</b> <br/> If you're not already at that step, you'll want to look up some tutorials like this one:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/">https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/</a>.
+
+Once you have successfully trained a neural network, the next question becomes how do you embed it into your C++ application?!  Perhaps you've already looked into using Darknet's legacy C API, functions like @p load_network_custom(), @p do_nms_sort(), and @p get_network_boxes().  That API is not easy to work with, and there isn't much documentation nor example code.
+
+%DarkHelp lets you skip those function calls, and simplifies things with a C++ API.  You load the neural network and the weight files once, then call @ref DarkHelp::predict() multiple times.  Each time you get back a @p std::vector of predictions.
+
+Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  For example:
+
+@image html barcode_100_percent.png
+
+If you're looking for some sample code to get started, this example loads a network and then loops through several image files:
+
+~~~~{.cpp}
+	DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
+
+	const auto image_filenames = {"image_0.jpg", "image_1.jpg", "image_2.jpg"};
+
+	for (const auto & filename : image_filenames)
+	{
+		darkhelp.predict(filename);
+		cv::Mat mat = darkhelp.annotate(); // annotates the most recent image seen by predict()
+		cv::imshow("prediction", mat);
+		cv::waitKey();
+	}
+~~~~
+
+The predictions are stored in a @p std::vector of structures.  (See @ref DarkHelp::PredictionResults.)  You can get this vector and iterate through the results like this:
+
+~~~~{.cpp}
+	DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
+
+	const auto results = darkhelp.predict("test_image_01.jpg");
+
+	for (const auto & det : results)
+	{
+		std::cout << det.name << " (" << 100.0 * det.best_probability << "% chance that this is class #" << det.best_class << ")" << std::endl;
+	}
+~~~~
+
+If you have multiple classes defined in your network, then you may want to look at @ref DarkHelp::PredictionResult::all_probabilities, not only @ref DarkHelp::PredictionResult::best_class and @ref DarkHelp::PredictionResult::best_probability.
+
+*/

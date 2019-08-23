@@ -21,12 +21,12 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 {
 	if (cfg_filename.empty())
 	{
-		/// @thow std::invalid_argument if the configuration filename is empty.
+		/// @throw std::invalid_argument if the configuration filename is empty.
 		throw std::invalid_argument("darknet configuration filename cannot be empty");
 	}
 	if (weights_filename.empty())
 	{
-		/// @thow std::invalid_argument if the weights filename is empty.
+		/// @throw std::invalid_argument if the weights filename is empty.
 		throw std::invalid_argument("darknet weights filename cannot be empty");
 	}
 

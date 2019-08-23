@@ -1,0 +1,40 @@
+/** @page Building Building %DarkHelp
+
+Building both Darknet and %DarkHelp should not take more than 5 minutes combined.
+
+If you have not already done so, you must first build Darknet with the flag @p LIBSO=1.  This will ensure you build the @p "libdarknet.so" dynamic library.
+
+Once it has built, remember to copy the library and header file to a location where %DarkHelp will find them.  For example:
+
+~~~~{.sh}
+git clone https://github.com/AlexeyAB/darknet.git
+cd darknet
+vi makefile # to set LIBSO=1, and possibly other flags
+make
+sudo cp libdarknet.so /usr/local/lib/
+sudo cp include/darknet.h /usr/local/include/
+~~~~
+
+For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.
+
+Once Darknet is done, you can build %DarkHelp.  Download it from <a target="_blank" href="https://www.ccoderun.ca/download/">here</a> and extract it into a directory of your choice.  Then run the following commands:
+
+~~~~{.sh}
+cd DarkHelp
+mkdir build
+cd build
+cmake ..
+make
+make package
+~~~~
+
+If desired, the doxygen documentation can be created with @p "make doc".
+
+To install %DarkHelp so the API can be used within your own C++ application, run @p "sudo dpkg -i darkhelp-*.deb" after having run @p "make package".
+
+Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against the following:
+@li libdarkhelp.so or libdarkhelp.a
+@li libdarknet.so
+@li OpenCV's libraries
+
+*/

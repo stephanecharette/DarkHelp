@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	for (int idx = first_image_idx; idx < argc; idx ++)
 	{
 		const std::string filename = argv[idx];
-		std::cout << "loading \"" << filename << "\"" << std::endl;
+		std::cout << "xxxloading \"" << filename << "\"" << std::endl;
 		cv::Mat mat;
 
 		try

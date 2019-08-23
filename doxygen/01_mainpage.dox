@@ -1,0 +1,24 @@
+/** @mainpage %DarkHelp
+
+The official web site for C Code Run's %DarkHelp is http://www.ccoderun.ca/. <br/>
+
+This documentation is available at http://www.ccoderun.ca/darkhelp/api/. <br/>
+
+Source code and pre-built packages for %DarkHelp are available at http://www.ccoderun.ca/download/. <br/>
+
+@note %DarkHelp is @em not Darknet!  %DarkHelp is a C++ API layer used to call Darknet's original C API.
+
+I recommend AlexeyAB's popular fork of Darknet, available at https://github.com/AlexeyAB/darknet.  %DarkHelp was specifically written for and tested against AlexeyAB's fork.
+
+The original author of the Darknet neural network framework is <a target="_blank" href="https://pjreddie.com/darknet/">Joseph Redmon</a>.  I have not tested %DarkHelp against that abandoned version of Darknet.
+
+<div style="padding:1em; margin:2em; border:1px solid black; display:inline-block;">
+%DarkHelp is written by <a target="_blank" href="https://www.ccoderun.ca/stephane/">Stéphane Charette d.b.a. C Code Run</a><br/>
+&copy; 2019 <a target="_blank" href="/stephane/">Stéphane Charette</a><br/>
+http://www.ccoderun.ca/darkhelp/ <br/>
+stephane@ccoderun.ca <br/>
+stephane.charette@gmail.com <br/>
+Tel. +1-250-769-2759 &nbsp; <span style="font-size:80%;">[Pacific Time, PST/PDT]</span>
+</div>
+
+*/
