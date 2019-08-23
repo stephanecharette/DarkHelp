@@ -91,13 +91,17 @@ class DarkHelp
 			 * bus
 			 * ~~~~
 			 *
-			 * Then an image of a truck may be 10.5% car, 0% person, 95.8% truck, and 60.3% bus, in which case this map would contain the following:
+			 * Then an image of a truck may be 10.5% car, 0% person, 95.8% truck, and 60.3% bus.  Only the non-zero
+			 * values are ever stored in this map, which for this example would be the following:
+			 *
 			 * @li 0 -> 0.105 // car
 			 * @li 2 -> 0.958 // truck
 			 * @li 3 -> 0.603 // bus
 			 *
-			 * The best results will always be stored in @ref best_class and @ref best_probability, which in this example would contain the values representing the truck:
-			 * @li best_class == 1
+			 * The best results will always be stored in @ref best_class and @ref best_probability, which in this
+			 * example would contain the values representing the truck:
+			 *
+			 * @li best_class == 2
 			 * @li best_probability == 0.958
 			 */
 			MClassProbabilities all_probabilities;
