@@ -40,8 +40,11 @@
  *
  * for (const auto & filename : image_filenames)
  * {
+ *     // these next two lines is where DarkHelp calls into Darknet to do all the hard work
  *     darkhelp.predict(filename);
  *     cv::Mat mat = darkhelp.annotate(); // annotates the most recent image seen by predict()
+ *
+ *     // use standard OpenCV calls to show the image results in a window
  *     cv::imshow("prediction", mat);
  *     cv::waitKey();
  * }
@@ -81,7 +84,8 @@ class DarkHelp
 			cv::Rect rect;
 
 			/** This is only useful if you have multiple classes, and an object may be one of several possible classes.
-			 * This will contain all <em>non-zero</em> class/probability pairs.
+			 *
+			 * @note This will contain all @em non-zero class/probability pairs.
 			 *
 			 * For example, if your classes in your @p names file are defined like this:
 			 * ~~~~{.txt}
@@ -98,11 +102,13 @@ class DarkHelp
 			 * @li 2 -> 0.958 // truck
 			 * @li 3 -> 0.603 // bus
 			 *
-			 * The best results will always be stored in @ref best_class and @ref best_probability, which in this
-			 * example would contain the values representing the truck:
+			 * (Note how @p person is not stored in the map, since the probability for that class is 0%.)
 			 *
-			 * @li best_class == 2
-			 * @li best_probability == 0.958
+			 * In addition to @p %all_probabilities, the best results will @em also be duplicated in @ref best_class
+			 * and @ref best_probability, which in this example would contain the values representing the truck:
+			 *
+			 * @li @ref best_class == 2
+			 * @li @ref best_probability == 0.958
 			 */
 			MClassProbabilities all_probabilities;
 
@@ -127,7 +133,8 @@ class DarkHelp
 			std::string name;
 		};
 
-		/** A vector of predictions for the image analyzed by @ref predict().
+		/** A vector of predictions for the image analyzed by @ref predict().  Each @ref PredictionResult entry in the
+		 * vector represents a different object in the image.
 		 * @see @ref PredictionResult
 		 * @see @ref prediction_results
 		 */
@@ -143,7 +150,11 @@ class DarkHelp
 		 * @param [in] image_filename The name of the image file to load from disk and analyze.  The member
 		 * @ref original_image will be set to this image.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
-		 * If >= 0, then @ref threshold will be set to this new value.
+		 * If >= 0, then @ref threshold will be set to this new value.  The threshold must be either -1, or a value
+		 * between 0.0 and 1.0 meaning 0% to 100%.
+		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
+		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
+		 * @see @ref PredictionResult
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(const std::string & image_filename, const float new_threshold = -1.0f);
@@ -152,7 +163,11 @@ class DarkHelp
 		 * @param [in] mat A OpenCV2 image which has already been loaded and which needs to be analyzed.  The member
 		 * @ref original_image will be set to this image.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
-		 * If >= 0, then @ref threshold will be set to this new value.
+		 * If >= 0, then @ref threshold will be set to this new value.  The threshold must be either -1, or a value
+		 * between 0.0 and 1.0 meaning 0% to 100%.
+		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
+		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
+		 * @see @ref PredictionResult
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(cv::Mat mat, const float new_threshold = -1.0f);
@@ -162,7 +177,11 @@ class DarkHelp
 		 * @param [in] mat A Darknet-style image object which has already been loaded and which needs to be analyzed.
 		 * The member @ref original_image will be set to this image.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
-		 * If >= 0, then @ref threshold will be set to this new value.
+		 * If >= 0, then @ref threshold will be set to this new value.  The threshold must be either -1, or a value
+		 * between 0.0 and 1.0 meaning 0% to 100%.
+		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
+		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
+		 * @see @ref PredictionResult
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(image img, const float new_threshold = -1.0f);
@@ -176,6 +195,19 @@ class DarkHelp
 		 *
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 		 * If >= 0, then @ref threshold will be set to this new value.
+		 *
+		 * Turning @em down the threshold in @ref annotate() wont bring back predictions that were excluded due to a
+		 * higher threshold originally used with @ref predict().  Here is an example:
+		 *
+		 * ~~~~
+		 * darkhelp.predict("image.jpg", 0.75);  // note the threshold is set to 75% for prediction
+		 * darkhelp.annotate(0.25);              // note the threshold is now modified to be 25%
+		 * ~~~~
+		 *
+		 * In the previous example, when annotate() is called with the lower threshold of 25%, the predictions had already
+		 * been capped at 75%.  This means any prediction between >= 25% and < 75% were excluded from the prediction results.
+		 * The only way to get those predictions is to re-run predict() with a value of 0.25.
+		 *
 		 * @see @ref annotation_colour
 		 * @see @ref annotation_font_scale
 		 * @see @ref annotation_font_thickness

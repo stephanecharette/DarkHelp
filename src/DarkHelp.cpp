@@ -289,6 +289,19 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 	{
 		threshold = new_threshold;
 	}
+	if (threshold > 1.0)
+	{
+		// user has probably specified percentages, so bring it back down to a range between 0.0 and 1.0
+		threshold /= 100.0;
+	}
+	if (threshold < 0.0)
+	{
+		threshold = 0.1;
+	}
+	if (threshold > 1.0)
+	{
+		threshold = 1.0;
+	}
 
 	network * nw = reinterpret_cast<network*>(net);
 

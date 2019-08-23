@@ -1,12 +1,12 @@
 /** @page Summary Summary
 
-@note <b>This document assumes you already have Darknet installed, and you have a neural net that works.</b> <br/> If you're not already at that step, you'll want to look up some tutorials like this one:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/">https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/</a>.
+@note <b>This document assumes you already have Darknet installed, and you have a functioning neural network.</b> <br/> If you're not already at that step, you'll want to look up some tutorials like this one:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/">https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/</a>.
 
-Once you have successfully trained a neural network, the next question becomes how do you embed it into your C++ application?!  Perhaps you've already looked into using Darknet's legacy C API, functions like @p load_network_custom(), @p do_nms_sort(), and @p get_network_boxes().  That API is not easy to work with, and there isn't much documentation nor example code.
+Once you have successfully trained a neural network, the next question becomes:  how do you embed it into your C++ application?!  Perhaps you've already looked into using Darknet's legacy C API, functions like @p load_network_custom(), @p do_nms_sort(), and @p get_network_boxes().  That API is not easy to work with, and there isn't much documentation nor example code.
 
 %DarkHelp lets you skip those function calls, and simplifies things with a C++ API.  You load the neural network and the weight files once, then call @ref DarkHelp::predict() multiple times.  Each time you get back a @p std::vector of predictions.
 
-Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  For example:
+Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  This is an example of what @ref DarkHelp::annotate() can do with an image and a network that detects barcodes:
 
 @image html barcode_100_percent.png
 
@@ -19,8 +19,11 @@ If you're looking for some sample code to get started, this example loads a netw
 
 	for (const auto & filename : image_filenames)
 	{
+		// these next two lines is where DarkHelp calls into Darknet to do all the hard work
 		darkhelp.predict(filename);
 		cv::Mat mat = darkhelp.annotate(); // annotates the most recent image seen by predict()
+
+		// use standard OpenCV calls to show the image results in a window
 		cv::imshow("prediction", mat);
 		cv::waitKey();
 	}
