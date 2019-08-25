@@ -142,7 +142,7 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 	{
 		if (pred.best_probability >= threshold)
 		{
-			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << ")" << std::endl;
+//			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << "), name=\"" << pred.name << "\", duration=" << duration_string() << std::endl;
 			cv::rectangle(annotated_image, pred.rect, annotation_colour, 2);
 
 			const cv::Size text_size = cv::getTextSize(pred.name, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
@@ -408,4 +408,46 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 	free_image(img);
 
 	return prediction_results;
+}
+
+
+cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
+{
+	if (mat.empty())
+	{
+		return mat;
+	}
+
+	if (desired_size.width == mat.cols && desired_size.height == mat.rows)
+	{
+		return mat;
+	}
+
+	if (desired_size.width < 1 || desired_size.height < 1)
+	{
+		// return an empty image
+		return cv::Mat();
+	}
+
+	const double image_width		= static_cast<double>(mat.cols);
+	const double image_height		= static_cast<double>(mat.rows);
+	const double horizontal_factor	= image_width	/ static_cast<double>(desired_size.width);
+	const double vertical_factor	= image_height	/ static_cast<double>(desired_size.height);
+	const double largest_factor 	= std::max(horizontal_factor, vertical_factor);
+	const double new_width			= image_width	/ largest_factor;
+	const double new_height			= image_height	/ largest_factor;
+	const cv::Size new_size(std::round(new_width), std::round(new_height));
+
+	// "To shrink an image, it will generally look best with CV_INTER_AREA interpolation ..."
+	int interpolation = CV_INTER_AREA;
+	if (largest_factor < 1.0)
+	{
+		// "... to enlarge an image, it will generally look best with CV_INTER_CUBIC"
+		interpolation = CV_INTER_CUBIC;
+	}
+
+	cv::Mat dst;
+	cv::resize(mat, dst, new_size, 0, 0, interpolation);
+
+	return dst;
 }

@@ -322,3 +322,13 @@ class DarkHelp
 		 */
 		PredictionResults predict(const float new_threshold = -1.0f);
 };
+
+
+/** Convenience function to resize an image yet retain the exact original aspect ratio.  Performs no resizing if the
+ * image is already the desired size.  Depending on the size of the original image and the desired size, a "best"
+ * size will be chosen that does not exceed the desired size.
+ *
+ * For example, if the image is 640x480, and the desired size specified is 400x400, the image returned will be 400x300
+ * which maintains the original 1.333 aspect ratio.
+ */
+cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size);

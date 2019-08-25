@@ -1,0 +1,34 @@
+/** @page CLI %DarkHelp CLI
+
+The %DarkHelp library also comes with a command-line tool that uses the %DarkHelp API.  With it, you can easily load a neural network and browse through a set of images, examining the results of calling DarkHelp::predict() on each image.
+
+Here is an example of how you'd call it:
+
+~~~~{.sh}
+DarkHelp barcodetest.cfg barcodetest_final.weights barcodetest.names test_image_1.jpg test_image_2.jpg
+~~~~
+
+There are many command-line arguments.  run `./DarkHelp --help` for the full list.  Some examples:
+
+~~~~{.sh}
+# -b means resize the "before" input image prior to calling DarkHelp::predict()
+# -t sets the new lower bound threshold to 25%
+DarkHelp -b 800x800 -t 0.25 barcodetest.cfg barcodetest_final.weights barcodetest.names *.jpg
+
+# -a resizes the "after" output image once DarkHelp::annotate() has been called
+# -s starts the viewer in slideshow mode, where a new image is loaded every second
+DarkHelp -a 640x480 -s barcodetest.cfg barcodetest_final.weights barcodetest.names *.jpg
+~~~~
+
+In addition to command-line arguments, there are several keys you can use in the viewer.  They are:
+
+@li @p q or @p ESC to exit from the viewer.
+@li @p w to save the current image to disk in the current working directory ("output.png")
+@li @p HOME to return to the first image in the data set
+@li @p END to skip to the last image in the data set
+@li @p LEFT go to the previous image
+@li @p UP increase the rate at which images are processed during the slideshow
+@li @p DOWN decrease the rate at which images are processed during the slideshow
+@li @p p to pause or play the slideshow
+
+*/
