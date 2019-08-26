@@ -6,6 +6,8 @@
 
 Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
 
+Also see this post:  https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/
+
 
 # ------------------
 # SETTING UP DARKNET
@@ -24,6 +26,7 @@ Save the "makefile", then run the following commands:
 make
 sudo cp include/darknet.h /usr/local/include/
 sudo cp libdarknet.so /usr/local/lib/
+sudo ldconfig
 
 
 # -------------------
@@ -42,3 +45,5 @@ cmake ..
 make
 make package
 sudo dpkg -i darkhelp*.deb
+
+Example application that uses libdarkhelp.so can be found in src-tool, or at https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/.

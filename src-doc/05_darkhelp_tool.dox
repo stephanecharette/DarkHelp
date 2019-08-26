@@ -1,6 +1,10 @@
 /** @page Tool %DarkHelp Tool
 
-The %DarkHelp library also comes with a tool that uses the %DarkHelp C++ API.  With it, you can load a neural network and browse through a set of images, examining the results of calling @ref DarkHelp::predict() and @ref DarkHelp::annotate() on each image.
+The %DarkHelp library also comes with a tool that uses the %DarkHelp C++ API and shows the results on the screen.
+
+@image html DarkHelp.png
+
+You can load a neural network and browse through a large set of images as you examine the results of calling @ref DarkHelp::predict() and @ref DarkHelp::annotate() on each image.  Images can be resized, apply different thresholds to the predictions, and get details on the predicted results.
 
 Here is an example of how to use it:
 
@@ -12,7 +16,7 @@ Note the parameters:
 
 @li The `.cfg` file used to originally train the neural network.
 @li The `.weights` file that was created as part of the neural network training.
-@li The `.names` file which contains the name of the various classes in the network.
+@li The `.names` file which contains the names of the various classes in the network.
 @li One or more image file (typically `.jpg`, but could be any type of image) against which you want to run the network.
 
 There are at least a dozen possible command-line arguments.  run `%DarkHelp --help` for the full list.  Some examples:

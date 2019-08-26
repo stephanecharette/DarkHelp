@@ -13,6 +13,7 @@ vi makefile # to set LIBSO=1, and possibly other flags
 make
 sudo cp libdarknet.so /usr/local/lib/
 sudo cp include/darknet.h /usr/local/include/
+sudo ldconfig
 ~~~~
 
 For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.

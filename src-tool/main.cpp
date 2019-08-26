@@ -19,6 +19,54 @@ typedef std::map<std::chrono::high_resolution_clock::time_point, std::string> MM
 MMsg messages;
 
 
+void show_help_window()
+{
+	const std::map<std::string, std::string> help =
+	{
+		// slideshow
+		{ "p"			, "Pause or play the slideshow."	},
+		{ "DOWN"		, "Slow down the slideshow."		},
+		{ "UP"			, "Speed up the slideshow."			},
+		// navigation
+		{ "LEFT"		, "Go to previous image."			},
+		{ "HOME"		, "Go to first image."				},
+		{ "END"			, "Go to last image."				},
+		// options
+		{ "PAGE DOWN"	, "Decrease threshold by 10%."		},
+		{ "PAGE UP"		, "Increase threshold by 10%."		},
+		{ "g"			, "Toggle greyscale."				},
+		// misc
+		{ "h"			, "Show help."						},
+		{ "w"			, "Write image to disk."			},
+		{ "q or ESC"	, "Exit from DarkHelp."				}
+	};
+
+	cv::Mat mat(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+
+	const auto font_face		= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
+	const auto font_scale		= 0.5;
+	const auto font_thickness	= 1;
+
+	int y = 25;
+	for (const auto iter : help)
+	{
+		const auto & key = iter.first;
+		const auto & val = iter.second;
+
+		const cv::Point p1(10, y);
+		const cv::Point p2(120, y);
+
+		cv::putText(mat, key, p1, font_face, font_scale, cv::Scalar(0,0,0), font_thickness, CV_AA);
+		cv::putText(mat, val, p2, font_face, font_scale, cv::Scalar(0,0,0), font_thickness, CV_AA);
+		y += 25;
+	}
+
+	cv::imshow("DarkHelp v" DH_VERSION, mat);
+
+	return;
+}
+
+
 void add_msg(const std::string & msg)
 {
 	// the thought initially was that we'd have multiple messages,
@@ -233,6 +281,8 @@ int main(int argc, char *argv[])
 			std::random_shuffle(all_images.begin(), all_images.end());
 		}
 
+		add_msg("press 'h' for help");
+
 		size_t image_index = 0;
 		while (image_index < all_images.size() && not done)
 		{
@@ -276,7 +326,14 @@ int main(int argc, char *argv[])
 			for (size_t idx = 0; idx < results.size(); idx ++)
 			{
 				const auto & pred = results.at(idx);
-				std::cout << "-> " << 1+idx << "/" << results.size() << ": " << pred.name << ", x=" << pred.rect.x << ", y=" << pred.rect.y << ", w=" << pred.rect.width << ", h=" << pred.rect.height << std::endl;
+				std::cout
+					<< "-> " << (1 + idx) << "/" << results.size() << ": "
+					<< pred.name
+					<< ", class #" << pred.best_class
+					<< ", probability " << pred.best_probability
+					<< ", x=" << pred.rect.x << ", y=" << pred.rect.y << ", w=" << pred.rect.width << ", h=" << pred.rect.height
+					<< ", " << pred.all_probabilities.size() << " entr" << (pred.all_probabilities.size() == 1 ? "y" : "ies")
+					<< std::endl;
 			}
 
 			cv::Mat output_image = dark_help.annotate();
@@ -311,7 +368,7 @@ int main(int argc, char *argv[])
 			cv::imshow("DarkHelp", output_image);
 
 			const int key = cv::waitKeyEx(delay_in_milliseconds);
-//			std::cout << "KEY=" << key << std::endl;
+			std::cout << "KEY=" << key << std::endl;
 
 			if (key == -1 && in_slideshow == false)
 			{
@@ -339,6 +396,11 @@ int main(int argc, char *argv[])
 					cv::imwrite(output_filename, output_image, {CV_IMWRITE_PNG_COMPRESSION, 9});
 					std::cout << "-> output image saved to \"" << output_filename << "\"" << std::endl;
 					add_msg("saved image to \"" + output_filename + "\"");
+					continue;
+				}
+				case 0x00100068:	// 'h'
+				{
+					show_help_window();
 					continue;
 				}
 				case 0x0010ff50:	// HOME

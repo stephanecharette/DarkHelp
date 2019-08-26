@@ -4,9 +4,11 @@
 
 Once you have successfully trained a neural network, the next question becomes:  how do you embed it into your C++ application?!  Perhaps you've already looked into using Darknet's legacy C API, functions like @p load_network_custom(), @p do_nms_sort(), and @p get_network_boxes().  That API is not easy to work with, and there isn't much documentation nor example code.
 
-%DarkHelp lets you skip those function calls, and simplifies things with a C++ API.  You load the neural network and the weight files once, then call @ref DarkHelp::predict() multiple times.  Each time you get back a @p std::vector of predictions.
+(In case it helps, I did put together this blog post with a few details in late August 2019:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/">https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/</a>.)
 
-Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  This is an example of what @ref DarkHelp::annotate() can do with an image and a network that detects barcodes:
+%DarkHelp lets you skip those C function calls, and simplifies things with an extremely simple-to-use C++ API.  You load the neural network and the weight files, then call @ref DarkHelp::predict() once per image you'd like analyzed.  Each time you get back a @p std::vector of predictions.
+
+Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  This is an example of what @ref DarkHelp::annotate() can do with an image and a neural network that detects barcodes:
 
 @image html barcode_100_percent.png
 
