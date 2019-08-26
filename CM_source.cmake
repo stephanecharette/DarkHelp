@@ -4,7 +4,8 @@
 # $Id$
 
 
-INCLUDE_DIRECTORIES ( src )
+INCLUDE_DIRECTORIES ( src-lib )
 
-ADD_SUBDIRECTORY ( src )
-ADD_SUBDIRECTORY ( doxygen )
+ADD_SUBDIRECTORY ( src-lib )
+ADD_SUBDIRECTORY ( src-tool )
+ADD_SUBDIRECTORY ( src-doc )

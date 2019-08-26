@@ -52,6 +52,7 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	hierchy_threshold					= 0.5f;
 	non_maximal_suppression_threshold	= 0.45f;
 	annotation_colour					= cv::Scalar(255, 0, 255);
+	annotation_font_face				= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
 	annotation_font_scale				= 0.5;
 	annotation_font_thickness			= 1;
 	annotation_include_duration			= true;
@@ -136,8 +137,6 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 
 	annotated_image = original_image.clone();
 
-	const auto font_face = cv::FONT_HERSHEY_SIMPLEX;
-
 	for (const auto & pred : prediction_results)
 	{
 		if (pred.best_probability >= threshold)
@@ -145,22 +144,22 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 //			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << "), name=\"" << pred.name << "\", duration=" << duration_string() << std::endl;
 			cv::rectangle(annotated_image, pred.rect, annotation_colour, 2);
 
-			const cv::Size text_size = cv::getTextSize(pred.name, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 			cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height - 2), cv::Size(text_size.width + 2, text_size.height + 2));
 			cv::rectangle(annotated_image, r, annotation_colour, CV_FILLED);
-			cv::putText(annotated_image, pred.name, cv::Point(r.x + 1, r.y + text_size.height), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+			cv::putText(annotated_image, pred.name, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 		}
 	}
 
 	if (annotation_include_duration)
 	{
 		const std::string str		= duration_string();
-		const cv::Size text_size	= cv::getTextSize(str, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+		const cv::Size text_size	= cv::getTextSize(str, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 		cv::Rect r(cv::Point(2, 2), cv::Size(text_size.width + 2, text_size.height + 2));
 		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
-		cv::putText(annotated_image, str, cv::Point(r.x + 1, r.y + text_size.height), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::putText(annotated_image, str, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 	}
 
 	if (annotation_include_timestamp)
@@ -170,11 +169,11 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", std::localtime(&tt));
 		std::cout << "timestamp=" << timestamp << std::endl;
 
-		const cv::Size text_size	= cv::getTextSize(timestamp, font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+		const cv::Size text_size	= cv::getTextSize(timestamp, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 		cv::Rect r(cv::Point(2, annotated_image.rows - text_size.height - 4), cv::Size(text_size.width + 2, text_size.height + 2));
 		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
-		cv::putText(annotated_image, timestamp, cv::Point(r.x + 1, r.y + text_size.height), font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::putText(annotated_image, timestamp, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 	}
 
 	return annotated_image;

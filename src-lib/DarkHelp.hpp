@@ -286,6 +286,9 @@ class DarkHelp
 		 */
 		cv::Scalar annotation_colour;
 
+		/// Font face to use in @ref annotate().  Defaults to @p cv::HersheyFonts::FONT_HERSHEY_SIMPLEX.
+		cv::HersheyFonts annotation_font_face;
+
 		/// Scaling factor used for the font in @ref annotate().  Defaults to 0.5.
 		double annotation_font_scale;
 

@@ -5,9 +5,80 @@
  */
 
 #include <DarkHelp.hpp>
+#include <chrono>
+#include <map>
 #include <vector>
 #include <string>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
+
+
+// Messages that need to be shown to the user.
+// They key is time at which the messages need to be dismissed,
+// and the value is the actual text of the message.
+typedef std::map<std::chrono::high_resolution_clock::time_point, std::string> MMsg;
+MMsg messages;
+
+
+void add_msg(const std::string & msg)
+{
+	// the thought initially was that we'd have multiple messages,
+	// but it works better if newer messages completely overwrite older messages
+	messages.clear();
+
+	if (msg.empty() == false)
+	{
+		messages[std::chrono::high_resolution_clock::now() + std::chrono::seconds(2)] = msg;
+	}
+
+	return;
+}
+
+
+void clear_old_msg(const std::chrono::high_resolution_clock::time_point & now)
+{
+	// go through the map and delete messages expired messages
+
+	auto iter = messages.begin();
+	while (iter != messages.end())
+	{
+		if (now > iter->first)
+		{
+			iter = messages.erase(iter);
+		}
+		else
+		{
+			iter ++;
+		}
+	}
+
+	return;
+}
+
+
+void display_current_msg(DarkHelp & dark_help, const std::chrono::high_resolution_clock::time_point & now, cv::Mat output_image, int & delay_in_milliseconds)
+{
+	if (not messages.empty())
+	{
+		const auto timestamp	= messages.begin()->first;
+		const std::string & msg	= messages.begin()->second;
+
+		const cv::Size text_size = cv::getTextSize(msg, dark_help.annotation_font_face, dark_help.annotation_font_scale, dark_help.annotation_font_thickness, nullptr);
+
+		cv::Point p(30, 50);
+		cv::Rect r(cv::Point(p.x - 5, p.y - text_size.height - 3), cv::Size(text_size.width + 10, text_size.height + 10));
+		cv::rectangle(output_image, r, cv::Scalar(0,255,255), CV_FILLED);
+		cv::rectangle(output_image, r, cv::Scalar(0,0,0), 1);
+		cv::putText(output_image, msg, p, dark_help.annotation_font_face, dark_help.annotation_font_scale, cv::Scalar(0,0,0), dark_help.annotation_font_thickness, CV_AA);
+
+		const int milliseconds_remaining = std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - now).count();
+		if (delay_in_milliseconds == 0 || delay_in_milliseconds > milliseconds_remaining)
+		{
+			delay_in_milliseconds = milliseconds_remaining;
+		}
+	}
+
+	return;
+}
 
 
 bool get_bool(TCLAP::ValueArg<std::string> & arg)
@@ -96,7 +167,7 @@ int main(int argc, char *argv[])
 	{
 		std::srand(std::time(nullptr)); // seed random number generator
 
-		TCLAP::CmdLine cli("Load a darknet neural net and run prediction on image files", ' ', DH_VERSION);
+		TCLAP::CmdLine cli("Load a darknet neural network and run prediction on the given image file(s).", ' ', DH_VERSION);
 
 		std::vector<std::string> booleans = { "true", "false", "on", "off", "t", "f", "1", "0" };
 		auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
@@ -110,6 +181,7 @@ int main(int argc, char *argv[])
 		TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."				, false, "true"		, &allowed_booleans	, cli);
 		TCLAP::ValueArg<std::string> nms		("n", "nms"			, "The non-maximal suppression threshold to use when predicting."	, false, "0.45"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."				, false, "false"	, &allowed_booleans	, cli);
+		TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																, cli, false);
 		TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations."				, false, "0.5"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."				, false, "true"		, &allowed_booleans	, cli);
 		TCLAP::ValueArg<std::string> resize1	("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."					, false, "640x480"	, &WxH_constraint	, cli);
@@ -145,6 +217,8 @@ int main(int argc, char *argv[])
 		dark_help.annotation_include_duration		= get_bool(duration);
 		dark_help.annotation_include_timestamp		= get_bool(timestamp);
 
+		bool force_greyscale = greyscale.getValue();
+
 		bool in_slideshow = slideshow.getValue();
 		int wait_time_in_milliseconds_for_slideshow = 500;
 
@@ -168,13 +242,24 @@ int main(int argc, char *argv[])
 
 			try
 			{
-				input_image = cv::imread(filename);
+				if (force_greyscale)
+				{
+					cv::Mat tmp = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+					// libdarknet.so segfaults when given single-channel images, so convert it back to a 3-channel image
+					// forward_network() -> forward_convolutional_layer() -> im2col_cpu_ext()
+					cv::cvtColor(tmp, input_image, cv::COLOR_GRAY2BGR);
+				}
+				else
+				{
+					input_image = cv::imread(filename);
+				}
 			}
 			catch (...) {}
 
 			if (input_image.empty())
 			{
 				std::cout << "Failed to read the image \"" << filename << "\"" << std::endl;
+				image_index ++;
 				continue;
 			}
 
@@ -186,8 +271,8 @@ int main(int argc, char *argv[])
 
 			const auto results = dark_help.predict(input_image);
 			std::cout
-				<< "-> prediction took " << dark_help.duration_string() << std::endl
-				<< "-> prediction results:  " << results.size() << std::endl;
+				<< "-> prediction took "		<< dark_help.duration_string()	<< std::endl
+				<< "-> prediction results:  "	<< results.size()				<< std::endl;
 			for (size_t idx = 0; idx < results.size(); idx ++)
 			{
 				const auto & pred = results.at(idx);
@@ -210,17 +295,29 @@ int main(int argc, char *argv[])
 			}
 
 			int delay_in_milliseconds = 0; // wait forever
+
+			const auto now = std::chrono::high_resolution_clock::now();
+			clear_old_msg(now);
+			display_current_msg(dark_help, now, output_image, delay_in_milliseconds);
+
 			if (in_slideshow)
 			{
+				// slideshow delay overrides whatever delay we may have put due to a message
 				delay_in_milliseconds = wait_time_in_milliseconds_for_slideshow;
 			}
 
-			cv::namedWindow("prediction", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-			cv::setWindowTitle("prediction", short_filename);
-			cv::imshow("prediction", output_image);
+			cv::namedWindow("DarkHelp", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
+			cv::setWindowTitle("DarkHelp", short_filename);
+			cv::imshow("DarkHelp", output_image);
 
 			const int key = cv::waitKeyEx(delay_in_milliseconds);
 //			std::cout << "KEY=" << key << std::endl;
+
+			if (key == -1 && in_slideshow == false)
+			{
+				// we didn't really timeout, this is simply an indication that a message needs to be erased
+				continue;
+			}
 
 			switch (key)
 			{
@@ -230,11 +327,18 @@ int main(int argc, char *argv[])
 					done = true;
 					break;
 				}
+				case 0x00100067:	// 'g'
+				{
+					force_greyscale = not force_greyscale;
+					continue;
+				}
 				case 0x00100077:	// 'w'
 				{
 					// save the file to disk, then re-load the same image
-					cv::imwrite("output.png", output_image, {CV_IMWRITE_PNG_COMPRESSION, 9});
-					std::cout << "-> output image saved to \"output.png\"" << std::endl;
+					const std::string output_filename = "output.png";
+					cv::imwrite(output_filename, output_image, {CV_IMWRITE_PNG_COMPRESSION, 9});
+					std::cout << "-> output image saved to \"" << output_filename << "\"" << std::endl;
+					add_msg("saved image to \"" + output_filename + "\"");
 					continue;
 				}
 				case 0x0010ff50:	// HOME
@@ -262,11 +366,12 @@ int main(int argc, char *argv[])
 				{
 					// quicker slideshow
 					wait_time_in_milliseconds_for_slideshow *= 0.5;
-					if (wait_time_in_milliseconds_for_slideshow < 10)
+					if (wait_time_in_milliseconds_for_slideshow < 50)
 					{
-						wait_time_in_milliseconds_for_slideshow = 10;
+						wait_time_in_milliseconds_for_slideshow = 50;
 					}
 					std::cout << "-> slideshow timeout has been decreased to " << wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
+					add_msg("slideshow timer: " + std::to_string(wait_time_in_milliseconds_for_slideshow) + " milliseconds");
 					in_slideshow = true;
 					continue;
 				}
@@ -275,7 +380,28 @@ int main(int argc, char *argv[])
 					// slower slideshow
 					wait_time_in_milliseconds_for_slideshow /= 0.5;
 					std::cout << "-> slideshow timeout has been increased to " << wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
+					add_msg("slideshow timer: " + std::to_string(wait_time_in_milliseconds_for_slideshow) + " milliseconds");
 					in_slideshow = true;
+					continue;
+				}
+				case 0x0010ff55:	// PAGE-UP
+				{
+					dark_help.threshold += 0.1;
+					if (dark_help.threshold > 1.0)
+					{
+						dark_help.threshold = 1.0;
+					}
+					add_msg("increased threshold: " + std::to_string((int)std::round(dark_help.threshold * 100.0)) + "%");
+					continue;
+				}
+				case 0x0010ff56:	// PAGE-DOWN
+				{
+					dark_help.threshold -= 0.1;
+					if (dark_help.threshold < 0.01)
+					{
+						dark_help.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
+					}
+					add_msg("decreased threshold: " + std::to_string((int)std::round(dark_help.threshold * 100.0)) + "%");
 					continue;
 				}
 				case 0x00100070:	// 'p'

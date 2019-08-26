@@ -21,19 +21,10 @@ SET_TARGET_PROPERTIES	( ${DH_LIB_SHARED} PROPERTIES OUTPUT_NAME "${DH_LIB_NAME}"
 SET_TARGET_PROPERTIES	( ${DH_LIB_SHARED} PROPERTIES PREFIX "lib" )
 
 
-# -------------------------------------
-# Next, we build the command line tool.
-# -------------------------------------
-
-ADD_EXECUTABLE ( DarkHelp main.cpp)
-TARGET_LINK_LIBRARIES ( DarkHelp Threads::Threads ${DH_LIB_STATIC} ${Darknet} ${OpenCV_LIBS} )
-
-
-# ------------------------------------------------------
-# Lastly, we install the files where we need them to be.
-# ------------------------------------------------------
+# ---------------------------------------------------
+# Next we install the files where we need them to be.
+# ---------------------------------------------------
 
 INSTALL ( FILES DarkHelp.hpp				DESTINATION include )
 INSTALL ( TARGETS ${DH_LIB_STATIC}			DESTINATION lib )
 INSTALL ( TARGETS ${DH_LIB_SHARED} LIBRARY	DESTINATION lib )
-INSTALL ( TARGETS DarkHelp					DESTINATION bin )
