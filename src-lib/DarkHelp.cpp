@@ -51,13 +51,13 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	threshold							= 0.5f;
 	hierchy_threshold					= 0.5f;
 	non_maximal_suppression_threshold	= 0.45f;
-	annotation_colour					= cv::Scalar(255, 0, 255);
 	annotation_font_face				= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
 	annotation_font_scale				= 0.5;
 	annotation_font_thickness			= 1;
 	annotation_include_duration			= true;
 	annotation_include_timestamp		= false;
 	names_include_percentage			= true;
+	annotation_colours					= get_default_annotation_colours();
 
 	if (not names_filename.empty())
 	{
@@ -137,17 +137,25 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 
 	annotated_image = original_image.clone();
 
+	// make sure we always have colours we can use
+	if (annotation_colours.empty())
+	{
+		annotation_colours = get_default_annotation_colours();
+	}
+
 	for (const auto & pred : prediction_results)
 	{
 		if (pred.best_probability >= threshold)
 		{
+			const auto colour = annotation_colours[pred.best_class % annotation_colours.size()];
+
 //			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << "), name=\"" << pred.name << "\", duration=" << duration_string() << std::endl;
-			cv::rectangle(annotated_image, pred.rect, annotation_colour, 2);
+			cv::rectangle(annotated_image, pred.rect, colour, 2);
 
 			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 			cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height - 2), cv::Size(text_size.width + 2, text_size.height + 2));
-			cv::rectangle(annotated_image, r, annotation_colour, CV_FILLED);
+			cv::rectangle(annotated_image, r, colour, CV_FILLED);
 			cv::putText(annotated_image, pred.name, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 		}
 	}
@@ -264,6 +272,41 @@ std::string DarkHelp::duration_string()
 	else /* use milliseconds for anything longer */			{ str = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()) + " milliseconds";	}
 
 	return str;
+}
+
+
+DarkHelp::VColours DarkHelp::get_default_annotation_colours()
+{
+	VColours colours =
+	{
+		// blue, green, red
+		{0x5E, 0x35, 0xFF},	// Radical Red
+		{0x17, 0x96, 0x29},	// Slimy Green
+		{0x33, 0xCC, 0xFF},	// Sunglow
+		{0x4D, 0x6E, 0xAF},	// Brown Sugar
+		{0xFF, 0x00, 0xFF},	// magenta
+		{0xE6, 0xBF, 0x50},	// Blizzard Blue
+		{0x00, 0xFF, 0xCC},	// Electric Lime
+		{0xFF, 0xFF, 0x00},	// cyan
+		{0x85, 0x4E, 0x8D},	// Razzmic Berry
+		{0xCC, 0x00, 0xFF},	// Purple Pizzazz
+		{0x00, 0xFF, 0x00},	// green
+		{0x00, 0xFF, 0xFF},	// yellow
+		{0xEC, 0xAD, 0x5D},	// Blue Jeans
+		{0xFF, 0x6E, 0xFF},	// Shocking Pink
+		{0x66, 0xFF, 0xFF},	// Laser Lemon
+		{0xD1, 0xF0, 0xAA},	// Magic Mint
+		{0x00, 0xC0, 0xFF},	// orange
+		{0xB6, 0x51, 0x9C},	// Purple Plum
+		{0x33, 0x99, 0xFF},	// Neon Carrot
+		{0xFF, 0x00, 0xFF},	// blue
+		{0x66, 0xFF, 0x66},	// Screamin' Green
+		{0x00, 0x00, 0xFF},	// red
+		{0x37, 0x60, 0xFF},	// Outrageous Orange
+		{0x78, 0x5B, 0xFD}	// Wild Watermelon
+	};
+
+	return colours;
 }
 
 

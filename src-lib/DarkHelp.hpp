@@ -69,6 +69,9 @@ class DarkHelp
 		/// Vector of text strings.  Typically used to store the class names.
 		typedef std::vector<std::string> VStr;
 
+		/// Vector of colours to use by @ref annotate().  @see @ref annotation_colours
+		typedef std::vector<cv::Scalar> VColours;
+
 		/** Map of a class ID to a probability that this object belongs to that class.
 		 * The key is the zero-based index of the class, while the value is the probability
 		 * that the object belongs to that class.
@@ -221,6 +224,12 @@ class DarkHelp
 		 */
 		std::string duration_string();
 
+		/** Obtain a vector of several bright colours that may be used to annotate images.
+		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "{0, 0, 255}".
+		 * @see @ref annotation_colours
+		 */
+		static VColours get_default_annotation_colours();
+
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
 		/** Static function to convert the OpenCV @p cv::Mat objects to Darknet's internal @p image format.
 		 * Provided for convenience in case you need to call into one of Darknet's functions.
@@ -280,11 +289,11 @@ class DarkHelp
 		 */
 		bool names_include_percentage;
 
-		/** The colour to use in @ref annotate().  Defaults to purple @p "(255, 0, 255)".
-		 *
-		 * Remember that OpenCV uses BGR, not RGB.  So pure red would be @p "(0, 0, 255)".
+		/** The colours to use in @ref annotate().  Defaults to @ref get_default_annotation_colours().
+		 * 
+		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "(0, 0, 255)".
 		 */
-		cv::Scalar annotation_colour;
+		VColours annotation_colours;
 
 		/// Font face to use in @ref annotate().  Defaults to @p cv::HersheyFonts::FONT_HERSHEY_SIMPLEX.
 		cv::HersheyFonts annotation_font_face;
