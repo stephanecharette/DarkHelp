@@ -57,6 +57,7 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	annotation_include_duration			= true;
 	annotation_include_timestamp		= false;
 	names_include_percentage			= true;
+	include_all_names					= true;
 	annotation_colours					= get_default_annotation_colours();
 
 	if (not names_filename.empty())
@@ -417,6 +418,11 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 			const int y = std::round(det.bbox.y * original_image.rows - h/2.0);
 			pr.rect = cv::Rect(cv::Point(x, y), cv::Size(w, h));
 
+			pr.mid_x	= det.bbox.x;
+			pr.mid_y	= det.bbox.y;
+			pr.width	= det.bbox.w;
+			pr.height	= det.bbox.h;
+
 			// now we come up with a decent name to use for this object
 			pr.name = names.at(pr.best_class);
 			if (names_include_percentage)
@@ -424,7 +430,7 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 				const int percentage = std::round(100.0 * pr.best_probability);
 				pr.name += " " + std::to_string(percentage) + "%";
 			}
-			if (pr.all_probabilities.size() > 1)
+			if (include_all_names and pr.all_probabilities.size() > 1)
 			{
 				// we have multiple probabilities!
 				for (auto iter : pr.all_probabilities)
@@ -453,6 +459,48 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 }
 
 
+std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred)
+{
+	os	<< "\""			<< pred.name << "\""
+		<< " #"			<< pred.best_class
+		<< " prob="		<< pred.best_probability
+		<< " x="		<< pred.rect.x
+		<< " y="		<< pred.rect.y
+		<< " w="		<< pred.rect.width
+		<< " h="		<< pred.rect.height
+		<< " entries="	<< pred.all_probabilities.size();
+
+	if (pred.all_probabilities.size() > 1)
+	{
+		os << " [";
+		for (auto iter : pred.all_probabilities)
+		{
+			const auto & key = iter.first;
+			const auto & val = iter.second;
+			os << " " << key << "=" << val;
+		}
+		os << " ]";
+	}
+
+	return os;
+}
+
+
+std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults & results)
+{
+	const size_t number_of_results = results.size();
+	os << "prediction results: " << number_of_results;
+
+	for (size_t idx = 0; idx < number_of_results; idx ++)
+	{
+		os << std::endl << "-> " << (idx+1) << "/" << number_of_results << ": ";
+		operator<<(os, results.at(idx));
+	}
+
+	return os;
+}
+
+
 cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
 {
 	if (mat.empty())
@@ -460,12 +508,12 @@ cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
 		return mat;
 	}
 
-	if (desired_size.width == mat.cols && desired_size.height == mat.rows)
+	if (desired_size.width == mat.cols and desired_size.height == mat.rows)
 	{
 		return mat;
 	}
 
-	if (desired_size.width < 1 || desired_size.height < 1)
+	if (desired_size.width < 1 or desired_size.height < 1)
 	{
 		// return an empty image
 		return cv::Mat();
@@ -481,7 +529,7 @@ cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
 	const cv::Size new_size(std::round(new_width), std::round(new_height));
 
 	// "To shrink an image, it will generally look best with CV_INTER_AREA interpolation ..."
-	int interpolation = CV_INTER_AREA;
+	auto interpolation = CV_INTER_AREA;
 	if (largest_factor < 1.0)
 	{
 		// "... to enlarge an image, it will generally look best with CV_INTER_CUBIC"

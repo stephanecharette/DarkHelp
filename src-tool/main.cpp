@@ -321,20 +321,8 @@ int main(int argc, char *argv[])
 
 			const auto results = dark_help.predict(input_image);
 			std::cout
-				<< "-> prediction took "		<< dark_help.duration_string()	<< std::endl
-				<< "-> prediction results:  "	<< results.size()				<< std::endl;
-			for (size_t idx = 0; idx < results.size(); idx ++)
-			{
-				const auto & pred = results.at(idx);
-				std::cout
-					<< "-> " << (1 + idx) << "/" << results.size() << ": "
-					<< pred.name
-					<< ", class #" << pred.best_class
-					<< ", probability " << pred.best_probability
-					<< ", x=" << pred.rect.x << ", y=" << pred.rect.y << ", w=" << pred.rect.width << ", h=" << pred.rect.height
-					<< ", " << pred.all_probabilities.size() << " entr" << (pred.all_probabilities.size() == 1 ? "y" : "ies")
-					<< std::endl;
-			}
+				<< "-> prediction took " << dark_help.duration_string()	<< std::endl
+				<< "-> " << results										<< std::endl;
 
 			cv::Mat output_image = dark_help.annotate();
 
