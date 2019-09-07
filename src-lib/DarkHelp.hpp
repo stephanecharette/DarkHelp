@@ -63,7 +63,7 @@
  * }
  * ~~~~
  *
- * Instead of writing your own loop, you can also use @ref operator<<() like this:
+ * Instead of writing your own loop, you can also use the @p std::ostream @p operator<<() like this:
  *
  * ~~~~
  * const auto results = darkhelp.predict("test_image_01.jpg");
@@ -91,26 +91,28 @@ class DarkHelp
 		 */
 		struct PredictionResult
 		{
-			/// OpenCV rectangle which describes where the object is located in the original image.
+			/** OpenCV rectangle which describes where the object is located in the original image.
+			 * @see @ref mid_x @see @ref mid_y @see @ref width @see @ref height
+			 */
 			cv::Rect rect;
 
 			/** The original X coordinate returned by darknet.  This is the normalized mid-point, not the corner.
-			 * You probably want to use @ref rect.x instead of this value.
+			 * You probably want to use @p rect.x instead of this value.  @see @ref rect
 			 */
 			float mid_x;
 
 			/** The original Y coordinate returned by darknet.  This is the normalized mid-point, not the corner.
-			 * You probably want to use @ref rect.y instead of this value.
+			 * You probably want to use @p rect.y instead of this value.  @see @ref rect
 			 */
 			float mid_y;
 
 			/** The original width returned by darknet.  This value is normalized.
-			 * You probably want to use @ref rect.width instead of this value.
+			 * You probably want to use @p rect.width instead of this value.  @see @ref rect
 			 */
 			float width;
 
 			/** The original height returned by darknet.  This value is normalized.
-			 * You probably want to use @ref rect.height instead of this value.
+			 * You probably want to use @p rect.height instead of this value.  @see @ref rect
 			 */
 			float height;
 
@@ -239,7 +241,7 @@ class DarkHelp
 		 * been capped at 75%.  This means any prediction between >= 25% and < 75% were excluded from the prediction results.
 		 * The only way to get those predictions is to re-run predict() with a value of 0.25.
 		 *
-		 * @see @ref annotation_colour
+		 * @see @ref annotation_colours
 		 * @see @ref annotation_font_scale
 		 * @see @ref annotation_font_thickness
 		 * @see @ref annotation_include_duration
