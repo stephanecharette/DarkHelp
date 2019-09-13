@@ -322,7 +322,7 @@ class DarkHelp
 		/** Determine if multiple class names are included when labelling an item.
 		 *
 		 * For example, if an object is 95% car or 80% truck, then the label could say @p "car, truck"
-		 * when this is set to @p true, and simply "car" with set to @p false.  Defaults to @p true.
+		 * when this is set to @p true, and simply @p "car" when set to @p false.  Defaults to @p true.
 		 */
 		bool include_all_names;
 
