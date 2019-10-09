@@ -92,17 +92,42 @@ class DarkHelp
 		struct PredictionResult
 		{
 			/** OpenCV rectangle which describes where the object is located in the original image.
+			 *
+			 * Given this example annotated 230x134 image:
+			 * @image html xkcd_bike.png
+			 * The red rectangle returned would be:
+			 * @li @p rect.x = 96 (top left)
+			 * @li @p rect.y = 38 (top left)
+			 * @li @p rect.width = 109
+			 * @li @p rect.height = 88
+			 *
 			 * @see @ref original_point @see @ref original_size
 			 */
 			cv::Rect rect;
 
-			/** The original normalize X and Y coordinates returned by darknet.  This is the normalized mid-point, not the corner.
-			 * If in doubt, you probably want to use @p rect.x and @p rect.y instead of this value.  @see @ref rect
+			/** The original normalized X and Y coordinate returned by darknet.  This is the normalized mid-point, not the corner.
+			 * If in doubt, you probably want to use @p rect.x and @p rect.y instead of this value.
+			 *
+			 * Given this example annotated 230x134 image:
+			 * @image html xkcd_bike.png
+			 * The @p original_point returned would be:
+			 * @li @p original_point.x = 0.652174 (mid x / image width, or 150 / 230)
+			 * @li @p original_point.y = 0.608209 (mid y / image height, or 81.5 / 134)
+			 *
+			 * @see @ref rect @see @ref original_size
 			 */
 			cv::Point2f original_point;
 
 			/** The original normalized width and height returned by darknet.  If in doubt, you probably want to use
-			 * @p rect.width and @p rect.height instead of this value.  @see @ref rect
+			 * @p rect.width and @p rect.height instead of this value.
+			 *
+			 * Given this example annotated 230x134 image:
+			 * @image html xkcd_bike.png
+			 * The @p original_size returned would be:
+			 * @li @p original_size.width  = 0.469565 (rect width / image width, or 108 / 230)
+			 * @li @p original_size.height = 0.649254 (rect height / image height, or 87 / 134)
+			 *
+			 * @see @ref rect @see @ref original_point
 			 */
 			cv::Size2f original_size;
 
