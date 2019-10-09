@@ -92,29 +92,19 @@ class DarkHelp
 		struct PredictionResult
 		{
 			/** OpenCV rectangle which describes where the object is located in the original image.
-			 * @see @ref mid_x @see @ref mid_y @see @ref width @see @ref height
+			 * @see @ref original_point @see @ref original_size
 			 */
 			cv::Rect rect;
 
-			/** The original X coordinate returned by darknet.  This is the normalized mid-point, not the corner.
-			 * You probably want to use @p rect.x instead of this value.  @see @ref rect
+			/** The original normalize X and Y coordinates returned by darknet.  This is the normalized mid-point, not the corner.
+			 * If in doubt, you probably want to use @p rect.x and @p rect.y instead of this value.  @see @ref rect
 			 */
-			float mid_x;
+			cv::Point2f original_point;
 
-			/** The original Y coordinate returned by darknet.  This is the normalized mid-point, not the corner.
-			 * You probably want to use @p rect.y instead of this value.  @see @ref rect
+			/** The original normalized width and height returned by darknet.  If in doubt, you probably want to use
+			 * @p rect.width and @p rect.height instead of this value.  @see @ref rect
 			 */
-			float mid_y;
-
-			/** The original width returned by darknet.  This value is normalized.
-			 * You probably want to use @p rect.width instead of this value.  @see @ref rect
-			 */
-			float width;
-
-			/** The original height returned by darknet.  This value is normalized.
-			 * You probably want to use @p rect.height instead of this value.  @see @ref rect
-			 */
-			float height;
+			cv::Size2f original_size;
 
 			/** This is only useful if you have multiple classes, and an object may be one of several possible classes.
 			 *

@@ -156,6 +156,11 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 			cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height - 2), cv::Size(text_size.width + 2, text_size.height + 2));
+			if (r.x < 0)	r.x = 0;								// shift the label to the very left edge of the screen, otherwise it would be off-screen
+			if (r.y < 0)	r.y = pred.rect.y + pred.rect.height;	// shift the label to the bottom of the prediction, otherwise it would be off-screen
+			if (r.x + r.width >= annotated_image.cols) r.x = pred.rect.x + pred.rect.width - r.width + 1;	// first attempt at pushing the label to the left
+			if (r.x + r.width >= annotated_image.cols) r.x = annotated_image.cols - r.width;				// more drastic attempt at pushing the label to the left
+
 			cv::rectangle(annotated_image, r, colour, CV_FILLED);
 			cv::putText(annotated_image, pred.name, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 		}
@@ -410,18 +415,16 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 
 		if (pr.best_probability >= threshold)
 		{
-			// at least 1 class is beyong the threshold, so remember this object
+			// at least 1 class is beyond the threshold, so remember this object
 
 			const int w = std::round(det.bbox.w * original_image.cols);
 			const int h = std::round(det.bbox.h * original_image.rows);
 			const int x = std::round(det.bbox.x * original_image.cols - w/2.0);
 			const int y = std::round(det.bbox.y * original_image.rows - h/2.0);
-			pr.rect = cv::Rect(cv::Point(x, y), cv::Size(w, h));
 
-			pr.mid_x	= det.bbox.x;
-			pr.mid_y	= det.bbox.y;
-			pr.width	= det.bbox.w;
-			pr.height	= det.bbox.h;
+			pr.rect				= cv::Rect(cv::Point(x, y), cv::Size(w, h));
+			pr.original_point	= cv::Point2f(det.bbox.x, det.bbox.y);
+			pr.original_size	= cv::Size2f(det.bbox.w, det.bbox.h);
 
 			// now we come up with a decent name to use for this object
 			pr.name = names.at(pr.best_class);
