@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
 		std::cout << "-> loading network took " << dark_help.duration_string() << std::endl;
 
 		dark_help.threshold							= std::stof(threshold.getValue());
-		dark_help.hierchy_threshold					= std::stof(hierarchy.getValue());
+		dark_help.hierarchy_threshold				= std::stof(hierarchy.getValue());
 		dark_help.non_maximal_suppression_threshold	= std::stof(nms.getValue());
 		dark_help.names_include_percentage			= get_bool(percentage);
 		dark_help.annotation_font_scale				= std::stod(fontscale.getValue());

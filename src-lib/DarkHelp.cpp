@@ -30,14 +30,13 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 		throw std::invalid_argument("darknet weights filename cannot be empty");
 	}
 
+	// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
+
 	const auto t1 = std::chrono::high_resolution_clock::now();
 	net = load_network_custom(const_cast<char*>(cfg_filename.c_str()), const_cast<char*>(weights_filename.c_str()), 1, 1);
-	const auto t2 = std::chrono::high_resolution_clock::now();
-	duration = t2 - t1;
-
 	if (net == nullptr)
 	{
-		/// @throw std::runtime_error if the call to darknet's load_network_custom() has failed.
+		/// @throw std::runtime_error if the call to darknet's @p load_network_custom() has failed.
 		throw std::runtime_error("darknet failed to load the configuration, the weights, or both");
 	}
 
@@ -47,17 +46,22 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	fuse_conv_batchnorm(*nw);
 	calculate_binary_weights(*nw);
 
+	const auto t2 = std::chrono::high_resolution_clock::now();
+	duration = t2 - t1;
+
 	// pick some reasonable default values
 	threshold							= 0.5f;
-	hierchy_threshold					= 0.5f;
+	hierarchy_threshold					= 0.5f;
 	non_maximal_suppression_threshold	= 0.45f;
 	annotation_font_face				= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
 	annotation_font_scale				= 0.5;
 	annotation_font_thickness			= 1;
+	annotation_line_thickness			= 2;
 	annotation_include_duration			= true;
 	annotation_include_timestamp		= false;
 	names_include_percentage			= true;
 	include_all_names					= true;
+	fix_out_of_bound_values				= true;
 	annotation_colours					= get_default_annotation_colours();
 
 	if (not names_filename.empty())
@@ -146,23 +150,27 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 
 	for (const auto & pred : prediction_results)
 	{
-		if (pred.best_probability >= threshold)
+		if (annotation_line_thickness > 0 and pred.best_probability >= threshold)
 		{
 			const auto colour = annotation_colours[pred.best_class % annotation_colours.size()];
 
 //			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << "), name=\"" << pred.name << "\", duration=" << duration_string() << std::endl;
-			cv::rectangle(annotated_image, pred.rect, colour, 2);
+			cv::rectangle(annotated_image, pred.rect, colour, annotation_line_thickness);
 
-			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+			int baseline = 0;
+			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, &baseline);
 
-			cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height - 2), cv::Size(text_size.width + 2, text_size.height + 2));
-			if (r.x < 0)	r.x = 0;								// shift the label to the very left edge of the screen, otherwise it would be off-screen
-			if (r.y < 0)	r.y = pred.rect.y + pred.rect.height;	// shift the label to the bottom of the prediction, otherwise it would be off-screen
+			cv::Rect r(cv::Point(pred.rect.x - annotation_line_thickness/2, pred.rect.y - text_size.height - baseline + annotation_line_thickness), cv::Size(text_size.width + annotation_line_thickness, text_size.height + baseline));
+			if (r.x < 0) r.x = 0;																			// shift the label to the very left edge of the screen, otherwise it would be off-screen
 			if (r.x + r.width >= annotated_image.cols) r.x = pred.rect.x + pred.rect.width - r.width + 1;	// first attempt at pushing the label to the left
 			if (r.x + r.width >= annotated_image.cols) r.x = annotated_image.cols - r.width;				// more drastic attempt at pushing the label to the left
 
+			if (r.y < 0) r.y = pred.rect.y + pred.rect.height;	// shift the label to the bottom of the prediction, otherwise it would be off-screen
+			if (r.y + r.height >= annotated_image.rows) r.y = pred.rect.y + 1; // shift the label to the inside-top of the prediction (CV seems to have trouble drawing text where the upper bound is y=0, so move it down 1 pixel)
+			if (r.y < 0) r.y = 0; // shift the label to the top of the image if it is off-screen
+
 			cv::rectangle(annotated_image, r, colour, CV_FILLED);
-			cv::putText(annotated_image, pred.name, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+			cv::putText(annotated_image, pred.name, cv::Point(r.x + annotation_line_thickness/2, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
 		}
 	}
 
@@ -285,19 +293,19 @@ DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 {
 	VColours colours =
 	{
-		// blue, green, red
+		// remember the OpenCV format blue-green-red and not RGB!
 		{0x5E, 0x35, 0xFF},	// Radical Red
 		{0x17, 0x96, 0x29},	// Slimy Green
 		{0x33, 0xCC, 0xFF},	// Sunglow
 		{0x4D, 0x6E, 0xAF},	// Brown Sugar
-		{0xFF, 0x00, 0xFF},	// magenta
+		{0xFF, 0x00, 0xFF},	// pure magenta
 		{0xE6, 0xBF, 0x50},	// Blizzard Blue
 		{0x00, 0xFF, 0xCC},	// Electric Lime
-		{0xFF, 0xFF, 0x00},	// cyan
+		{0xFF, 0xFF, 0x00},	// pure cyan
 		{0x85, 0x4E, 0x8D},	// Razzmic Berry
 		{0xCC, 0x00, 0xFF},	// Purple Pizzazz
-		{0x00, 0xFF, 0x00},	// green
-		{0x00, 0xFF, 0xFF},	// yellow
+		{0x00, 0xFF, 0x00},	// pure green
+		{0x00, 0xFF, 0xFF},	// pure yellow
 		{0xEC, 0xAD, 0x5D},	// Blue Jeans
 		{0xFF, 0x6E, 0xFF},	// Shocking Pink
 		{0x66, 0xFF, 0xFF},	// Laser Lemon
@@ -305,11 +313,12 @@ DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 		{0x00, 0xC0, 0xFF},	// orange
 		{0xB6, 0x51, 0x9C},	// Purple Plum
 		{0x33, 0x99, 0xFF},	// Neon Carrot
-		{0xFF, 0x00, 0xFF},	// blue
+		{0xFF, 0x00, 0xFF},	// pure purple
 		{0x66, 0xFF, 0x66},	// Screamin' Green
-		{0x00, 0x00, 0xFF},	// red
+		{0x00, 0x00, 0xFF},	// pure red
 		{0x37, 0x60, 0xFF},	// Outrageous Orange
-		{0x78, 0x5B, 0xFD}	// Wild Watermelon
+		{0x78, 0x5B, 0xFD},	// Wild Watermelon
+		{0xFF, 0x00, 0x00}	// pure blue
 	};
 
 	return colours;
@@ -366,7 +375,7 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 
 	int nboxes = 0;
 	const int use_letterbox = 0;
-	auto darknet_results = get_network_boxes(nw, original_image.cols, original_image.rows, threshold, hierchy_threshold, 0, 1, &nboxes, use_letterbox);
+	auto darknet_results = get_network_boxes(nw, original_image.cols, original_image.rows, threshold, hierarchy_threshold, 0, 1, &nboxes, use_letterbox);
 
 	if (non_maximal_suppression_threshold)
 	{
@@ -376,12 +385,12 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 
 	for (int detection_idx = 0; detection_idx < nboxes; detection_idx ++)
 	{
-		const auto & det = darknet_results[detection_idx];
+		auto & det = darknet_results[detection_idx];
 
 		if (names.empty())
 		{
 			// we weren't given a names file to parse, but we know how many classes are defined in the network
-			// so we can invest a few dummy names to use based on the class index
+			// so we can invent a few dummy names to use based on the class index
 			for (int i = 0; i < det.classes; i++)
 			{
 				names.push_back("#" + std::to_string(i));
@@ -416,6 +425,32 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 		if (pr.best_probability >= threshold)
 		{
 			// at least 1 class is beyond the threshold, so remember this object
+
+			if (fix_out_of_bound_values)
+			{
+				if (det.bbox.x - det.bbox.w/2.0f < 0.0f ||	// too far left
+					det.bbox.x + det.bbox.w/2.0f > 1.0f)	// too far right
+				{
+					// calculate a new X and width to use for this prediction
+					const float new_x1 = std::max(0.0f, det.bbox.x - det.bbox.w/2.0f);
+					const float new_x2 = std::min(1.0f, det.bbox.x + det.bbox.w/2.0f);
+					const float new_w = new_x2 - new_x1;
+					const float new_x = (new_x1 + new_x2) / 2.0f;
+					det.bbox.x = new_x;
+					det.bbox.w = new_w;
+				}
+				if (det.bbox.y - det.bbox.h/2.0f < 0.0f ||	// too far above
+					det.bbox.y + det.bbox.h/2.0f > 1.0f)	// too far below
+				{
+					// calculate a new Y and height to use for this prediction
+					const float new_y1 = std::max(0.0f, det.bbox.y - det.bbox.h/2.0f);
+					const float new_y2 = std::min(1.0f, det.bbox.y + det.bbox.h/2.0f);
+					const float new_h = new_y2 - new_y1;
+					const float new_y = (new_y1 + new_y2) / 2.0f;
+					det.bbox.y = new_y;
+					det.bbox.h = new_h;
+				}
+			}
 
 			const int w = std::round(det.bbox.w * original_image.cols);
 			const int h = std::round(det.bbox.h * original_image.rows);

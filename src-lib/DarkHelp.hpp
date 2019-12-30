@@ -77,12 +77,12 @@ class DarkHelp
 		/// Vector of text strings.  Typically used to store the class names.
 		typedef std::vector<std::string> VStr;
 
-		/// Vector of colours to use by @ref annotate().  @see @ref annotation_colours
+		/// Vector of colours to use by @ref annotate().  @see @ref annotation_colours  @see @ref get_default_annotation_colours()
 		typedef std::vector<cv::Scalar> VColours;
 
 		/** Map of a class ID to a probability that this object belongs to that class.
 		 * The key is the zero-based index of the class, while the value is the probability
-		 * that the object belongs to that class.
+		 * that the object belongs to that class.  @see @ref PredictionResult::all_probabilities
 		 */
 		typedef std::map<int, float> MClassProbabilities;
 
@@ -149,6 +149,12 @@ class DarkHelp
 			 * @li 0 -> 0.105 // car
 			 * @li 2 -> 0.958 // truck
 			 * @li 3 -> 0.603 // bus
+			 *
+			 * The C++ map would contains the following values:
+			 *
+			 * ~~~~
+			 * all_probabilities = { {0, 0.105}, {2, 0.958}, {3, 0.603} };
+			 * ~~~~
 			 *
 			 * (Note how @p person is not stored in the map, since the probability for that class is 0%.)
 			 *
@@ -256,21 +262,27 @@ class DarkHelp
 		 * been capped at 75%.  This means any prediction between >= 25% and < 75% were excluded from the prediction results.
 		 * The only way to get those predictions is to re-run predict() with a value of 0.25.
 		 *
+		 * @note Annotations wont be drawn if @ref annotation_line_thickness is less than @p 1.
+		 *
 		 * @see @ref annotation_colours
 		 * @see @ref annotation_font_scale
 		 * @see @ref annotation_font_thickness
+		 * @see @ref annotation_line_thickness
 		 * @see @ref annotation_include_duration
 		 * @see @ref annotation_include_timestamp
 		 */
 		virtual cv::Mat annotate(const float new_threshold = -1.0f);
 
 		/** Return the @ref duration as a text string which can then be added to the image during annotation.
+		 * For example, this might return @p "912 microseconds" or @p "375 milliseconds".
 		 * @see @ref annotate()
 		 */
 		std::string duration_string();
 
 		/** Obtain a vector of several bright colours that may be used to annotate images.
-		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "{0, 0, 255}".
+		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "{0, 0, 255}".  The
+		 * vector returned by this function are intended to be used by OpenCV, and thus are
+		 * in BGR format.
 		 * @see @ref annotation_colours
 		 */
 		static VColours get_default_annotation_colours();
@@ -310,17 +322,41 @@ class DarkHelp
 		 */
 		std::chrono::high_resolution_clock::duration duration;
 
-		/// Image prediction threshold.  Defaults to 0.5.  @see @ref predict()  @see @ref annotate()
+		/** Image prediction threshold.  Defaults to @p 0.5.  @see @ref predict()  @see @ref annotate()
+		 *
+		 * Quote: <blockquote> [...] threshold is what is used to determine whether or not there is an object in the predicted
+		 * bounding box. The network predicts an explicit 'objectness' score separate from the class predictions that if above
+		 * the threshold indicates that a bounding box will be returned.
+		 * [<a href="https://github.com/philipperemy/yolo-9000/issues/3#issuecomment-304208297">source</a>]
+		 * </blockquote>
+		 */
 		float threshold;
 
-		/** Used during prediction.  Defaults to 0.5.  @see @ref predict()
-		 * @todo Need to find more details on how this setting works in Darknet.
+		/** Used during prediction.  Defaults to @p 0.5.  @see @ref predict()
+		 *
+		 * Quote: <blockquote> [...] the network traverses the tree of candidate detections and multiples through the conditional
+		 * probabilities for each item, e.g. object * animal * feline * house cat. The hierarchical threshold is used in this
+		 * second step, completely after and separate from whether there is an item or not, to decide whether following the
+		 * tree further to a more specific class is the right action to take. When this threshold is 0, the tree will basically
+		 * follow the highest probability branch all the way to a leaf node.
+		 * [<a href="https://github.com/philipperemy/yolo-9000/issues/3#issuecomment-304208297">source</a>]
+		 * </blockquote>
+		 *
+		 * @note This variable used to be named @p hierchy_threshold.  The typo in the name was fixed in December 2019.
 		 */
-		float hierchy_threshold;
+		float hierarchy_threshold;
 
 		/** Non-Maximal Suppression (NMS) threshold suppresses overlapping bounding boxes and only retains the bounding
-		 * box that has the maximum probability of object detection associated with it.  Defaults to 0.45.
+		 * box that has the maximum probability of object detection associated with it.  Defaults to @p 0.45.
 		 * @see @ref predict()
+		 *
+		 * Quote: <blockquote> [...] nms works by looking at all bounding boxes that made it past the 'objectness' threshold
+		 * and removes the least confident ​of the boxes that overlap with each other above a certain IOU threshold
+		 * [<a href="https://github.com/philipperemy/yolo-9000/issues/3#issuecomment-304208297">source</a>]
+		 * </blockquote>
+		 *
+		 * (IOU -- "intersection over union" -- is a ratio that describes how much two areas overlap, where 0.0 means two
+		 * areas don't overlap at all, and 1.0 means two areas perfectly overlap.)
 		 */
 		float non_maximal_suppression_threshold;
 
@@ -330,7 +366,7 @@ class DarkHelp
 		/** Determines if the name given to each prediction includes the percentage.
 		 *
 		 * For example, the name for a prediction might be @p "dog" when this flag is set to @p false, or it might be
-		 * @p "dog 98%" when set to @p true.  Defaults to true.
+		 * @p "dog 98%" when set to @p true.  Defaults to @p true.
 		 */
 		bool names_include_percentage;
 
@@ -350,14 +386,17 @@ class DarkHelp
 		/// Font face to use in @ref annotate().  Defaults to @p cv::HersheyFonts::FONT_HERSHEY_SIMPLEX.
 		cv::HersheyFonts annotation_font_face;
 
-		/// Scaling factor used for the font in @ref annotate().  Defaults to 0.5.
+		/// Scaling factor used for the font in @ref annotate().  Defaults to @p 0.5.
 		double annotation_font_scale;
 
-		/// Thickness of the font in @ref annotate().  Defaults to 1.
+		/// Thickness of the font in @ref annotate().  Defaults to @p 1.
 		int annotation_font_thickness;
 
+		/// Thickness of the lines to draw in @ref annotate().  Defaults to @p 2.
+		int annotation_line_thickness;
+
 		/** If set to @p true then @ref annotate() will call @ref duration_string() and display on the top-left of the
-		 * image the length of time @ref predict() took to process the image.  Defaults to true.
+		 * image the length of time @ref predict() took to process the image.  Defaults to @p true.
 		 *
 		 * When enabed, the duration may look similar to this:
 		 * @image html barcode_100_percent.png
@@ -365,12 +404,21 @@ class DarkHelp
 		bool annotation_include_duration;
 
 		/** If set to @p true then @ref annotate() will display a timestamp on the bottom-left corner of the image.
-		 * Defaults to false.
+		 * Defaults to @p false.
 		 *
 		 * When enabled, the timestamp may look similar to this:
 		 * @image html barcode_with_timestamp.png
 		 */
 		bool annotation_include_timestamp;
+
+		/** Darknet sometimes will return values that are out-of-bound, especially when working with low thresholds.
+		 * For example, the @p X or @p Y coordinates might be less than zero, or the @p width and @p height might extend
+		 * beyond the edges of the image.  When @p %fix_out_of_bound_values is set to @p true (the default) then the
+		 * results (@ref prediction_results) after calling @ref predict() will be capped so all values are positive and
+		 * do not extend beyond the edges of the image.  When set to @p false, the exact values as returned by darknet
+		 * will be used.  Defaults to @p true.
+		 */
+		bool fix_out_of_bound_values;
 
 		/// The most recent image handled by @ref predict().
 		cv::Mat original_image;
@@ -381,7 +429,7 @@ class DarkHelp
 
 	protected:
 
-		/** @internal Used by all the other @ref predict() calls to do the actual network prediction.  This uses the
+		/** Used by all the other @ref predict() calls to do the actual network prediction.  This uses the
 		 * image stored in @ref original_image.
 		 */
 		PredictionResults predict(const float new_threshold = -1.0f);
