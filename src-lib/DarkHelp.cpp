@@ -8,11 +8,24 @@
 #include <fstream>
 #include <cmath>
 #include <ctime>
-#include <darknet.h>
+
+extern "C"
+{
+	#include <darknet.h>
+	void free_network(network net); // missing definition from network.h
+}
 
 
 DarkHelp::~DarkHelp()
 {
+	if (net)
+	{
+		network * nw = reinterpret_cast<network*>(net);
+		free_network(*nw);
+		free(net); // this was calloc()'d in load_network_custom()
+		net = nullptr;
+	}
+
 	return;
 }
 

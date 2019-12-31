@@ -300,14 +300,10 @@ class DarkHelp
 		 */
 		static cv::Mat convert_darknet_image_to_opencv_mat(const image img);
 
-		/** The Darknet network.  This is setup in the constructor.
-		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
-		 */
+		/// The Darknet network.  This is setup in the constructor.
 		network * net;
 #else
-		/** The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
-		 * @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
-		 */
+		/// The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
 		void * net;
 #endif
 
