@@ -191,6 +191,7 @@ class DarkHelp
 		 * vector represents a different object in the image.
 		 * @see @ref PredictionResult
 		 * @see @ref prediction_results
+		 * @see @ref sort_predictions
 		 */
 		typedef std::vector<PredictionResult> PredictionResults;
 
@@ -209,6 +210,7 @@ class DarkHelp
 		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
 		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
 		 * @see @ref PredictionResult
+		 * @see @ref sort_predictions
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(const std::string & image_filename, const float new_threshold = -1.0f);
@@ -222,6 +224,7 @@ class DarkHelp
 		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
 		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
 		 * @see @ref PredictionResult
+		 * @see @ref sort_predictions
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(cv::Mat mat, const float new_threshold = -1.0f);
@@ -236,6 +239,7 @@ class DarkHelp
 		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
 		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
 		 * @see @ref PredictionResult
+		 * @see @ref sort_predictions
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(image img, const float new_threshold = -1.0f);
@@ -422,6 +426,29 @@ class DarkHelp
 		/// The most recent output produced by @ref annotate().
 		cv::Mat annotated_image;
 
+		/// @see @ref sort_predictions
+		enum class ESort
+		{
+			kUnsorted,		///< Do not sort predictions.
+			kAscending,		///< Sort predictions using @ref PredictionResult::best_probability in ascending order (low values first, high values last).
+			kDescending		///< Sort predictions using @ref PredictionResult::best_probability in descending order (high values first, low values last).
+		};
+
+		/** Determines if the predictions will be sorted the next time @ref predict() is called.  When set to
+		 * @ref ESort::kUnsorted, the predictions are in the exact same order as they were returned by Darknet.  When
+		 * set to @ref ESort::kAscending or @ref ESort::kDescending, the predictions will be sorted according to
+		 * @ref PredictionResult::best_probability.
+		 *
+		 * If annotations will be drawn on the image for visual consumption, then it is often preferable to have the higher
+		 * probability predictions drawn last so they appear "on top".  Otherwise, lower probability predictions may overwrite
+		 * or obscure the more important ones.  This means using @ref ESort::kAscending (the default).
+		 *
+		 * If you want to process only the first few predictions instead of drawing annotations, then you may want to sort
+		 * using @ref ESort::kDescending to ensure you handle the most likely predictions first.
+		 *
+		 * Defaults to @ref ESort::kAscending.
+		 */
+		ESort sort_predictions;
 
 	protected:
 

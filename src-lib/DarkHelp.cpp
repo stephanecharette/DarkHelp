@@ -76,6 +76,7 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	include_all_names					= true;
 	fix_out_of_bound_values				= true;
 	annotation_colours					= get_default_annotation_colours();
+	sort_predictions					= ESort::kAscending;
 
 	if (not names_filename.empty())
 	{
@@ -501,6 +502,23 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 
 			prediction_results.push_back(pr);
 		}
+	}
+
+	if (sort_predictions == ESort::kAscending)
+	{
+		std::sort(prediction_results.begin(), prediction_results.end(),
+				  [](const PredictionResult & lhs, const PredictionResult & rhs)
+				  {
+					  return lhs.best_probability < rhs.best_probability;
+				  } );
+	}
+	else if (sort_predictions == ESort::kDescending)
+	{
+		std::sort(prediction_results.begin(), prediction_results.end(),
+				  [](const PredictionResult & lhs, const PredictionResult & rhs)
+				  {
+					  return rhs.best_probability < lhs.best_probability;
+				  } );
 	}
 
 	free_detections(darknet_results, nboxes);
