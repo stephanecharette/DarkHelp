@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <sys/stat.h>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 
 
@@ -188,6 +189,22 @@ class FloatConstraint : public TCLAP::Constraint<std::string>
 };
 
 
+// Class used to validate that an input file exists
+class FileExistConstraint : public TCLAP::Constraint<std::string>
+{
+	public:
+
+		virtual std::string description() const	{ return "file must exist"; }
+		virtual std::string shortID() const		{ return "filename"; }
+		virtual bool check(const std::string & value) const
+		{
+			struct stat s;
+			const int result = stat(value.c_str(), &s);
+			return (result == 0);
+		}
+};
+
+
 // Class used to validate "WxH" parameters.
 class WxHConstraint : public TCLAP::Constraint<std::string>
 {
@@ -221,6 +238,7 @@ int main(int argc, char *argv[])
 		auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
 		auto float_constraint = FloatConstraint();
 		auto WxH_constraint = WxHConstraint();
+		auto exist_constraint = FileExistConstraint();
 
 		TCLAP::ValueArg<std::string> hierarchy	("y", "hierarchy"	, "The hierarchy threshold to use when predicting."					, false, "0.5"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> threshold	("t", "threshold"	, "The threshold to use when predicting with the neural net."		, false, "0.5"		, &float_constraint	, cli);
@@ -234,12 +252,14 @@ int main(int argc, char *argv[])
 		TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."				, false, "true"		, &allowed_booleans	, cli);
 		TCLAP::ValueArg<std::string> resize1	("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."					, false, "640x480"	, &WxH_constraint	, cli);
 		TCLAP::ValueArg<std::string> resize2	("a", "resize2"		, "Resize the output image (\"after\") to \"WxH\"."					, false, "640x480"	, &WxH_constraint	, cli);
-
-		TCLAP::UnlabeledValueArg<std::string> cfg		("config"	, "The darknet config filename, usually ends in \".cfg\"."			, true	, "", "cfg"		, cli);
-		TCLAP::UnlabeledValueArg<std::string> weights	("weights"	, "The darknet weights filename, usually ends in \".weights\"."		, true	, "", "weights"	, cli);
+		TCLAP::ValueArg<std::string> inputlist	("l", "list"		, "Text file that contains a list of images to use (one per line). "
+																		"Blank lines and lines beginning with '#' are ignored."			, false	, ""		, &exist_constraint	, cli);
+		TCLAP::UnlabeledValueArg<std::string> cfg		("config"	, "The darknet config filename, usually ends in \".cfg\"."			, true	, ""		, &exist_constraint	, cli);
+		TCLAP::UnlabeledValueArg<std::string> weights	("weights"	, "The darknet weights filename, usually ends in \".weights\"."		, true	, ""		, &exist_constraint	, cli);
 		TCLAP::UnlabeledValueArg<std::string> names		("names"	, "The darknet class names filename, usually ends in \".names\". "
-														"Set to \"none\" if you don't have (or don't care about) the class names."		, true	, "", "names"	, cli);
-		TCLAP::UnlabeledMultiArg<std::string> images	("images"	, "The name of images to process with the given neural network."	, true		, "images"	, cli);
+														"Set to \"none\" if you don't have (or don't care about) the class names."		, true	, ""		, &exist_constraint	, cli);
+		TCLAP::UnlabeledMultiArg<std::string> images	("images"	, "The name of images to process with the given neural network. "
+																		"May be unspecified if the --list parameter is used instead."	, false				, "images..."		, cli);
 
 		cli.parse(argc, argv);
 
@@ -276,6 +296,26 @@ int main(int argc, char *argv[])
 		bool done = false;
 
 		DarkHelp::VStr all_images = images.getValue();
+
+		if (inputlist.isSet())
+		{
+			// we have an input list to use -- need to read the file one line at a time
+			const std::string input_list_filename = inputlist.getValue();
+			std::cout << "-> reading input list " << input_list_filename << std::endl;
+			std::ifstream file(input_list_filename);
+			std::string line;
+			while (std::getline(file, line))
+			{
+				line.erase(0, line.find_first_not_of(" \t\r\n")); // ltrim
+				if (line.empty() || line[0] == '#')
+				{
+					// we need to ignore this line
+					continue;
+				}
+				all_images.push_back(line);
+			}
+		}
+
 		if (random.getValue())
 		{
 			std::random_shuffle(all_images.begin(), all_images.end());
