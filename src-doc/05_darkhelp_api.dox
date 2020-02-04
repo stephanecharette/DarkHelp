@@ -1,0 +1,54 @@
+/** @page API %DarkHelp C++ API
+
+The %DarkHelp C++ API is a wrapper (not a replacement!) for the @p libdarknet.so C API.
+
+To use %DarkHelp, you must include the project header file within your C++ application:
+
+~~~~{.cpp}
+#include <darkhelp.hpp>
+~~~~
+
+Instantiate a DarkHelp object.  These can easily be placed either on the stack, or created dynamically with @p new.  You'll want this object to persist for a long time, as the constructor loads the neural network into memory which takes a (relatively) long time.
+
+~~~~{.cpp}
+const std::string config_file	= argv[1];
+const std::string weights_file	= argv[2];
+const std::string names_file	= argv[3];
+
+DarkHelp darkhelp(config_file, weights_file, names_file);
+~~~~
+
+At this point, the neural network has been fully loaded and is ready to use.  But just prior to using it, if you have certain settings you'd like to tweak, now is the time.  Several examples:
+
+~~~~{.cpp}
+DarkHelp darkhelp(...);
+
+darkhelp.threshold						= 0.35;
+darkhelp.include_all_names				= false;
+darkhelp.names_include_percentage		= true;
+darkhelp.annotation_include_duration	= true;
+darkhelp.annotation_include_timestamp	= false;
+darkhelp.sort_predictions				= DarkHelp::ESort::kAscending;
+~~~~
+
+The only thing left is to loop through every image and call @ref DarkHelp::predict().  If you want %DarkHelp to annotate the image with the results, you must also call @ref DarkHelp::annotate():
+
+~~~~{.cpp}
+DarkHelp darkhelp(...);
+
+for (const auto & filename : get_all_image_names())
+{
+	// analyze the image and return a vector of structures with all sorts of information
+	const auto result = darkhelp.predict(filename);
+
+	// get DarkHelp to annotate the image with the most recent results
+	cv::Mat output = darkhelp.annotate(filename);
+
+	// fictional function to process the results and the annotated image
+	handle_image(output, result);
+}
+~~~~
+
+Calling any of the @ref DarkHelp::predict() overloads gives back a @p std::vector of @ref DarkHelp::PredictionResult objects, which should be extremely simple to manage.
+
+*/

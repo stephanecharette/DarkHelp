@@ -1,6 +1,6 @@
 /** @page Tool %DarkHelp CLI Tool
 
-The %DarkHelp library also comes with a tool that uses the %DarkHelp C++ API and shows the results on the screen.
+The %DarkHelp library also comes with a command-line tool that uses the @ref API to show the results on the screen, or outputs the findings in JSON format.
 
 @image html DarkHelp.png
 
@@ -21,7 +21,7 @@ Note the parameters:
 @li The `.names` file which contains the names of the various classes in the network.
 @li One or more image file (typically `.jpg`, but could be any type of image) against which you want to run the network.  This can be left out if you instead use the @p -l parameter to read in a list of image filenames from a text file.
 
-There are at least a dozen possible command-line arguments.  run `%DarkHelp --help` for the full list.  Some examples:
+There are at least a dozen possible command-line arguments.  run `%DarkHelp --help` for the full list or see @ref Parameters.  Some examples:
 
 ~~~~{.sh}
 # -b means resize the "before" input image prior to calling DarkHelp::predict()
@@ -49,5 +49,9 @@ In addition to command-line arguments, there are several keys you can use in the
 @li @p PAGE-DOWN decrease the threshold
 @li @p g to toggle greyscale images
 @li @p p to pause or play the slideshow
+
+Also see:
+- @subpage Parameters
+- @subpage ShellScripting
 
 */

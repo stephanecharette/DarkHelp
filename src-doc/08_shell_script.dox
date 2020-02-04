@@ -2,7 +2,7 @@
 
 With minimal effort, %DarkHelp can be used from within shell scripts to analyze images and return predictions.
 
-@note Before trying this out, first run the %DarkHelp CLI tool in the "normal" interactive mode as described in @ref Tool.  Once that works correctly, then test it with the @p -j flag to generate the JSON output.
+@note Before trying this out, first run the %DarkHelp CLI tool in the "normal" interactive mode as described in @ref Tool and @ref Parameters.  Once that works correctly, then test it with the @p -j flag to generate the JSON output.
 
 When you run the @ref Tool with the @p -j or @p --json command line switch, two things will happen:
 
