@@ -1,8 +1,10 @@
-/** @page Tool %DarkHelp Tool
+/** @page Tool %DarkHelp CLI Tool
 
 The %DarkHelp library also comes with a tool that uses the %DarkHelp C++ API and shows the results on the screen.
 
 @image html DarkHelp.png
+
+@note The CLI tool can also be used in a non-interactive mode, where it returns results as a JSON structure.  This can be useful in bash scripts, and is explained in @ref ShellScripting.
 
 You can load a neural network and browse through a large set of images as you examine the results of calling @ref DarkHelp::predict() and @ref DarkHelp::annotate() on each image.  Images can be resized, apply different thresholds to the predictions, and get details on the predicted results.
 
@@ -17,18 +19,21 @@ Note the parameters:
 @li The `.cfg` file used to originally train the neural network.
 @li The `.weights` file that was created as part of the neural network training.
 @li The `.names` file which contains the names of the various classes in the network.
-@li One or more image file (typically `.jpg`, but could be any type of image) against which you want to run the network.
+@li One or more image file (typically `.jpg`, but could be any type of image) against which you want to run the network.  This can be left out if you instead use the @p -l parameter to read in a list of image filenames from a text file.
 
 There are at least a dozen possible command-line arguments.  run `%DarkHelp --help` for the full list.  Some examples:
 
 ~~~~{.sh}
 # -b means resize the "before" input image prior to calling DarkHelp::predict()
 # -t sets the new lower bound threshold to 25%
-DarkHelp -b 800x800 -t 0.25 barcodetest.cfg barcodetest_final.weights barcodetest.names *.jpg
+DarkHelp -b 800x800 -t 0.25 barcodetest.cfg barcodetest_best.weights barcodetest.names *.jpg
 
 # -a resizes the "after" output image once DarkHelp::annotate() has been called
 # -s starts the viewer in slideshow mode, where a new image is loaded every second
 DarkHelp -a 640x480 -s barcodetest.cfg barcodetest_final.weights barcodetest.names *.jpg
+
+# -j outputs the results as JSON text instead of showing an annotated image.
+DarkHelp -j -t 0.5 barcodetest.cfg barcodetest_best.weights barcodetest.names *.jpg
 ~~~~
 
 In addition to command-line arguments, there are several keys you can use in the viewer.  They are:

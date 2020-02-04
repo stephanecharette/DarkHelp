@@ -11,6 +11,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
+#include "json.hpp"
 
 
 // Messages that need to be shown to the user.
@@ -247,7 +248,8 @@ int main(int argc, char *argv[])
 		TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."				, false, "true"		, &allowed_booleans	, cli);
 		TCLAP::ValueArg<std::string> nms		("n", "nms"			, "The non-maximal suppression threshold to use when predicting."	, false, "0.45"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."				, false, "false"	, &allowed_booleans	, cli);
-		TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																, cli, false);
+		TCLAP::SwitchArg use_json				("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."									, cli, false );
+		TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																, cli, false );
 		TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations."				, false, "0.5"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."				, false, "true"		, &allowed_booleans	, cli);
 		TCLAP::ValueArg<std::string> resize1	("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."					, false, "640x480"	, &WxH_constraint	, cli);
@@ -269,12 +271,20 @@ int main(int argc, char *argv[])
 			names.reset();
 		}
 
+		const bool use_json_output					= use_json.getValue();
+		nlohmann::json json;
+
+		json["network"]["cfg"			] = cfg		.getValue();
+		json["network"]["weights"		] = weights	.getValue();
+		json["network"]["names"			] = names	.getValue();
 		std::cout
-			<< "-> config file:  " << cfg		.getValue() << std::endl
-			<< "-> weights file: " << weights	.getValue() << std::endl
-			<< "-> names file:   " << names		.getValue() << std::endl;
+				<< "-> config file:  " << cfg		.getValue() << std::endl
+				<< "-> weights file: " << weights	.getValue() << std::endl
+				<< "-> names file:   " << names		.getValue() << std::endl;
 
 		DarkHelp dark_help(cfg.getValue(), weights.getValue(), names.getValue());
+
+		json["network"]["loading"]				=  dark_help.duration_string();
 		std::cout << "-> loading network took " << dark_help.duration_string() << std::endl;
 
 		dark_help.threshold							= std::stof(threshold.getValue());
@@ -284,8 +294,13 @@ int main(int argc, char *argv[])
 		dark_help.annotation_font_scale				= std::stod(fontscale.getValue());
 		dark_help.annotation_include_duration		= get_bool(duration);
 		dark_help.annotation_include_timestamp		= get_bool(timestamp);
-
-		bool force_greyscale = greyscale.getValue();
+		bool force_greyscale						= greyscale.getValue();
+		json["settings"]["threshold"]				= dark_help.threshold;
+		json["settings"]["hierarchy"]				= dark_help.hierarchy_threshold;
+		json["settings"]["nms"]						= dark_help.non_maximal_suppression_threshold;
+		json["settings"]["include_percentage"]		= dark_help.names_include_percentage;
+		json["settings"]["force_greyscale"]			= force_greyscale;
+		json["settings"]["resize"]					= resize1.getValue();
 
 		bool in_slideshow = slideshow.getValue();
 		int wait_time_in_milliseconds_for_slideshow = 500;
@@ -327,6 +342,8 @@ int main(int argc, char *argv[])
 		while (image_index < all_images.size() && not done)
 		{
 			const std::string & filename = all_images.at(image_index);
+
+			json["image"][image_index]["filename"] = filename;
 			std::cout << "#" << 1+image_index << "/" << all_images.size() << ": loading image \"" << filename << "\"" << std::endl;
 			cv::Mat input_image;
 
@@ -348,18 +365,76 @@ int main(int argc, char *argv[])
 
 			if (input_image.empty())
 			{
-				std::cout << "Failed to read the image \"" << filename << "\"" << std::endl;
+				const auto msg = "Failed to read the image \"" + filename + "\".";
+				json["image"][image_index]["error"] = msg;
+				std::cout << msg << std::endl;
 				image_index ++;
 				continue;
 			}
 
+			json["image"][image_index]["original_width"		] = input_image.cols;
+			json["image"][image_index]["original_height"	] = input_image.rows;
+
 			if (resize1.isSet())
 			{
-				std::cout << "-> resizing input image from " << input_image.cols << "x" << input_image.rows << " to " << size1.width << "x" << size1.height << std::endl;
-				input_image = resize_keeping_aspect_ratio(input_image, size1);
+				if (input_image.cols != size1.width or
+					input_image.rows != size1.height)
+				{
+					const auto msg =	"resizing input image from " + std::to_string(input_image.cols) + "x" + std::to_string(input_image.rows) +
+										" to " + std::to_string(size1.width) + "x" + std::to_string(size1.height);
+
+					json["image"][image_index]["msg"] = msg;
+					std::cout << "-> " << msg << std::endl;
+					input_image = resize_keeping_aspect_ratio(input_image, size1);
+				}
 			}
 
+			json["image"][image_index]["resized_width"	] = input_image.cols;
+			json["image"][image_index]["resized_height"	] = input_image.rows;
+
 			const auto results = dark_help.predict(input_image);
+
+			if (use_json_output)
+			{
+				json["image"][image_index]["duration"	] = dark_help.duration_string();
+				json["image"][image_index]["count"		] = results.size();
+
+				size_t count = 0;
+				for (const auto & pred : results)
+				{
+					auto & j = json["image"][image_index]["prediction"][count];
+
+					j["name"]						= pred.name;
+					j["best_class"]					= pred.best_class;
+					j["best_probability"]			= pred.best_probability;
+					j["original_size"]["width"]		= pred.original_size.width;
+					j["original_size"]["height"]	= pred.original_size.height;
+					j["original_point"]["x"]		= pred.original_point.x;
+					j["original_point"]["y"]		= pred.original_point.y;
+					j["rect"]["x"]					= pred.rect.x;
+					j["rect"]["y"]					= pred.rect.y;
+					j["rect"]["width"]				= pred.rect.width;
+					j["rect"]["height"]				= pred.rect.height;
+
+					size_t prop_count = 0;
+					for (const auto & prop : pred.all_probabilities)
+					{
+						j["all_probabilities"][prop_count]["class"			] = prop.first;
+						j["all_probabilities"][prop_count]["probability"	] = prop.second;
+						j["all_probabilities"][prop_count]["name"			] = dark_help.names[prop.first];
+						prop_count ++;
+					}
+
+					count ++;
+				}
+
+				// move to the next image
+				image_index ++;
+				continue;
+			}
+
+			// If we get here then we're showing GUI windows to the user with the results.
+
 			std::cout
 				<< "-> prediction took " << dark_help.duration_string()	<< std::endl
 				<< "-> " << results										<< std::endl;
@@ -508,13 +583,23 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (image_index >= all_images.size())
+		// Once we get here, we're done the loop.  Either we've shown all the images, or the user has pressed 'q' to quit.
+
+		if (json.empty() or use_json_output == false)
 		{
-			std::cout << "Done showing " << all_images.size() << " images...exiting." << std::endl;
+			if (image_index >= all_images.size())
+			{
+				std::cout << "Done showing " << all_images.size() << " images...exiting." << std::endl;
+			}
+			else
+			{
+				std::cout << "Exiting!" << std::endl;
+			}
 		}
 		else
 		{
-			std::cout << "Exiting!" << std::endl;
+			std::cout	<< "JSON OUTPUT"	<< std::endl
+						<< json.dump(4)		<< std::endl;
 		}
 	}
 	catch (const TCLAP::ArgException & e)

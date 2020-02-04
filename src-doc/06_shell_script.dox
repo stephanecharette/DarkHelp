@@ -1,0 +1,146 @@
+/** @page ShellScripting Shell Scripting
+
+With minimal effort, %DarkHelp can be used from within shell scripts to analyze images and return predictions.
+
+@note Before trying this out, first run the %DarkHelp CLI tool in the "normal" interactive mode as described in @ref Tool.  Once that works correctly, then test it with the @p -j flag to generate the JSON output.
+
+When you run the @ref Tool with the @p -j or @p --json command line switch, two things will happen:
+
+- The interactive GUI window normally created using OpenCV is skipped, and %DarkHelp will automatically process all the specified images as quickly as it can without waiting for user input.
+- The output results are stored in a JSON structure which is output to @p STDOUT once %DarkHelp has finished running.
+
+However, Darknet itself outputs a large amount of text to @em both @p STDOUT and @p STDERR while it runs.  Instead of modifying the original Darknet source to remove all the various calls to @p printf(), what we do instead is the following:
+
+- Combine @p STDOUT and @p STDERR into a single output stream.
+- Use a tool such as @p sed to find where the JSON output starts, and only keep the JSON portion of the output.
+
+The solution you'll want to use when scripting with %DarkHelp would be similar to this one:
+
+~~~~{.txt}
+# note how we combine STDOUT and STDERR
+# and then pipe the results through sed
+DarkHelp -j dogs-vs-cats_yolov3-tiny.cfg dogs-vs-cats_yolov3-tiny_best.weights dogs-vs-cats.names *.jpg 2>&1 | sed -e '1,/JSON OUTPUT/ d'
+~~~~
+
+Used within a shell script where you might want to store the results, the command would look like this:
+
+~~~~{.txt}
+# same as above, but store the JSON output in a variable
+result=$(DarkHelp -j dogs-vs-cats_yolov3-tiny.cfg dogs-vs-cats_yolov3-tiny_best.weights dogs-vs-cats.names *.jpg 2>&1 | sed -e '1,/JSON OUTPUT/ d')
+~~~~
+
+The output should be similar to this:
+~~~~{.txt}
+{
+    "image": [
+        {
+            "count": 3,
+            "duration": "164 milliseconds",
+            "filename": "pets.jpg",
+            "original_height": 375,
+            "original_width": 500,
+...etc...
+~~~~
+
+The JSON structure contains an array with an entry for every image that was processed.
+
+Let's look at a full example, followed by an explanation of each line:
+
+~~~~{.txt}
+DarkHelp -j dogs-vs-cats_yolov3-tiny.cfg dogs-vs-cats_yolov3-tiny_best.weights dogs-vs-cats.names *.jpg 2>&1 | sed -e '1,/JSON OUTPUT/ d'
+
+{
+    "image": [
+        {
+            "count": 1,
+            "duration": "178 milliseconds",
+            "filename": "cujo.jpg",
+            "original_height": 293,
+            "original_width": 269,
+            "prediction": [
+                {
+                   "all_probabilities": [
+                        {
+                            "class": 0,
+                            "name": "dog",
+                            "probability": 0.9390020966529846
+                        }
+                    ],
+                    "best_class": 0,
+                    "best_probability": 0.9390020966529846,
+                    "name": "dog 94%",
+                    "original_point": {
+                        "x": 0.4825710654258728,
+                        "y": 0.33033615350723267
+                    },
+                    "original_size": {
+                        "height": 0.48039382696151733,
+                        "width": 0.6355597376823425
+                    },
+                    "rect": {
+                        "height": 141,
+                        "width": 171,
+                        "x": 44,
+                        "y": 26
+                    }
+                }
+            ],
+            "resized_height": 293,
+            "resized_width": 269
+        }
+    ],
+    "network": {
+        "cfg": "dogs-vs-cats_yolov3-tiny.cfg",
+        "loading": "229 milliseconds",
+        "names": "dogs-vs-cats.names",
+        "weights": "dogs-vs-cats_yolov3-tiny_best.weights"
+    },
+    "settings": {
+        "force_greyscale": false,
+        "hierarchy": 0.5,
+        "include_percentage": true,
+        "nms": 0.44999998807907104,
+        "resize": "640x480",
+        "threshold": 0.5
+    }
+}
+~~~~
+
+Name								| Example								| Meaning
+------------------------------------|---------------------------------------|--------
+["image"][#]						| ...									| Array of images that were processed.
+["image"][#]["count"]				| "count" : 1							| The number of predictions that were made for this image.
+["image"][#]["duration"]			| "duration": "178 milliseconds"		| How long it took for Darknet to analyze this image.
+["image"][#]["filename"]			| "filename": "other_dog.jpg"			| The filename  which was analyzed.
+["image"][#]["original_height"]		| "original_height": 293				| The height of the image prior to it being resized (in case @p -b is used).
+["image"][#]["original_width"]		| "original_width": 269					| The width of the image prior to it being resized (in case @p -b is used).
+["image"][#]["prediction"][#][...]	| ...									| The same fields as what is documented in @ref DarkHelp::PredictionResult.  For example, see @ref DarkHelp::PredictionResult::rect and @ref DarkHelp::PredictionResult::all_probabilities.
+["image"][#]["resized_height"]		| "resized_height": 293					| The height of the image after it has been resized (in case @p -b is used).
+["image"][#]["resized_width"]		| "resized_width": 269					| The width of the image after it has been resized (in case @p -b is used).
+["network"]["cfg"]					| "cfg": "dogs-vs-cats_yolov3-tiny.cfg"	| The name of the neural network's @p .cfg file.
+["network"]["loading"]				| "loading": "229 milliseconds"			| How long it took for the entire neural network to finish loading.
+["network"]["names"]				| "names": "dogs-vs-cats.names"			| The filename that contains a text string for each class in the neural network.
+["network"]["weights"]				| "weights": "dogs-vs-cats_yolov3-tiny_best.weights" | The filename that contains the neural network's binary data.
+["settings"]["force_greyscale"]		| "force_greyscale": false				| Whether images are forced to greyscale prior to calling darknet.
+["settings"]["hierarchy"]			| "hierarchy": 0.5						| Hierarchy threshold to use.  See @ref DarkHelp::hierarchy_threshold.
+["settings"]["include_percentage"]	| "include_percentage": true			| Whether the name given to each prediction includes the percentage.  See @ref DarkHelp::names_include_percentage.
+["settings"]["nms"]					| "nms": 0.44999998807907104			| Non-maximal suppression threshold.  See @ref DarkHelp::non_maximal_suppression_threshold.
+["settings"]["resize"]				| "resize": "640x480"					| Images are resized to this prior to calling @ref DarkHelp::predict().  See @ref resize_keeping_aspect_ratio().
+["settings"]["threshold"]			| "threshold": 0.5						| Prediction threshold.  See @ref DarkHelp::threshold.
+
+The %DarkHelp CLI tool always returns zero.  When using @p -j, you'll need to parse the JSON structure to find out if something didn't work correctly.
+
+For example, this is part of what you'd see if an image does not exist:
+
+~~~~{.json}
+{
+    "image": [
+        {
+            "error": "Failed to read the image \"testing.jpg\".",
+            "filename": "testing.jpg"
+        }
+    ]
+}
+~~~~
+
+*/
