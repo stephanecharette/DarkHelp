@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
 
@@ -249,6 +251,7 @@ int main(int argc, char *argv[])
 		TCLAP::ValueArg<std::string> nms		("n", "nms"			, "The non-maximal suppression threshold to use when predicting."	, false, "0.45"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."				, false, "false"	, &allowed_booleans	, cli);
 		TCLAP::SwitchArg use_json				("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."									, cli, false );
+		TCLAP::SwitchArg keep_images			("k", "keep"		, "Keep annotated images (write images to disk). Especially useful when combined with the -j option."		, cli, false );
 		TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																, cli, false );
 		TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations."				, false, "0.5"		, &float_constraint	, cli);
 		TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."				, false, "true"		, &allowed_booleans	, cli);
@@ -271,7 +274,8 @@ int main(int argc, char *argv[])
 			names.reset();
 		}
 
-		const bool use_json_output					= use_json.getValue();
+		const bool keep_annotated_images	= keep_images.getValue();
+		const bool use_json_output			= use_json.getValue();
 		nlohmann::json json;
 
 		json["network"]["cfg"			] = cfg		.getValue();
@@ -300,7 +304,11 @@ int main(int argc, char *argv[])
 		json["settings"]["nms"]						= dark_help.non_maximal_suppression_threshold;
 		json["settings"]["include_percentage"]		= dark_help.names_include_percentage;
 		json["settings"]["force_greyscale"]			= force_greyscale;
-		json["settings"]["resize"]					= resize1.getValue();
+		json["settings"]["keep_annotations"]		= keep_annotated_images;
+		if (resize1.isSet())
+		{
+			json["settings"]["resize"]				= resize1.getValue();
+		}
 
 		bool in_slideshow = slideshow.getValue();
 		int wait_time_in_milliseconds_for_slideshow = 500;
@@ -394,6 +402,40 @@ int main(int argc, char *argv[])
 
 			const auto results = dark_help.predict(input_image);
 
+			std::cout
+				<< "-> prediction took " << dark_help.duration_string()	<< std::endl
+				<< "-> " << results										<< std::endl;
+
+			cv::Mat output_image;
+			if (keep_annotated_images or use_json_output == false)
+			{
+				output_image = dark_help.annotate();
+				if (resize2.isSet())
+				{
+					std::cout << "-> resizing output image from " << output_image.cols << "x" << output_image.rows << " to " << size2.width << "x" << size2.height << std::endl;
+					output_image = resize_keeping_aspect_ratio(output_image, size2);
+				}
+
+				if (keep_annotated_images)
+				{
+					// save the annotated image to disk
+
+					const auto pid = getpid();
+					std::string basedir = "/tmp";
+					if (all_images.size() > 1)
+					{
+						// since we're dealing with multiple images at once, put them in a subdirectory
+						basedir += "/darkhelp_" + std::to_string(pid);
+						mkdir(basedir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+					}
+
+					const std::string output_filename = basedir + "/darkhelp_" + std::to_string(pid) + "_output_" + std::to_string(image_index) + ".png";
+					cv::imwrite(output_filename, output_image, {CV_IMWRITE_PNG_COMPRESSION, 9});
+					std::cout << "-> annotated image saved to \"" << output_filename << "\"" << std::endl;
+					json["image"][image_index]["annotated_image"] = output_filename;
+				}
+			}
+
 			if (use_json_output)
 			{
 				json["image"][image_index]["duration"	] = dark_help.duration_string();
@@ -434,18 +476,6 @@ int main(int argc, char *argv[])
 			}
 
 			// If we get here then we're showing GUI windows to the user with the results.
-
-			std::cout
-				<< "-> prediction took " << dark_help.duration_string()	<< std::endl
-				<< "-> " << results										<< std::endl;
-
-			cv::Mat output_image = dark_help.annotate();
-
-			if (resize2.isSet())
-			{
-				std::cout << "-> resizing output image from " << output_image.cols << "x" << output_image.rows << " to " << size2.width << "x" << size2.height << std::endl;
-				output_image = resize_keeping_aspect_ratio(output_image, size2);
-			}
 
 			std::string short_filename = filename;
 			size_t pos = short_filename.find_last_of("/\\");
