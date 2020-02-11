@@ -24,13 +24,11 @@
  * Unless you are using darknet's "image" class directly in your application, it is probably best to NOT define this
  * macro, and not include darknet.h.  (The header is included by DarkHelp.cpp, so you definitely still need to have it,
  * but the scope of where it is needed is confined to that one .cpp file.)
+ *
+ * @warning If you enable this, remember that you may also need to specify @p GPU=1 and @p CUDNN=1 when building.
+ * See the page https://www.ccoderun.ca/DarkHelp/api/Building.html for details.
  */
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
-/** @warning Prior to including @p darknet.h, you @b must @p "#define GPU" and @p "#define CUDNN" @b if darknet was built
- * with support for GPU and CUDNN!  This is because the darknet structures have several optional fields that only exist
- * when @p GPU and @p CUDNN are defined, thereby changing the size of those structures.  If DarkHelp and Darknet aren't
- * using the exact same structure size, you'll see segfaults when DarkHelp calls into Darknet.
- */
 #include <darknet.h>
 #endif
 
@@ -200,11 +198,20 @@ class DarkHelp
 		 */
 		typedef std::vector<PredictionResult> PredictionResults;
 
-		/// Destructor.
+		/// Destructor.  This automatically calls reset() to release memory allocated by the neural network.
 		virtual ~DarkHelp();
 
-		/// Constructor.
+		/// Constructor.  When using this constructor, the neural network remains uninitialized until @ref init() is called.
+		DarkHelp();
+
+		/// Constructor.  This constructor automatically calls @ref init().
 		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "");
+
+		/// Initialize ("load") the darknet neural network.
+		DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "");
+
+		/// The opposite of @ref init().  This is automatically called by the destructor.
+		void reset();
 
 		/** Use the neural network to predict what is contained in this image.
 		 * @param [in] image_filename The name of the image file to load from disk and analyze.  The member

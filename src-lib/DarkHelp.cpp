@@ -10,9 +10,9 @@
 #include <ctime>
 
 
-/** @warning Prior to including @p darknet.h, you @b must @p "#define GPU" and @p "#define CUDNN" @b if darknet was built
- * with support for GPU and CUDNN!  This is because the darknet structures have several optional fields that only exist
- * when @p GPU and @p CUDNN are defined, thereby changing the size of those structures.  If DarkHelp and Darknet aren't
+/* Prior to including @p darknet.h, you @b must @p "#define GPU 1" and @p "#define CUDNN 1" @b if darknet was built with
+ * support for GPU and CUDNN!  This is because the darknet structures have several optional fields that only exist when
+ * @p GPU and @p CUDNN are defined, thereby changing the size of those structures.  If DarkHelp and Darknet aren't
  * using the exact same structure size, you'll see segfaults when DarkHelp calls into Darknet.
  */
 #include <darknet.h>
@@ -37,20 +37,34 @@
 
 DarkHelp::~DarkHelp()
 {
-	if (net)
-	{
-		network * nw = reinterpret_cast<network*>(net);
-		free_network(*nw);
-		free(net); // this was calloc()'d in load_network_custom()
-		net = nullptr;
-	}
+	reset();
 
 	return;
 }
 
 
-DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename)
+DarkHelp::DarkHelp() :
+	net(nullptr)
 {
+	reset();
+
+	return;
+}
+
+
+DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename) :
+	DarkHelp()
+{
+	init(cfg_filename, weights_filename, names_filename);
+
+	return;
+}
+
+
+DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename)
+{
+	reset();
+
 	if (cfg_filename.empty())
 	{
 		/// @throw std::invalid_argument if the configuration filename is empty.
@@ -81,6 +95,39 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	const auto t2 = std::chrono::high_resolution_clock::now();
 	duration = t2 - t1;
 
+	if (not names_filename.empty())
+	{
+		std::ifstream ifs(names_filename);
+		std::string line;
+		while (std::getline(ifs, line))
+		{
+			if (line.empty())
+			{
+				break;
+			}
+			names.push_back(line);
+		}
+	}
+
+	return *this;
+}
+
+
+void DarkHelp::reset()
+{
+	if (net)
+	{
+		network * nw = reinterpret_cast<network*>(net);
+		free_network(*nw);
+		free(net); // this was calloc()'d in load_network_custom()
+		net = nullptr;
+	}
+
+	names								.clear();
+	prediction_results					.clear();
+	original_image						= cv::Mat();
+	annotated_image						= cv::Mat();
+
 	// pick some reasonable default values
 	threshold							= 0.5f;
 	hierarchy_threshold					= 0.5f;
@@ -96,20 +143,6 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 	fix_out_of_bound_values				= true;
 	annotation_colours					= get_default_annotation_colours();
 	sort_predictions					= ESort::kAscending;
-
-	if (not names_filename.empty())
-	{
-		std::ifstream ifs(names_filename);
-		std::string line;
-		while (std::getline(ifs, line))
-		{
-			if (line.empty())
-			{
-				break;
-			}
-			names.push_back(line);
-		}
-	}
 
 	return;
 }

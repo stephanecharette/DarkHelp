@@ -2,6 +2,8 @@
 
 Building both Darknet and %DarkHelp should not take more than 5 minutes combined.
 
+@section BuildingDarknet Building Darknet
+
 If you have not already done so, you must first build Darknet with the flag @p LIBSO=1.  This will ensure you build the @p "libdarknet.so" dynamic library.
 
 Once it has built, remember to copy the library and header file to a location where %DarkHelp will find them.  For example:
@@ -18,9 +20,13 @@ sudo ldconfig
 
 For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.
 
+@section BuildingDarkHelp BuildingDarkHelp
+
 Once Darknet is done, you can build %DarkHelp.  Download it from <a target="_blank" href="https://www.ccoderun.ca/download/">here</a> and extract it into a directory of your choice.
 
-@note %DarkHelp uses libdarknet.so.  If Darknet was built with support for GPU (@p GPU=1) or CUDNN (@p CUDNN=1), then you @em must enable those same flags when building %DarkHelp.  Otherwise, when %DarkHelp calls into Darknet, dereferencing certain fields in the @p network and @p layers structures can lead to segfaults.  The @p DARKNET_FLAG variable @b must be set correctly when building %DarkHelp.  It must be set to one of the following values: @li CPU @li GPU @li CUDNN
+@note %DarkHelp uses libdarknet.so.  If Darknet was built with support for GPU (@p GPU=1) or CUDNN (@p CUDNN=1), then you @em must enable those same flags when building %DarkHelp.  Otherwise, when %DarkHelp calls into Darknet, dereferencing certain fields in the @p network and @p layers structures can lead to segfaults.  The @p DARKNET_FLAG variable @b must be set correctly when building %DarkHelp.  It must be set to one of the following values: @li @p CPU @li @p GPU @li @p CUDNN (which also implies @p GPU)
+
+@subsection BuildingDarkHelpCPU CPU
 
 To build the @b CPU-only (non-GPU) version of %DarkHelp, run the following commands:
 
@@ -33,6 +39,8 @@ make
 make package
 ~~~~
 
+@subsection BuildingDarkHelpGPU GPU
+
 To build the @b GPU-enabled version of %DarkHelp:
 
 ~~~~{.sh}
@@ -43,6 +51,8 @@ cmake -DCMAKE_BUILD_TYPE=Release -DDARKNET_FLAG=GPU ..
 make
 make package
 ~~~~
+
+@subsection BuildingDarkHelpCUDNN GPU+CUDNN
 
 To build with support for both @b GPU and @b CUDNN:
 
@@ -57,13 +67,17 @@ make package
 
 (GPU and CUDNN require that the NVidia CUDA SDK be installed.)
 
+@section BuildingDoxygen Doxygen
+
 If desired, the doxygen documentation can be created with @p "make doc".
+
+@section BuildingPackages Packages
 
 To install %DarkHelp so the API can be used within your own C++ application, run @p "sudo dpkg -i darkhelp-*.deb" after having run @p "make package".
 
 Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against the following:
-@li libdarkhelp.so or libdarkhelp.a
-@li libdarknet.so
+@li @p libdarkhelp.so or the static version @p libdarkhelp.a
+@li @p libdarknet.so
 @li OpenCV's libraries
 
 */
