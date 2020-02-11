@@ -26,6 +26,11 @@
  * but the scope of where it is needed is confined to that one .cpp file.)
  */
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
+/** @warning Prior to including @p darknet.h, you @b must @p "#define GPU" and @p "#define CUDNN" @b if darknet was built
+ * with support for GPU and CUDNN!  This is because the darknet structures have several optional fields that only exist
+ * when @p GPU and @p CUDNN are defined, thereby changing the size of those structures.  If DarkHelp and Darknet aren't
+ * using the exact same structure size, you'll see segfaults when DarkHelp calls into Darknet.
+ */
 #include <darknet.h>
 #endif
 

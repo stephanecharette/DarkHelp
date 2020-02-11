@@ -18,16 +18,44 @@ sudo ldconfig
 
 For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.
 
-Once Darknet is done, you can build %DarkHelp.  Download it from <a target="_blank" href="https://www.ccoderun.ca/download/">here</a> and extract it into a directory of your choice.  Then run the following commands:
+Once Darknet is done, you can build %DarkHelp.  Download it from <a target="_blank" href="https://www.ccoderun.ca/download/">here</a> and extract it into a directory of your choice.
+
+@note %DarkHelp uses libdarknet.so.  If Darknet was built with support for GPU (@p GPU=1) or CUDNN (@p CUDNN=1), then you @em must enable those same flags when building %DarkHelp.  Otherwise, when %DarkHelp calls into Darknet, dereferencing certain fields in the @p network and @p layers structures can lead to segfaults.  The @p DARKNET_FLAG variable @b must be set correctly when building %DarkHelp.  It must be set to one of the following values: @li CPU @li GPU @li CUDNN
+
+To build the @b CPU-only (non-GPU) version of %DarkHelp, run the following commands:
 
 ~~~~{.sh}
 cd DarkHelp
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release -DDARKNET_FLAG=CPU ..
 make
 make package
 ~~~~
+
+To build the @b GPU-enabled version of %DarkHelp:
+
+~~~~{.sh}
+cd DarkHelp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DDARKNET_FLAG=GPU ..
+make
+make package
+~~~~
+
+To build with support for both @b GPU and @b CUDNN:
+
+~~~~{.sh}
+cd DarkHelp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DDARKNET_FLAG=CUDNN ..
+make
+make package
+~~~~
+
+(GPU and CUDNN require that the NVidia CUDA SDK be installed.)
 
 If desired, the doxygen documentation can be created with @p "make doc".
 
