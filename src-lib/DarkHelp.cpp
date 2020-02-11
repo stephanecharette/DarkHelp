@@ -18,6 +18,23 @@
 #include <darknet.h>
 
 
+/* OpenCV4 has renamed some common defines and placed them in the cv namespace.  Need to deal with this until older
+ * versions of OpenCV are no longer in use.
+ */
+#ifndef CV_INTER_CUBIC
+#define CV_INTER_CUBIC cv::INTER_CUBIC
+#endif
+#ifndef CV_INTER_AREA
+#define CV_INTER_AREA cv::INTER_AREA
+#endif
+#ifndef CV_AA
+#define CV_AA cv::LINE_AA
+#endif
+#ifndef CV_FILLED
+#define CV_FILLED cv::FILLED
+#endif
+
+
 DarkHelp::~DarkHelp()
 {
 	if (net)

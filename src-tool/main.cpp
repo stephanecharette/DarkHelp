@@ -6,6 +6,7 @@
 
 #include <DarkHelp.hpp>
 #include <chrono>
+#include <fstream>
 #include <map>
 #include <vector>
 #include <string>
@@ -14,6 +15,20 @@
 #include <unistd.h>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
+
+
+/* OpenCV4 has renamed some common defines and placed them in the cv namespace.  Need to deal with this until older
+ * versions of OpenCV are no longer in use.
+ */
+#ifndef CV_AA
+#define CV_AA cv::LINE_AA
+#endif
+#ifndef CV_FILLED
+#define CV_FILLED cv::FILLED
+#endif
+#ifndef CV_IMWRITE_PNG_COMPRESSION
+#define CV_IMWRITE_PNG_COMPRESSION cv::IMWRITE_PNG_COMPRESSION
+#endif
 
 
 // Messages that need to be shown to the user.
