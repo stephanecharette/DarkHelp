@@ -289,19 +289,27 @@ int main(int argc, char *argv[])
 			names.reset();
 		}
 
+		// Originally, it was very important that the cfg, weights, and names files be listed in the correct order.
+		// But now we have a function that looks at the contents of the files and makes an educated guess.
+		std::string cfg_fn		= cfg		.getValue();
+		std::string weights_fn	= weights	.getValue();
+		std::string names_fn	= names		.getValue();
+		DarkHelp::verify_cfg_and_weights(cfg_fn, weights_fn, names_fn);
+
 		const bool keep_annotated_images	= keep_images.getValue();
 		const bool use_json_output			= use_json.getValue();
 		nlohmann::json json;
 
-		json["network"]["cfg"			] = cfg		.getValue();
-		json["network"]["weights"		] = weights	.getValue();
-		json["network"]["names"			] = names	.getValue();
+		json["network"]["cfg"			] = cfg_fn;
+		json["network"]["weights"		] = weights_fn;
+		json["network"]["names"			] = names_fn;
 		std::cout
-				<< "-> config file:  " << cfg		.getValue() << std::endl
-				<< "-> weights file: " << weights	.getValue() << std::endl
-				<< "-> names file:   " << names		.getValue() << std::endl;
+				<< "-> config file:  " << cfg_fn		<< std::endl
+				<< "-> weights file: " << weights_fn	<< std::endl
+				<< "-> names file:   " << names_fn		<< std::endl;
 
-		DarkHelp dark_help(cfg.getValue(), weights.getValue(), names.getValue());
+		// we already verified the files several lines up, so no need to do it again
+		DarkHelp dark_help(cfg_fn, weights_fn, names_fn, false);
 
 		json["network"]["loading"]				=  dark_help.duration_string();
 		std::cout << "-> loading network took " << dark_help.duration_string() << std::endl;

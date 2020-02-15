@@ -77,6 +77,9 @@ class DarkHelp
 {
 	public:
 
+		/// Map of strings where both the key and the value are @p std::string.
+		typedef std::map<std::string, std::string> MStr;
+
 		/// Vector of text strings.  Typically used to store the class names.
 		typedef std::vector<std::string> VStr;
 
@@ -205,10 +208,13 @@ class DarkHelp
 		DarkHelp();
 
 		/// Constructor.  This constructor automatically calls @ref init().
-		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "");
+		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
 
-		/// Initialize ("load") the darknet neural network.
-		DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "");
+		/** Initialize ("load") the darknet neural network.  If @p verify_files_first has been enabled (the default)
+		 * then this method will also call the static method @ref verify_cfg_and_weights() to perform some last-minute
+		 * validation prior to darknet loading the neural network.
+		 */
+		DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
 
 		/// The opposite of @ref init().  This is automatically called by the destructor.
 		void reset();
@@ -302,6 +308,22 @@ class DarkHelp
 		 * @see @ref annotation_colours
 		 */
 		static VColours get_default_annotation_colours();
+
+		/** Look at the names and/or the contents of all 3 files and swap the filenames around if necessary so the @p .cfg,
+		 * @p .weights, and @p .names are assigned where they should be.  This is necessary because darknet tends to segfault
+		 * if it is given the wrong filename.  (For example, if it mistakenly tries to parse the @p .weights file as a @p .cfg
+		 * file.)  This function does a bit of sanity checking, determines which file is which, and also returns a map of debug
+		 * information related to each file.
+		 *
+		 * On @em input, it doesn't matter which file goes into which parameter.  Simply pass in the filenames you have in any
+		 * order.
+		 *
+		 * On @em output, the @p .cfg, @p .weights, and @p .names will be set correctly.  If needed for display purposes, some
+		 * additional information is also passed back using the @p MStr string map, but most callers can ignore this.
+		 *
+		 * @see @ref init()
+		 */
+		static MStr verify_cfg_and_weights(std::string & cfg_filename, std::string & weights_filename, std::string & names_filename);
 
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
 		/** Static function to convert the OpenCV @p cv::Mat objects to Darknet's internal @p image format.

@@ -6,8 +6,10 @@
 
 #include <DarkHelp.hpp>
 #include <fstream>
+#include <regex>
 #include <cmath>
 #include <ctime>
+#include <sys/stat.h>
 
 
 /* Prior to including @p darknet.h, you @b must @p "#define GPU 1" and @p "#define CUDNN 1" @b if darknet was built with
@@ -52,34 +54,33 @@ DarkHelp::DarkHelp() :
 }
 
 
-DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename) :
+DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first) :
 	DarkHelp()
 {
-	init(cfg_filename, weights_filename, names_filename);
+	init(cfg_filename, weights_filename, names_filename, verify_files_first);
 
 	return;
 }
 
 
-DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename)
+DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first)
 {
 	reset();
 
-	if (cfg_filename.empty())
+	// darknet behaves very badly if the .cfg and the .weights files are accidentally swapped.  I've seen it segfault when
+	// it attempts to parse the weights as a text flle.  So do a bit of simple verification and swap them if necessary.
+	std::string cfg_fn		= cfg_filename;
+	std::string weights_fn	= weights_filename;
+	std::string names_fn	= names_filename;
+	if (verify_files_first)
 	{
-		/// @throw std::invalid_argument if the configuration filename is empty.
-		throw std::invalid_argument("darknet configuration filename cannot be empty");
-	}
-	if (weights_filename.empty())
-	{
-		/// @throw std::invalid_argument if the weights filename is empty.
-		throw std::invalid_argument("darknet weights filename cannot be empty");
+		verify_cfg_and_weights(cfg_fn, weights_fn, names_fn);
 	}
 
 	// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
-	net = load_network_custom(const_cast<char*>(cfg_filename.c_str()), const_cast<char*>(weights_filename.c_str()), 1, 1);
+	net = load_network_custom(const_cast<char*>(cfg_fn.c_str()), const_cast<char*>(weights_fn.c_str()), 1, 1);
 	if (net == nullptr)
 	{
 		/// @throw std::runtime_error if the call to darknet's @p load_network_custom() has failed.
@@ -95,9 +96,9 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 	const auto t2 = std::chrono::high_resolution_clock::now();
 	duration = t2 - t1;
 
-	if (not names_filename.empty())
+	if (not names_fn.empty())
 	{
-		std::ifstream ifs(names_filename);
+		std::ifstream ifs(names_fn);
 		std::string line;
 		while (std::getline(ifs, line))
 		{
@@ -388,6 +389,184 @@ DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 	};
 
 	return colours;
+}
+
+
+DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std::string & weights_filename, std::string & names_filename)
+{
+	MStr m;
+
+	// we need a minimum of 2 unique files for things to be valid
+	std::set<std::string> all_filenames;
+	all_filenames.insert(cfg_filename		);
+	all_filenames.insert(weights_filename	);
+	all_filenames.insert(names_filename		);
+	if (all_filenames.size() < 2)
+	{
+		/// @throw std::invalid_argument if at least 2 unique filenames have not been provided
+		throw std::invalid_argument("need a minimum of 2 filenames (cfg and weights) to load darknet neural network");
+	}
+
+	// The simplest case is to look at the file extensions.  If they happen to be .cfg, and .weights, then
+	// that is what we'll use to decide which file is which.  (And anything left over will be the .names file.)
+	for (const auto & filename : all_filenames)
+	{
+		const size_t pos = filename.rfind(".");
+		if (pos != std::string::npos)
+		{
+			const std::string ext = filename.substr(pos + 1);
+			m[ext] = filename;
+		}
+	}
+	if (m.count("cfg"		) == 1 and
+		m.count("weights"	) == 1)
+	{
+		for (auto iter : m)
+		{
+			if (iter.first == "weights")	weights_filename	= iter.second;
+			else if (iter.first == "cfg")	cfg_filename		= iter.second;
+			else							names_filename		= iter.second;
+		}
+
+		// We *know* we have a cfg and weights, but the names is optional.  If we have a 3rd filename, then it must be the names,
+		// otherwise blank out the 3rd filename in case that field was used to pass in either the cfg or the weights.
+		if (names_filename == cfg_filename or names_filename == weights_filename)
+		{
+			names_filename = "";
+		}
+		m["names"] = names_filename;
+	}
+	else
+	{
+		// If we get here, then the filenames are not obvious just by looking at the extensions.
+		//
+		// Instead, we're going to use the size of the files to decide what is the .cfg, .weights, and .names.  The largest
+		// file (MiB) will always be the .weights.  The next one (KiB) will be the configuration.  And the names, if available,
+		// is only a few bytes in size.  Because the order of magnitude is so large, the three files should never have the
+		// exact same size unless something has gone very wrong.
+
+		m.clear();
+
+		std::map<size_t, std::string> file_size_map;
+		for (const auto & filename : all_filenames)
+		{
+			struct stat buf;
+			buf.st_size = 0; // only field we actually use is the size, so initialize it to zero in case the stat() call fails
+			stat(filename.c_str(), &buf);
+			file_size_map[buf.st_size] = filename;
+		}
+
+		if (file_size_map.size() != 3)
+		{
+			/// @throw std::runtime_error if the size of the files cannot be determined (one or more file does not exist?)
+			throw std::runtime_error("cannot access .cfg or .weights file");
+		}
+
+		// iterate through the files from smallest up to the largest
+		auto iter = file_size_map.begin();
+
+		names_filename		= iter->second;
+		m["names"]			= iter->second;
+		m[iter->second]		= std::to_string(iter->first) + " bytes";
+
+		iter ++;
+		cfg_filename		= iter->second;
+		m["cfg"]			= iter->second;
+		m[iter->second]		= std::to_string(iter->first) + " bytes";
+
+		iter ++;
+		weights_filename	= iter->second;
+		m["weights"]		= iter->second;
+		m[iter->second]		= std::to_string(iter->first) + " bytes";
+	}
+
+	// now that we know which file is which, read the first few bytes or lines to see if it contains what we'd expect
+
+	std::ifstream ifs;
+
+	// look for "[net]" within the first few lines of the .cfg file
+	ifs.open(cfg_filename);
+	bool found = false;
+	for (size_t line_counter = 0; line_counter < 20; line_counter ++)
+	{
+		std::string line;
+		std::getline(ifs, line);
+		if (line.find("[net]") != std::string::npos)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (not found)
+	{
+		/// @throw std::invalid_argument if the cfg file doesn't contain @p "[net]" near the top of the file
+		throw std::invalid_argument("failed to find [net] section in configuration file " + cfg_filename);
+	}
+
+	// keep looking until we find "classes=###" so we know how many lines the .names file should have
+	int number_of_classes = 0;
+	const std::regex rx("^classes[ \t]*=[ \t]*([0-9]+)");
+	while (ifs.good())
+	{
+		std::string line;
+		std::getline(ifs, line);
+		std::smatch sm;
+		if (std::regex_search(line, sm, rx))
+		{
+			m["number of classes"] = sm[1].str();
+			number_of_classes = std::stoi(sm[1].str());
+			break;
+		}
+	}
+
+	if (number_of_classes < 1)
+	{
+		/// @throw std::invalid_argument if the configuration file does not have a line that says "classes=..."
+		throw std::invalid_argument("failed to find the number of classes in the configuration file " + cfg_filename);
+	}
+
+	// first 4 fields in the weights file -- see save_weights_upto() in darknet's src/parser.c
+	ifs.close();
+	ifs.open(weights_filename, std::ifstream::in | std::ifstream::binary);
+	uint32_t major	= 0;
+	uint32_t minor	= 0;
+	uint32_t patch	= 0;
+	uint64_t seen	= 0;
+	ifs.read(reinterpret_cast<char*>(&major	), sizeof(major	));
+	ifs.read(reinterpret_cast<char*>(&minor	), sizeof(minor	));
+	ifs.read(reinterpret_cast<char*>(&patch	), sizeof(patch	));
+	ifs.read(reinterpret_cast<char*>(&seen	), sizeof(seen	));
+	m["weights major"	] = std::to_string(major);
+	m["weights minor"	] = std::to_string(minor);
+	m["weights patch"	] = std::to_string(patch);
+	m["images seen"		] = std::to_string(seen);
+
+	if (major * 10 + minor < 2)
+	{
+		/// @throw std::invalid_argument if weights file has an invalid version number (or weights file is from an extremely old version of darknet?)
+		throw std::invalid_argument("failed to find the version number in the weights file " + weights_filename);
+	}
+
+	if (names_filename.empty() == false)
+	{
+		ifs.close();
+		ifs.open(names_filename);
+		std::string line;
+		int line_counter = 0;
+		while (std::getline(ifs, line))
+		{
+			line_counter ++;
+		}
+		m["number of names"] = std::to_string(line_counter);
+
+		if (line_counter != number_of_classes)
+		{
+			/// @throw std::runtime_error if the number of lines in the names file doesn't match the number of classes in the configuration file
+			throw std::runtime_error("the network configuration defines " + std::to_string(number_of_classes) + " classes, but the file " + names_filename + " has " + std::to_string(line_counter) + " lines");
+		}
+	}
+
+	return m;
 }
 
 
