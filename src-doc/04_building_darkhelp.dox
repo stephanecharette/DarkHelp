@@ -20,7 +20,7 @@ sudo ldconfig
 
 For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.
 
-@section BuildingDarkHelp BuildingDarkHelp
+@section BuildingDarkHelp Building DarkHelp
 
 Once Darknet is done, you can build %DarkHelp.  Download it from <a target="_blank" href="https://www.ccoderun.ca/download/">here</a> and extract it into a directory of your choice.
 

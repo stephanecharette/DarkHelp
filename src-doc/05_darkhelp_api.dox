@@ -42,13 +42,33 @@ for (const auto & filename : get_all_image_names())
 	const auto result = darkhelp.predict(filename);
 
 	// get DarkHelp to annotate the image with the most recent results
-	cv::Mat output = darkhelp.annotate(filename);
+	cv::Mat output = darkhelp.annotate();
 
 	// fictional function to process the results and the annotated image
 	handle_image(output, result);
 }
 ~~~~
 
-Calling any of the @ref DarkHelp::predict() overloads gives back a @p std::vector of @ref DarkHelp::PredictionResult objects, which should be extremely simple to manage.
+Calling any of the @ref DarkHelp::predict() overloads gives back a @p std::vector of @ref DarkHelp::PredictionResult objects, which should be extremely simple to manage.  While the previous example used image filenames, you can also use @p cv::Mat objects.  Here is an example with @p cv::Mat images obtained from video frames:
+
+~~~~{.cpp}
+DarkHelp darkhelp(cfg_filename, weights_filename, names_filename);
+cv::VideoCapture cap("sample.mp4");
+while (true)
+{
+	cv::Mat frame;
+	cap >> frame;
+	if (frame.empty())
+	{
+		break;
+	}
+
+	const auto result = darkhelp.predict(frame);
+
+	// display the results as a block of text (not an annotated image)
+	std::cout << result << std::endl;
+}
+cap.release();
+~~~~
 
 */
