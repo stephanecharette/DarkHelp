@@ -24,9 +24,6 @@
  * Unless you are using darknet's "image" class directly in your application, it is probably best to NOT define this
  * macro, and not include darknet.h.  (The header is included by DarkHelp.cpp, so you definitely still need to have it,
  * but the scope of where it is needed is confined to that one .cpp file.)
- *
- * @warning If you enable this, remember that you may also need to specify @p GPU=1 and @p CUDNN=1 when building.
- * See the page https://www.ccoderun.ca/DarkHelp/api/Building.html for details.
  */
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
 #include <darknet.h>
@@ -104,8 +101,8 @@ class DarkHelp
 			 * The red rectangle returned would be:
 			 * @li @p rect.x = 96 (top left)
 			 * @li @p rect.y = 38 (top left)
-			 * @li @p rect.width = 109
-			 * @li @p rect.height = 88
+			 * @li @p rect.width = 108
+			 * @li @p rect.height = 87
 			 *
 			 * @see @ref original_point @see @ref original_size
 			 */

@@ -12,10 +12,19 @@
 #include <sys/stat.h>
 
 
-/* Prior to including @p darknet.h, you @b must @p "#define GPU 1" and @p "#define CUDNN 1" @b if darknet was built with
+/* If you are using a recent version of Darknet there is no problem, and you can skip the rest of this comment.
+ *
+ * If you are using a version of Darknet from before 2020-March-01, then the following comment applies:
+ *
+ * --------------------------------------------------------
+ * Prior to including @p darknet.h, you @b must @p "#define GPU 1" and @p "#define CUDNN 1" @b if darknet was built with
  * support for GPU and CUDNN!  This is because the darknet structures have several optional fields that only exist when
  * @p GPU and @p CUDNN are defined, thereby changing the size of those structures.  If DarkHelp and Darknet aren't
  * using the exact same structure size, you'll see segfaults when DarkHelp calls into Darknet.
+ * --------------------------------------------------------
+ *
+ * This problem was fixed in Darknet by AlexeyAB on 2020-March-01.  See this post for details:
+ * https://github.com/AlexeyAB/darknet/issues/4839#issuecomment-593085313
  */
 #include <darknet.h>
 
@@ -49,6 +58,33 @@ DarkHelp::DarkHelp() :
 	net(nullptr)
 {
 	reset();
+
+	/* There used to be a problem with the size of certain darknet structure being different depending on whether darknet
+	 * was compiled for CPU-only, GPU, or GPU+cuDNN.  This is no longer a problem since darknet issue #4839 was fixed on
+	 * 2020-Mar-01, but leaving this here (commented out) in case this needs to be debugged or re-verified every once in a
+	 * while.  Last time this was recorded was 2020-03-07:
+	 *		sizeof(network) ........ 504
+	 *		sizeof(network_state) .. 544
+	 *		sizeof(layer) .......... 2376
+	 *		sizeof(image) .......... 24
+	 *		sizeof(detection) ...... 64
+	 *		sizeof(load_args) ...... 208
+	 *		sizeof(data) ........... 64
+	 *		sizeof(metadata) ....... 16
+	 *		sizeof(tree) ........... 72
+	 */
+	#if 0
+	std::cout
+		<< "sizeof(network) ........ " << sizeof(network		) << std::endl
+		<< "sizeof(network_state) .. " << sizeof(network_state	) << std::endl
+		<< "sizeof(layer) .......... " << sizeof(layer			) << std::endl
+		<< "sizeof(image) .......... " << sizeof(image			) << std::endl
+		<< "sizeof(detection) ...... " << sizeof(detection		) << std::endl
+		<< "sizeof(load_args) ...... " << sizeof(load_args		) << std::endl
+		<< "sizeof(data) ........... " << sizeof(data			) << std::endl
+		<< "sizeof(metadata) ....... " << sizeof(metadata		) << std::endl
+		<< "sizeof(tree) ........... " << sizeof(tree			) << std::endl;
+	#endif
 
 	return;
 }

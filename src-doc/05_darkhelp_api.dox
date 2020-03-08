@@ -71,4 +71,14 @@ while (true)
 cap.release();
 ~~~~
 
+For example, the @p std::cout line in the previous example might results in the following text:
+
+~~~~{.txt}
+-> prediction results: 2
+-> 1/2: "stop sign 100%" #0 prob=0.999795 x=500 y=326 w=253 h=227 entries=1
+-> 2/2: "street name 100%" #2 prob=0.999893 x=484 y=231 w=267 h=72 entries=1
+~~~~
+
+But most likely you'll want to handle the @p result vector yourself, instead of dumping lines of text to @p std::cout.  See @ref DarkHelp::PredictionResult and the various members it provides, such as @ref DarkHelp::PredictionResult::rect and @ref DarkHelp::PredictionResult::all_probabilities.
+
 */
