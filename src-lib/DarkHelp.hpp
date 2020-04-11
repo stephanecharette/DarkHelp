@@ -207,14 +207,17 @@ class DarkHelp
 		/// Constructor.  This constructor automatically calls @ref init().
 		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
 
+		/// Get a version string for the DarkHelp library.  E.g., could be `1.0.0-123`.
+		virtual std::string version() const;
+
 		/** Initialize ("load") the darknet neural network.  If @p verify_files_first has been enabled (the default)
 		 * then this method will also call the static method @ref verify_cfg_and_weights() to perform some last-minute
 		 * validation prior to darknet loading the neural network.
 		 */
-		DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
+		virtual DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
 
 		/// The opposite of @ref init().  This is automatically called by the destructor.
-		void reset();
+		virtual void reset();
 
 		/** Use the neural network to predict what is contained in this image.
 		 * @param [in] image_filename The name of the image file to load from disk and analyze.  The member
@@ -296,7 +299,7 @@ class DarkHelp
 		 * For example, this might return @p "912 microseconds" or @p "375 milliseconds".
 		 * @see @ref annotate()
 		 */
-		std::string duration_string();
+		virtual std::string duration_string();
 
 		/** Obtain a vector of several bright colours that may be used to annotate images.
 		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "{0, 0, 255}".  The

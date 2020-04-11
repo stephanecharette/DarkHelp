@@ -99,6 +99,12 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 }
 
 
+std::string DarkHelp::version() const
+{
+	return DH_VERSION;
+}
+
+
 DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first)
 {
 	reset();
@@ -522,6 +528,11 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 
 	// look for "[net]" within the first few lines of the .cfg file
 	ifs.open(cfg_filename);
+	if (ifs.is_open() == false)
+	{
+		/// @throw std::invalid_argument if the cfg file doesn't exist
+		throw std::invalid_argument("failed to open the configuration file " + cfg_filename);
+	}
 	bool found = false;
 	for (size_t line_counter = 0; line_counter < 20; line_counter ++)
 	{
@@ -564,6 +575,11 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 	// first 4 fields in the weights file -- see save_weights_upto() in darknet's src/parser.c
 	ifs.close();
 	ifs.open(weights_filename, std::ifstream::in | std::ifstream::binary);
+	if (ifs.is_open() == false)
+	{
+		/// @throw std::invalid_argument if the weights file doesn't exist
+		throw std::invalid_argument("failed to open the weights file " + weights_filename);
+	}
 	uint32_t major	= 0;
 	uint32_t minor	= 0;
 	uint32_t patch	= 0;

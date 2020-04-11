@@ -5,7 +5,7 @@ The %DarkHelp C++ API is a wrapper (not a replacement!) for the @p libdarknet.so
 To use %DarkHelp, you must include the project header file within your C++ application:
 
 ~~~~{.cpp}
-#include <darkhelp.hpp>
+#include <DarkHelp.hpp>
 ~~~~
 
 Instantiate a DarkHelp object.  These can easily be placed either on the stack, or created dynamically with @p new.  You'll want this object to persist for a long time, as the constructor loads the neural network into memory which takes a (relatively) long time.
