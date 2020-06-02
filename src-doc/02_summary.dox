@@ -1,12 +1,18 @@
 /** @page Summary Summary
 
-@note <b>This document assumes you already have Darknet installed, and you have a functioning neural network.</b> <br/> If you're not already at that step, you'll want to look up some tutorials like this one:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/">https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/</a>.
+@note <b>This document assumes you already have Darknet installed, and you have a functioning neural network.</b> <br/> If you're not already at that step, you'll want to look up some tutorials like these ones:
+@li <a target="_blank" href="https://www.ccoderun.ca/programming/2020-03-07_Darknet/">https://www.ccoderun.ca/programming/2020-03-07_Darknet/</a> (newer tutorial, better information)
+@li <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/">https://www.ccoderun.ca/programming/2019-08-17_Darknet_summary/</a> (older tutorial, different approach)
+
+&nbsp;
 
 Once you have successfully trained a neural network, the next question becomes:  how do you embed it into your C++ application?!  Perhaps you've already looked into using Darknet's legacy C API, functions like @p load_network_custom(), @p do_nms_sort(), and @p get_network_boxes().  That API is not easy to work with, and there isn't much documentation nor example code.
 
 (In case it helps, I did put together a blog post with a few details in late August 2019:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/">https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/</a>.)
 
-%DarkHelp lets you skip those C function calls, and simplifies things with an extremely simple-to-use C++ API.  You load the neural network and the weight files, then call @ref DarkHelp::predict() once per image you'd like analyzed.  Each time you get back a @p std::vector of predictions.
+<b>%DarkHelp lets you skip those C function calls, and simplifies things with an extremely simple-to-use C++ API!</b>
+
+You load the neural network and the weight files, then call @ref DarkHelp::predict() once per image you'd like analyzed.  Each time you get back a @p std::vector of predictions.
 
 Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  This is an example of what @ref DarkHelp::annotate() can do with an image and a neural network that detects barcodes:
 
@@ -45,5 +51,62 @@ The predictions are stored in a @p std::vector of structures.  (See @ref DarkHel
 ~~~~
 
 If you have multiple classes defined in your network, then you may want to look at @ref DarkHelp::PredictionResult::all_probabilities, not only @ref DarkHelp::PredictionResult::best_class and @ref DarkHelp::PredictionResult::best_probability.
+
+The following is the shortest/simplest self-contained example showing how to load a network, run it against a set of images provided on the command-line, and then output the results as a series of coordinates, names, etc:
+
+~~~~{.cpp}
+#include <iostream>
+#include <DarkHelp.hpp>
+
+int main(int argc, char *argv[])
+{
+	DarkHelp darkhelp("driving.cfg", "driving_best.weights", "driving.names");
+
+	// Loop through all the images specified on the command-line:
+	for (int idx = 1; idx < argc; idx ++)
+	{
+		// get the predictions
+		const auto results = darkhelp.predict(argv[idx]);
+
+		// display the results on the console (meaning coordinates, not displaying the images themselves)
+		std::cout << results << std::endl; // see the output in the next block below
+
+		// to annotate the images, you'd use this instead:
+//		cv::Mat output = darkhelp.annotate();
+//		do_something_with_the_image(output);
+	}
+
+	return 0;
+}
+~~~~
+
+@note The order in which you specify the @p .cfg, @p .weights, and @p .names files in the constructor or in @ref DarkHelp::init() is not important due to how the parameters are swapped around by @ref DarkHelp::verify_cfg_and_weights().
+
+Example output from sending the @p "results" to @p std::cout like the code in the previous block:
+
+~~~~{.txt}
+#1/74: loading image "surveillance_frame_000443.jpg"
+-> prediction took 4 milliseconds
+-> prediction results: 12
+-> 1/12: "vehicle 84%" #0 prob=0.838765 x=573 y=223 w=24 h=19 entries=1
+-> 2/12: "vehicle 85%" #0 prob=0.845121 x=1034 y=236 w=26 h=19 entries=1
+-> 3/12: "motorcycle 93%" #1 prob=0.932856 x=473 y=308 w=24 h=54 entries=1
+-> 4/12: "vehicle 98%" #0 prob=0.98197 x=1027 y=242 w=38 h=20 entries=1
+...
+~~~~
+
+If you call @ref DarkHelp::annotate() to get back a OpenCV @p cv::Mat object, you can then display the image with all the annotations, or easily save it as a @p jpg or @p png.  For example:
+
+~~~~{.cpp}
+    darkhelp.predict(argv[idx]);
+    cv::Mat mat = darkhelp.annotate();
+    cv::imwrite("output.png", mat, {CV_IMWRITE_PNG_COMPRESSION, 9});
+~~~~
+
+The example call to @p cv::imwrite() in the previous example might give something similar to this image:
+
+@image html driving_annotations.png
+
+Note that DarkHelp uses OpenCV internally, regardless of whether or not the client code calls @ref DarkHelp::annotate().  This means when you link against @p libdarkhelp.so (dynamic) or @p libdarkhelp.a (static) you'll also need to link against a modern version of OpenCV.
 
 */

@@ -204,7 +204,13 @@ class DarkHelp
 		/// Constructor.  When using this constructor, the neural network remains uninitialized until @ref init() is called.
 		DarkHelp();
 
-		/// Constructor.  This constructor automatically calls @ref init().
+		/** Constructor.  This constructor automatically calls @ref init().
+		 *
+		 * @note The order in which you pass the various filenames is @em not important if @p verify_files_first is set to
+		 * @p true (the default value).  This is because @ref init() will call @ref verify_cfg_and_weights() to correctly
+		 * determine which is the @p .cfg, @p .weights, and @p .names file, and swap the names around as necessary so Darknet
+		 * is given the correct filenames.
+		 */
 		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
 
 		/// Get a version string for the DarkHelp library.  E.g., could be `1.0.0-123`.
@@ -315,11 +321,10 @@ class DarkHelp
 		 * file.)  This function does a bit of sanity checking, determines which file is which, and also returns a map of debug
 		 * information related to each file.
 		 *
-		 * On @em input, it doesn't matter which file goes into which parameter.  Simply pass in the filenames you have in any
-		 * order.
+		 * On @em input, it doesn't matter which file goes into which parameter.  Simply pass in the filenames in any order.
 		 *
 		 * On @em output, the @p .cfg, @p .weights, and @p .names will be set correctly.  If needed for display purposes, some
-		 * additional information is also passed back using the @p MStr string map, but most callers can ignore this.
+		 * additional information is also passed back using the @p MStr string map, but most callers should ignore this.
 		 *
 		 * @see @ref init()
 		 */
@@ -535,7 +540,7 @@ std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults &
 
 /** Convenience function to resize an image yet retain the exact original aspect ratio.  Performs no resizing if the
  * image is already the desired size.  Depending on the size of the original image and the desired size, a "best"
- * size will be chosen that does not exceed the specified size.
+ * size will be chosen that <b>does not exceed</b> the specified size.  No letterboxing will be performed.
  *
  * For example, if the image is 640x480, and the specified size is 400x400, the image returned will be 400x300
  * which maintains the original 1.333 aspect ratio.
