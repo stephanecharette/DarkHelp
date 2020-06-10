@@ -507,7 +507,6 @@ void process_video(Options & options)
 				average += duration;
 			}
 			average /= duration_deque.size();
-			std::cout << "average over " << duration_deque.size() << " frames is " << std::chrono::duration_cast<std::chrono::milliseconds>(average).count() << " milliseconds" << std::endl;
 			options.dark_help.duration = average;
 		}
 
