@@ -4,8 +4,9 @@
 # $Id$
 
 
-FIND_PACKAGE ( Threads REQUIRED )
-FIND_PACKAGE ( OpenCV REQUIRED )
-FIND_LIBRARY ( Darknet darknet )
+FIND_PACKAGE ( Threads	REQUIRED	)
+FIND_PACKAGE ( OpenCV	REQUIRED	)
+FIND_LIBRARY ( Magic	magic		) # sudo apt-get install libmagic-dev
+FIND_LIBRARY ( Darknet	darknet		)
 
 INCLUDE_DIRECTORIES ( ${OpenCV_INCLUDE_DIRS} )

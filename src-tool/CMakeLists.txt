@@ -5,5 +5,5 @@
 
 
 ADD_EXECUTABLE ( DarkHelp main.cpp)
-TARGET_LINK_LIBRARIES ( DarkHelp Threads::Threads darkhelp ${Darknet} ${OpenCV_LIBS} )
+TARGET_LINK_LIBRARIES ( DarkHelp Threads::Threads darkhelp ${Darknet} ${OpenCV_LIBS} ${Magic} )
 INSTALL ( TARGETS DarkHelp DESTINATION bin )
