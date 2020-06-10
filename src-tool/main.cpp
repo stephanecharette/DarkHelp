@@ -446,6 +446,22 @@ void process_video(Options & options)
 
 	std::cout << input_fps << " FPS, " << input_frames << " frames, " << input_width << "x" << input_height << " -> " << output_width << "x" << output_height << ", " << length_str << std::endl;
 
+	/* For videos, having the duration flash at every frame is next to useless.  Instead, we're going to do a running average
+	 * over the last few seconds.  We'll calculate the average and overwrite the value inside the DarkHelp object prior to
+	 * annotating the frame.
+	 */
+	std::deque<std::chrono::high_resolution_clock::duration> duration_deque;
+
+	bool show_video = false;
+	if (options.use_json_output == false)
+	{
+		show_video = true;
+		cv::namedWindow("DarkHelp", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
+		cv::setWindowTitle("DarkHelp", short_filename);
+		cv::imshow("DarkHelp", mat);
+		cv::resizeWindow("DarkHelp", output_width, output_height);
+	}
+
 	output_video.open(short_filename, CV_FOURCC('m', 'p', '4', 'v'), input_fps, {output_width, output_height});
 
 	// reset to the start of the video and process every frame
@@ -476,6 +492,25 @@ void process_video(Options & options)
 		}
 
 		options.dark_help.predict(frame);
+
+		// no need to figure out the average duration if the display of the duration field is turned off in annotate()
+		if (options.dark_help.annotation_include_duration)
+		{
+			duration_deque.push_front(options.dark_help.duration);
+			if (duration_deque.size() > 3 * rounded_fps)
+			{
+				duration_deque.resize(3 * rounded_fps);
+			}
+			std::chrono::high_resolution_clock::duration average = std::chrono::milliseconds(0);
+			for (auto && duration : duration_deque)
+			{
+				average += duration;
+			}
+			average /= duration_deque.size();
+			std::cout << "average over " << duration_deque.size() << " frames is " << std::chrono::duration_cast<std::chrono::milliseconds>(average).count() << " milliseconds" << std::endl;
+			options.dark_help.duration = average;
+		}
+
 		frame = options.dark_help.annotate();
 
 		if (options.size2_is_set)
@@ -490,10 +525,8 @@ void process_video(Options & options)
 		{
 			std::cout << "\rprocessing frame " << number_of_frames << "/" << input_frames << " (" << std::round(number_of_frames * 100 / input_frames) << "%)" << std::flush;
 
-			if (options.use_json_output == false)
+			if (show_video)
 			{
-				cv::namedWindow("DarkHelp", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-				cv::setWindowTitle("DarkHelp", short_filename);
 				cv::imshow("DarkHelp", frame);
 				cv::waitKeyEx(1);
 			}
