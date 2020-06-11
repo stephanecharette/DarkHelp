@@ -402,7 +402,7 @@ DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 {
 	VColours colours =
 	{
-		// remember the OpenCV format blue-green-red and not RGB!
+		// remember the OpenCV format is blue-green-red and not RGB!
 		{0x5E, 0x35, 0xFF},	// Radical Red
 		{0x17, 0x96, 0x29},	// Slimy Green
 		{0x33, 0xCC, 0xFF},	// Sunglow

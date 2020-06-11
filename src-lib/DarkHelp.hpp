@@ -307,10 +307,9 @@ class DarkHelp
 		 */
 		virtual std::string duration_string();
 
-		/** Obtain a vector of several bright colours that may be used to annotate images.
-		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "{0, 0, 255}".  The
-		 * vector returned by this function are intended to be used by OpenCV, and thus are
-		 * in BGR format.
+		/** Obtain a vector of several bright colours that may be used to annotate images.  Remember that OpenCV uses BGR,
+		 * not RGB.  So pure red is @p "{0, 0, 255}".  The colours returned by this function are intended to be used by
+		 * OpenCV, and thus are in BGR format.
 		 * @see @ref annotation_colours
 		 */
 		static VColours get_default_annotation_colours();
