@@ -2,6 +2,10 @@
 
 The official web site for C Code Run's %DarkHelp is http://www.ccoderun.ca/. <br/>
 
+@htmlonly[block]
+<iframe width="560" height="315" src="https://www.youtube.com/embed/igpJMhIOKQE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+@endhtmlonly
+
 This documentation is available here:
 @li http://www.ccoderun.ca/DarkHelp/api/
 @li https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/

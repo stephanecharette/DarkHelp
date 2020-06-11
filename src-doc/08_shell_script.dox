@@ -7,7 +7,7 @@ With minimal effort, %DarkHelp can be used from within shell scripts to analyze 
 When you run the @ref Tool with the @p -j or @p --json command line switch, two things will happen:
 
 - The interactive GUI window normally created using OpenCV is skipped, and %DarkHelp will automatically process all the specified images as quickly as it can without waiting for user input.
-- The output results are stored in a JSON structure which is output to @p STDOUT once %DarkHelp has finished running.
+- The results are stored in a JSON structure which is output to @p STDOUT once %DarkHelp has finished running.
 
 However, Darknet itself outputs a large amount of text to @em both @p STDOUT and @p STDERR while it runs.  Instead of modifying the original Darknet source to remove all the various calls to @p printf(), what we do instead is the following:
 
@@ -32,7 +32,7 @@ result=$(DarkHelp -j dogs-vs-cats_yolov3-tiny.cfg dogs-vs-cats_yolov3-tiny_best.
 The output should be similar to this:
 ~~~~{.txt}
 {
-    "image": [
+    "file": [
         {
             "count": 3,
             "duration": "164 milliseconds",
@@ -50,7 +50,7 @@ Let's look at a full example, followed by an explanation of each line:
 DarkHelp -j dogs-vs-cats_yolov3-tiny.cfg dogs-vs-cats_yolov3-tiny_best.weights dogs-vs-cats.names *.jpg 2>&1 | sed -e '1,/JSON OUTPUT/ d'
 
 {
-    "image": [
+    "file": [
         {
             "count": 1,
             "duration": "178 milliseconds",
@@ -108,15 +108,15 @@ DarkHelp -j dogs-vs-cats_yolov3-tiny.cfg dogs-vs-cats_yolov3-tiny_best.weights d
 
 Name								| Example								| Meaning
 ------------------------------------|---------------------------------------|--------
-["image"][#]						| ...									| Array of images that were processed.
-["image"][#]["count"]				| "count" : 1							| The number of predictions that were made for this image.
-["image"][#]["duration"]			| "duration": "178 milliseconds"		| How long it took for Darknet to analyze this image.
-["image"][#]["filename"]			| "filename": "other_dog.jpg"			| The filename  which was analyzed.
-["image"][#]["original_height"]		| "original_height": 293				| The height of the image prior to it being resized (in case @p -b is used).
-["image"][#]["original_width"]		| "original_width": 269					| The width of the image prior to it being resized (in case @p -b is used).
-["image"][#]["prediction"][#][...]	| ...									| The same fields as what is documented in @ref DarkHelp::PredictionResult.  For example, see @ref DarkHelp::PredictionResult::rect and @ref DarkHelp::PredictionResult::all_probabilities.
-["image"][#]["resized_height"]		| "resized_height": 293					| The height of the image after it has been resized (in case @p -b is used).
-["image"][#]["resized_width"]		| "resized_width": 269					| The width of the image after it has been resized (in case @p -b is used).
+["file"][#]							| ...									| Array of images and videos that were processed.
+["file"][#]["count"]				| "count" : 1							| The number of predictions that were made for this image.
+["file"][#]["duration"]				| "duration": "178 milliseconds"		| How long it took for Darknet to analyze this image.
+["file"][#]["filename"]				| "filename": "other_dog.jpg"			| The filename  which was analyzed.
+["file"][#]["original_height"]		| "original_height": 293				| The height of the image prior to it being resized (in case @p -b is used).
+["file"][#]["original_width"]		| "original_width": 269					| The width of the image prior to it being resized (in case @p -b is used).
+["file"][#]["prediction"][#][...]	| ...									| The same fields as what is documented in @ref DarkHelp::PredictionResult.  For example, see @ref DarkHelp::PredictionResult::rect and @ref DarkHelp::PredictionResult::all_probabilities.
+["file"][#]["resized_height"]		| "resized_height": 293					| The height of the image after it has been resized (in case @p -b is used).
+["file"][#]["resized_width"]		| "resized_width": 269					| The width of the image after it has been resized (in case @p -b is used).
 ["network"]["cfg"]					| "cfg": "dogs-vs-cats_yolov3-tiny.cfg"	| The name of the neural network's @p .cfg file.
 ["network"]["loading"]				| "loading": "229 milliseconds"			| How long it took for the entire neural network to finish loading.
 ["network"]["names"]				| "names": "dogs-vs-cats.names"			| The filename that contains a text string for each class in the neural network.
@@ -134,7 +134,7 @@ For example, this is part of what you'd see if an image does not exist:
 
 ~~~~{.json}
 {
-    "image": [
+    "file": [
         {
             "error": "Failed to read the image \"testing.jpg\".",
             "filename": "testing.jpg"
