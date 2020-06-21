@@ -30,6 +30,9 @@
 #ifndef CV_IMWRITE_PNG_COMPRESSION
 #define CV_IMWRITE_PNG_COMPRESSION cv::IMWRITE_PNG_COMPRESSION
 #endif
+#ifndef CV_FOURCC
+#define CV_FOURCC cv::VideoWriter::fourcc
+#endif
 
 
 // Messages that need to be shown to the user.

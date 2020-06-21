@@ -9,6 +9,7 @@ If you have not already done so, you must first build Darknet with the flag @p L
 Once it has built, remember to copy the library and header file to a location where %DarkHelp will find them.  For example:
 
 ~~~~{.sh}
+sudo apt-get install build-essential git libopencv-dev
 git clone https://github.com/AlexeyAB/darknet.git
 cd darknet
 vi makefile # to set LIBSO=1, and possibly other flags
@@ -27,6 +28,7 @@ Once Darknet is done, you can build %DarkHelp.  Download it from <a target="_bla
 To build %DarkHelp from source, run the following commands:
 
 ~~~~{.sh}
+sudo apt-get install cmake libtclap-dev libmagic-dev libopencv-dev
 cd DarkHelp
 mkdir build
 cd build
