@@ -298,6 +298,8 @@ class DarkHelp
 		 * @see @ref annotation_line_thickness
 		 * @see @ref annotation_include_duration
 		 * @see @ref annotation_include_timestamp
+		 * @see @ref annotation_auto_hide_labels
+		 * @see @ref annotation_shade_predictions
 		 */
 		virtual cv::Mat annotate(const float new_threshold = -1.0f);
 
@@ -307,10 +309,44 @@ class DarkHelp
 		 */
 		virtual std::string duration_string();
 
-		/** Obtain a vector of several bright colours that may be used to annotate images.  Remember that OpenCV uses BGR,
-		 * not RGB.  So pure red is @p "{0, 0, 255}".  The colours returned by this function are intended to be used by
-		 * OpenCV, and thus are in BGR format.
+		/** Obtain a vector of at least 25 different bright colours that may be used to annotate images.  OpenCV uses BGR, not RGB.
+		 * For example:
+		 * 
+		 * @li @p "{0, 0, 255}" is pure red
+		 * @li @p "{255, 0, 0}" is pure blue
+		 * 
+		 * The colours returned by this function are intended to be used by OpenCV, and thus are in BGR format.
 		 * @see @ref annotation_colours
+		 *
+		 * Default colours returned by this method are:
+		 *
+		 * Index	| RGB Hex	| Name
+		 * ---------|-----------|-----
+		 * 0		| @p FF355E	| <span style="background-color: #FF355E">Radical Red</span>
+		 * 1		| @p 299617	| <span style="background-color: #299617">Slimy Green</span>
+		 * 2		| @p FFCC33	| <span style="background-color: #FFCC33">Sunglow</span>
+		 * 3		| @p AF6E4D	| <span style="background-color: #AF6E4D">Brown Sugar</span>
+		 * 4		| @p FF00FF	| <span style="background-color: #FF00FF">Pure magenta</span>
+		 * 5		| @p 50BFE6	| <span style="background-color: #50BFE6">Blizzard Blue</span>
+		 * 6		| @p CCFF00	| <span style="background-color: #CCFF00">Electric Lime</span>
+		 * 7		| @p 00FFFF	| <span style="background-color: #00FFFF">Pure cyan</span>
+		 * 8		| @p 8D4E85	| <span style="background-color: #8D4E85">Razzmic Berry</span>
+		 * 9		| @p FF48CC	| <span style="background-color: #FF48CC">Purple Pizzazz</span>
+		 * 10		| @p 00FF00	| <span style="background-color: #00FF00">Pure green</span>
+		 * 11		| @p FFFF00	| <span style="background-color: #FFFF00">Pure yellow</span>
+		 * 12		| @p 5DADEC	| <span style="background-color: #5DADEC">Blue Jeans</span>
+		 * 13		| @p FF6EFF	| <span style="background-color: #FF6EFF">Shocking Pink</span>
+		 * 14		| @p AAF0D1	| <span style="background-color: #AAF0D1">Magic Mint</span>
+		 * 15		| @p FFC000	| <span style="background-color: #FFC000">Orange</span>
+		 * 16		| @p 9C51B6	| <span style="background-color: #9C51B6">Purple Plum</span>
+		 * 17		| @p FF9933	| <span style="background-color: #FF9933">Neon Carrot</span>
+		 * 18		| @p 66FF66	| <span style="background-color: #66FF66">Screamin' Green</span>
+		 * 19		| @p FF0000	| <span style="background-color: #FF0000">Pure red</span>
+		 * 20		| @p 4B0082	| <span style="background-color: #4B0082">Indigo</span>
+		 * 21		| @p FF6037	| <span style="background-color: #FF6037">Outrageous Orange</span>
+		 * 22		| @p FFFF66	| <span style="background-color: #FFFF66">Laser Lemon</span>
+		 * 23		| @p FD5B78	| <span style="background-color: #FD5B78">Wild Watermelon</span>
+		 * 24		| @p 0000FF	| <span style="background-color: #0000FF">Pure blue</span>
 		 */
 		static VColours get_default_annotation_colours();
 
@@ -405,8 +441,46 @@ class DarkHelp
 		 *
 		 * For example, the name for a prediction might be @p "dog" when this flag is set to @p false, or it might be
 		 * @p "dog 98%" when set to @p true.  Defaults to @p true.
+		 *
+		 * Examples:
+		 *
+		 * Setting								| Image
+		 * -------------------------------------|------
+		 * @p names_include_percentage=true		| @image html include_percentage_true.png
+		 * @p names_include_percentage=false	| @image html include_percentage_false.png
 		 */
 		bool names_include_percentage;
+
+		/** Hide the label if the size of the text exceeds the size of the prediction.  This can help "clean up" some
+		 * images which contain many small objects.  Set to @p false to always display ever label.  Set to @p true if
+		 * %DarkHelp should decide whether a label must be shown or hidden.  Defaults to @p true.
+		 * @since 2020-07-03
+		 *
+		 * Examples:
+		 *
+		 * Setting						| Image
+		 * -----------------------------|------
+		 * @p auto_hide_labels=true		| @image html auto_hide_labels_true.png
+		 * @p auto_hide_labels=false	| @image html auto_hide_labels_false.png
+		 */
+		bool annotation_auto_hide_labels;
+
+		/** Determines the amount of "shade" used when drawing the prediction rectangles.  When set to zero, the rectangles
+		 * are not shaded.  When set to 1.0, prediction recangles are completely filled.  Values in between are semi-transparent.
+		 * For example, the default value of 0.25 means the rectangles are filled at 25% opacity.
+		 * @since 2020-07-03
+		 *
+		 * Examples:
+		 *
+		 * Setting						| Image
+		 * -----------------------------|------
+		 * @p shade_predictions=0.0		| @image html shade_0pcnt.png
+		 * @p shade_predictions=0.25	| @image html shade_25pcnt.png
+		 * @p shade_predictions=0.50	| @image html shade_50pcnt.png
+		 * @p shade_predictions=0.75	| @image html shade_75pcnt.png
+		 * @p shade_predictions=1.0		| @image html shade_100pcnt.png
+		 */
+		float annotation_shade_predictions;
 
 		/** Determine if multiple class names are included when labelling an item.
 		 *

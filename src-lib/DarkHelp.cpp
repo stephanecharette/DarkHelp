@@ -186,6 +186,8 @@ void DarkHelp::reset()
 	fix_out_of_bound_values				= true;
 	annotation_colours					= get_default_annotation_colours();
 	sort_predictions					= ESort::kAscending;
+	annotation_auto_hide_labels			= true;
+	annotation_shade_predictions		= 0.25;
 
 	return;
 }
@@ -263,11 +265,36 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 		{
 			const auto colour = annotation_colours[pred.best_class % annotation_colours.size()];
 
+			int line_thickness_or_fill = annotation_line_thickness;
+			if (annotation_shade_predictions >= 1.0)
+			{
+				line_thickness_or_fill = CV_FILLED;
+			}
+			else if (annotation_shade_predictions > 0.0)
+			{
+				cv::Mat roi = annotated_image(pred.rect);
+				cv::Mat coloured_rect(roi.size(), roi.type(), colour);
+
+				const double alpha = annotation_shade_predictions;
+				const double beta = 1.0 - alpha;
+				cv::addWeighted(coloured_rect, alpha, roi, beta, 0.0, roi);
+			}
+
 //			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << "), name=\"" << pred.name << "\", duration=" << duration_string() << std::endl;
-			cv::rectangle(annotated_image, pred.rect, colour, annotation_line_thickness);
+			cv::rectangle(annotated_image, pred.rect, colour, line_thickness_or_fill);
 
 			int baseline = 0;
 			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, &baseline);
+
+			if (annotation_auto_hide_labels)
+			{
+				if (text_size.width >= pred.rect.width or
+					text_size.height >= pred.rect.height)
+				{
+					// label is too large to display
+					continue;
+				}
+			}
 
 			cv::Rect r(cv::Point(pred.rect.x - annotation_line_thickness/2, pred.rect.y - text_size.height - baseline + annotation_line_thickness), cv::Size(text_size.width + annotation_line_thickness, text_size.height + baseline));
 			if (r.x < 0) r.x = 0;																			// shift the label to the very left edge of the screen, otherwise it would be off-screen
@@ -412,20 +439,20 @@ DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 		{0x00, 0xFF, 0xCC},	// Electric Lime
 		{0xFF, 0xFF, 0x00},	// pure cyan
 		{0x85, 0x4E, 0x8D},	// Razzmic Berry
-		{0xCC, 0x00, 0xFF},	// Purple Pizzazz
+		{0xCC, 0x48, 0xFF},	// Purple Pizzazz
 		{0x00, 0xFF, 0x00},	// pure green
 		{0x00, 0xFF, 0xFF},	// pure yellow
 		{0xEC, 0xAD, 0x5D},	// Blue Jeans
 		{0xFF, 0x6E, 0xFF},	// Shocking Pink
-		{0x66, 0xFF, 0xFF},	// Laser Lemon
 		{0xD1, 0xF0, 0xAA},	// Magic Mint
 		{0x00, 0xC0, 0xFF},	// orange
 		{0xB6, 0x51, 0x9C},	// Purple Plum
 		{0x33, 0x99, 0xFF},	// Neon Carrot
-		{0xFF, 0x00, 0xFF},	// pure purple
 		{0x66, 0xFF, 0x66},	// Screamin' Green
 		{0x00, 0x00, 0xFF},	// pure red
+		{0x82, 0x00, 0x4B},	// Indigo
 		{0x37, 0x60, 0xFF},	// Outrageous Orange
+		{0x66, 0xFF, 0xFF},	// Laser Lemon
 		{0x78, 0x5B, 0xFD},	// Wild Watermelon
 		{0xFF, 0x00, 0x00}	// pure blue
 	};

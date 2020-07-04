@@ -292,6 +292,8 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."				, false, "false"	, &allowed_booleans	, cli);
 	TCLAP::SwitchArg use_json				("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."									, cli, false );
 	TCLAP::SwitchArg keep_images			("k", "keep"		, "Keep annotated images (write images to disk). Especially useful when combined with the -j option."		, cli, false );
+	TCLAP::ValueArg<std::string> autohide	("o", "autohide"	, "Auto-hide labels."												, false, "true"		, &allowed_booleans	, cli);
+	TCLAP::ValueArg<std::string> shade		("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles"		, false, "0.25"		, &float_constraint	, cli);
 	TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																, cli, false );
 	TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations."				, false, "0.5"		, &float_constraint	, cli);
 	TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."				, false, "true"		, &allowed_booleans	, cli);
@@ -345,6 +347,8 @@ void init(Options & options, int argc, char *argv[])
 	options.dark_help.annotation_font_scale				= std::stod(fontscale.getValue());
 	options.dark_help.annotation_include_duration		= get_bool(duration);
 	options.dark_help.annotation_include_timestamp		= get_bool(timestamp);
+	options.dark_help.annotation_shade_predictions		= std::stof(shade.getValue());
+	options.dark_help.annotation_auto_hide_labels		= get_bool(autohide);
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["threshold"]				= options.dark_help.threshold;
 	options.json["settings"]["hierarchy"]				= options.dark_help.hierarchy_threshold;
