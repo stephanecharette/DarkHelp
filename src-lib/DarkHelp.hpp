@@ -452,7 +452,7 @@ class DarkHelp
 		bool names_include_percentage;
 
 		/** Hide the label if the size of the text exceeds the size of the prediction.  This can help "clean up" some
-		 * images which contain many small objects.  Set to @p false to always display ever label.  Set to @p true if
+		 * images which contain many small objects.  Set to @p false to always display every label.  Set to @p true if
 		 * %DarkHelp should decide whether a label must be shown or hidden.  Defaults to @p true.
 		 * @since 2020-07-03
 		 *
