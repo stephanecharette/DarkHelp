@@ -10,7 +10,15 @@ Assuming we are working with a neural network named @p "cars", at a minimum you'
 DarkHelp cars.cfg cars.weights cars.names *.jpg
 ~~~~
 
-@note The images at the end of the command are optional when @p -l is used.  See the table below for details.
+%DarkHelp can also be used with video files instead of static images.  You call it exactly the same way.  For example:
+
+~~~~{.sh}
+DarkHelp cars.cfg cars.weights cars.names *.mp4
+~~~~
+
+Any video file or image type that can be opened using OpenCV is valid.
+
+@note The filename at the end of the command is optional when @p -l is used.  See the table below for details.
 
 Short Name						| Long Name			| Description
 --------------------------------|-------------------|------------
