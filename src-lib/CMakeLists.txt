@@ -4,27 +4,14 @@
 # $Id$
 
 
-# -------------------------------------------
-# First we build the dynamic and static libs.
-# -------------------------------------------
+# the library is C++11, but the CLI tool uses std::filesystem from C++17
+SET ( CMAKE_CXX_STANDARD				11 )
+SET ( CMAKE_CXX_STANDARD_REQUIRED		ON )
+SET ( CMAKE_POSITION_INDEPENDENT_CODE	ON )
+SET ( BUILD_SHARED_LIBS					FALSE )
 
-SET ( DH_LIB_NAME		darkhelp )
-SET ( DH_LIB_STATIC		${DH_LIB_NAME} )
-SET ( DH_LIB_SHARED		${DH_LIB_NAME}_shared )
+ADD_LIBRARY ( dh STATIC DarkHelp.cpp )
+SET_TARGET_PROPERTIES ( dh PROPERTIES OUTPUT_NAME "darkhelp" )
 
-# this creates the static library (.a)
-ADD_LIBRARY				( ${DH_LIB_STATIC} STATIC DarkHelp.cpp )
-
-# this creates the shared library (.so)
-ADD_LIBRARY				( ${DH_LIB_SHARED} SHARED DarkHelp.cpp )
-SET_TARGET_PROPERTIES	( ${DH_LIB_SHARED} PROPERTIES OUTPUT_NAME "${DH_LIB_NAME}" )
-SET_TARGET_PROPERTIES	( ${DH_LIB_SHARED} PROPERTIES PREFIX "lib" )
-
-
-# ---------------------------------------------------
-# Next we install the files where we need them to be.
-# ---------------------------------------------------
-
-INSTALL ( FILES DarkHelp.hpp				DESTINATION include )
-INSTALL ( TARGETS ${DH_LIB_STATIC}			DESTINATION lib )
-INSTALL ( TARGETS ${DH_LIB_SHARED} LIBRARY	DESTINATION lib )
+INSTALL ( FILES DarkHelp.hpp	DESTINATION include	)
+INSTALL ( TARGETS dh			DESTINATION lib		)

@@ -5,41 +5,156 @@
  */
 
 #include <DarkHelp.hpp>
+#include <random>
 #include <chrono>
 #include <fstream>
 #include <map>
 #include <vector>
 #include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <magic.h>
+#include <filesystem>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
 
 
-/* OpenCV4 has renamed some common defines and placed them in the cv namespace.  Need to deal with this until older
- * versions of OpenCV are no longer in use.
- */
-#ifndef CV_AA
-#define CV_AA cv::LINE_AA
-#endif
-#ifndef CV_FILLED
-#define CV_FILLED cv::FILLED
-#endif
-#ifndef CV_IMWRITE_PNG_COMPRESSION
-#define CV_IMWRITE_PNG_COMPRESSION cv::IMWRITE_PNG_COMPRESSION
-#endif
-#ifndef CV_FOURCC
-#define CV_FOURCC cv::VideoWriter::fourcc
+#ifdef WIN32
+// I need to figure out how to get libmagic compiled in Windows, or decide
+// to remove it from this project.  For now, create dummy prototypes so the
+// code compiles in Windows.  https://github.com/microsoft/vcpkg/issues/13528
+typedef int magic_t;
+#define MAGIC_MIME_TYPE 0
+magic_t magic_open(int flags) { return 0; }
+void magic_close(magic_t cookie) { return; }
+int magic_load(magic_t cookie, const char* filename) { return 0; }
+const char* magic_file(magic_t cookie, const char* filename)
+{
+	// Poor man's version of libmagic for Windows.  Look for a few common
+	// file types we expect DarkHelp to have to handle.  Unlike the real
+	// libmagic, this doesn't examine the contents of the file.  Instead,
+	// it is comparing the filename extension against a built-in list.
+	//
+	// Return string should look similar to "image/jpeg" or "video/mpeg".
+
+	std::string extension = filename;
+	size_t pos = extension.rfind(".");
+	if (pos != std::string::npos)
+	{
+		extension.erase(0, pos + 1);
+	}
+	std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) { return std::tolower(c); });
+
+	const std::map<std::string, std::string> m =
+	{
+		{"avi"	, "video"},
+		{"flv"	, "video"},
+		{"gif"	, "image"},
+		{"jpeg"	, "image"},
+		{"jpg"	, "image"},
+		{"m4a"	, "video"},
+		{"m4v"	, "video"},
+		{"mkv"	, "video"},
+		{"mov"	, "video"},
+		{"mp4"	, "video"},
+		{"mpeg4", "video"},
+		{"mpeg"	, "video"},
+		{"ogg"	, "video"},
+		{"png"	, "image"},
+		{"qt"	, "video"},
+		{"tiff"	, "image"},
+		{"tif"	, "image"},
+		{"webm"	, "video"},
+		{"wmv"	, "video"}
+	};
+
+	static std::string result;
+	result = "unknown/" + extension;
+
+	// now we loop through the map of extensions and see if this matches one of the common ones
+	for (const auto & [key, val] : m)
+	{
+		if (extension == key)
+		{
+			result = val + "/" + key;
+			break;
+		}
+	}
+
+	return result.c_str();
+}
+#else
+#include <magic.h>
 #endif
 
 
-// Messages that need to be shown to the user.
-// They key is time at which the messages need to be dismissed,
-// and the value is the actual text of the message.
-typedef std::map<std::chrono::high_resolution_clock::time_point, std::string> MMsg;
-MMsg messages;
+// possible return values from cv::waitKeyEx()
+#ifdef WIN32
+const int KEY_ESC		= 0x0000001b;
+const int KEY_g			= 0x00000067;
+const int KEY_h			= 0x00000068;
+const int KEY_p			= 0x00000070;
+const int KEY_q			= 0x00000071;
+const int KEY_w			= 0x00000077;
+const int KEY_PAGE_UP	= 0x00210000;
+const int KEY_PAGE_DOWN = 0x00220000;
+const int KEY_END		= 0x00230000;
+const int KEY_HOME		= 0x00240000;
+const int KEY_LEFT		= 0x00250000;
+const int KEY_UP		= 0x00260000;
+const int KEY_DOWN		= 0x00280000;
+#else
+const int KEY_ESC		= 0x0010001b;
+const int KEY_g			= 0x00100067;
+const int KEY_h			= 0x00100068;
+const int KEY_p			= 0x00100070;
+const int KEY_q			= 0x00100071;
+const int KEY_w			= 0x00100077;
+const int KEY_HOME		= 0x0010ff50;
+const int KEY_LEFT		= 0x0010ff51;
+const int KEY_UP		= 0x0010ff52;
+const int KEY_DOWN		= 0x0010ff54;
+const int KEY_PAGE_UP	= 0x0010ff55;
+const int KEY_PAGE_DOWN = 0x0010ff56;
+const int KEY_END		= 0x0010ff57;
+#endif
+
+
+struct Options
+{
+	std::string cfg_fn;
+	std::string weights_fn;
+	std::string names_fn;
+	bool keep_annotated_images;
+	bool use_json_output;
+	nlohmann::json json;
+	DarkHelp dark_help;
+	bool force_greyscale;
+	bool done;
+	bool size1_is_set;
+	bool size2_is_set;
+	cv::Size size1;
+	cv::Size size2;
+	DarkHelp::VStr all_files;
+	bool in_slideshow;
+	int wait_time_in_milliseconds_for_slideshow;
+	std::string filename;
+	size_t file_index;
+	std::string message_text;	// Message that needs to be shown to the user.  This text will be printed overtop of the image.
+	std::time_t message_time;	// Time at which the message should be cleared.
+
+	Options() :
+		keep_annotated_images	(false),
+		use_json_output			(false),
+		force_greyscale			(false),
+		done					(false),
+		size1_is_set			(false),
+		size2_is_set			(false),
+		in_slideshow			(false),
+		wait_time_in_milliseconds_for_slideshow(500),
+		file_index				(0),
+		message_time			(0)
+	{
+		return;
+	}
+};
 
 
 void show_help_window()
@@ -79,8 +194,8 @@ void show_help_window()
 		const cv::Point p1(10, y);
 		const cv::Point p2(120, y);
 
-		cv::putText(mat, key, p1, font_face, font_scale, cv::Scalar(0,0,0), font_thickness, CV_AA);
-		cv::putText(mat, val, p2, font_face, font_scale, cv::Scalar(0,0,0), font_thickness, CV_AA);
+		cv::putText(mat, key, p1, font_face, font_scale, cv::Scalar(0,0,0), font_thickness, cv::LINE_AA);
+		cv::putText(mat, val, p2, font_face, font_scale, cv::Scalar(0,0,0), font_thickness, cv::LINE_AA);
 		y += 25;
 	}
 
@@ -90,59 +205,46 @@ void show_help_window()
 }
 
 
-void add_msg(const std::string & msg)
+void set_msg(Options & options, const std::string & msg)
 {
-	// the thought initially was that we'd have multiple messages,
-	// but it works better if newer messages completely overwrite older messages
-	messages.clear();
-
-	if (msg.empty() == false)
+	options.message_time = 0;
+	options.message_text = msg;
+	if (options.message_text.empty() == false)
 	{
-		messages[std::chrono::high_resolution_clock::now() + std::chrono::seconds(2)] = msg;
+		std::cout << "-> setting message: \"" << msg << "\"" << std::endl;
 	}
 
 	return;
 }
 
 
-void clear_old_msg(const std::chrono::high_resolution_clock::time_point & now)
+void display_current_msg(Options & options, cv::Mat output_image, int & delay_in_milliseconds)
 {
-	// go through the map and delete messages expired messages
+	const auto now = std::time(nullptr);
 
-	auto iter = messages.begin();
-	while (iter != messages.end())
+	if (options.message_text.empty() or (options.message_time > 0 and options.message_time <= now))
 	{
-		if (now > iter->first)
-		{
-			iter = messages.erase(iter);
-		}
-		else
-		{
-			iter ++;
-		}
+		options.message_text = "";
+		options.message_time = 0;
 	}
-
-	return;
-}
-
-
-void display_current_msg(DarkHelp & dark_help, const std::chrono::high_resolution_clock::time_point & now, cv::Mat output_image, int & delay_in_milliseconds)
-{
-	if (not messages.empty())
+	else
 	{
-		const auto timestamp	= messages.begin()->first;
-		const std::string & msg	= messages.begin()->second;
+		if (options.message_time == 0)
+		{
+			// this must be the first time this message is shown, so initialize the time at which point it needs to be taken down
+			options.message_time = now + 2;
+		}
 
-		const cv::Size text_size = cv::getTextSize(msg, dark_help.annotation_font_face, dark_help.annotation_font_scale, dark_help.annotation_font_thickness, nullptr);
+		const cv::Size text_size = cv::getTextSize(options.message_text, options.dark_help.annotation_font_face, options.dark_help.annotation_font_scale, options.dark_help.annotation_font_thickness, nullptr);
 
 		cv::Point p(30, 50);
 		cv::Rect r(cv::Point(p.x - 5, p.y - text_size.height - 3), cv::Size(text_size.width + 10, text_size.height + 10));
-		cv::rectangle(output_image, r, cv::Scalar(0,255,255), CV_FILLED);
+		cv::rectangle(output_image, r, cv::Scalar(0,255,255), cv::FILLED);
 		cv::rectangle(output_image, r, cv::Scalar(0,0,0), 1);
-		cv::putText(output_image, msg, p, dark_help.annotation_font_face, dark_help.annotation_font_scale, cv::Scalar(0,0,0), dark_help.annotation_font_thickness, CV_AA);
+		cv::putText(output_image, options.message_text, p, options.dark_help.annotation_font_face, options.dark_help.annotation_font_scale, cv::Scalar(0,0,0), options.dark_help.annotation_font_thickness, cv::LINE_AA);
 
-		const int milliseconds_remaining = std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - now).count();
-		if (delay_in_milliseconds == 0 || delay_in_milliseconds > milliseconds_remaining)
+		const int milliseconds_remaining = 1000 * (options.message_time - now);
+		if (delay_in_milliseconds == 0 or milliseconds_remaining < delay_in_milliseconds)
 		{
 			delay_in_milliseconds = milliseconds_remaining;
 		}
@@ -245,29 +347,6 @@ class WxHConstraint : public TCLAP::Constraint<std::string>
 			catch (...) {}
 			return false;
 		}
-};
-
-
-struct Options
-{
-	std::string cfg_fn;
-	std::string weights_fn;
-	std::string names_fn;
-	bool keep_annotated_images;
-	bool use_json_output;
-	nlohmann::json json;
-	DarkHelp dark_help;
-	bool force_greyscale;
-	bool done;
-	bool size1_is_set;
-	bool size2_is_set;
-	cv::Size size1;
-	cv::Size size2;
-	DarkHelp::VStr all_files;
-	bool in_slideshow;
-	int wait_time_in_milliseconds_for_slideshow;
-	std::string filename;
-	size_t file_index;
 };
 
 
@@ -392,7 +471,9 @@ void init(Options & options, int argc, char *argv[])
 
 	if (random.getValue())
 	{
-		std::random_shuffle(options.all_files.begin(), options.all_files.end());
+		std::random_device rd;
+		std::mt19937 rng(rd());
+		std::shuffle(options.all_files.begin(), options.all_files.end(), rng);
 	}
 
 	return;
@@ -469,7 +550,7 @@ void process_video(Options & options)
 		cv::resizeWindow("DarkHelp", output_width, output_height);
 	}
 
-	output_video.open(short_filename, CV_FOURCC('m', 'p', '4', 'v'), input_fps, {output_width, output_height});
+	output_video.open(short_filename, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), input_fps, {output_width, output_height});
 
 	// reset to the start of the video and process every frame
 	input_video.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0.0);
@@ -614,19 +695,26 @@ void process_image(Options & options)
 		{
 			// save the annotated image to disk
 
+			auto basedir = std::filesystem::temp_directory_path();
+
+			#ifdef WIN32
+			const auto pid = _getpid();
+			#else
 			const auto pid = getpid();
-			std::string basedir = "/tmp";
+			#endif
+
 			if (options.all_files.size() > 1)
 			{
 				// since we're dealing with multiple images at once, put them in a subdirectory
-				basedir += "/darkhelp_" + std::to_string(pid);
-				mkdir(basedir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+				basedir /= "darkhelp_" + std::to_string(pid);
+				std::filesystem::create_directories(basedir);
 			}
 
-			const std::string output_filename = basedir + "/darkhelp_" + std::to_string(pid) + "_output_" + std::to_string(options.file_index) + ".png";
-			cv::imwrite(output_filename, output_image, {CV_IMWRITE_PNG_COMPRESSION, 9});
-			std::cout << "-> annotated image saved to \"" << output_filename << "\"" << std::endl;
-			options.json["file"][options.file_index]["annotated_image"] = output_filename;
+			auto output_file = basedir / ("darkhelp_" + std::to_string(pid) + "_output_" + std::to_string(options.file_index) + ".png");
+//			const std::string output_filename = basedir + "/darkhelp_" + std::to_string(pid) + "_output_" + std::to_string(options.file_index) + ".png";
+			cv::imwrite(output_file.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
+			std::cout << "-> annotated image saved to \"" << output_file.string() << "\"" << std::endl;
+			options.json["file"][options.file_index]["annotated_image"] = output_file.string();
 		}
 	}
 
@@ -680,9 +768,7 @@ void process_image(Options & options)
 
 	int delay_in_milliseconds = 0; // wait forever
 
-	const auto now = std::chrono::high_resolution_clock::now();
-	clear_old_msg(now);
-	display_current_msg(options.dark_help, now, output_image, delay_in_milliseconds);
+	display_current_msg(options, output_image, delay_in_milliseconds);
 
 	if (options.in_slideshow)
 	{
@@ -705,44 +791,44 @@ void process_image(Options & options)
 
 	switch (key)
 	{
-		case 0x00100071:	// 'q'
-		case 0x0010001b:	// ESC
+		case KEY_ESC:
+		case KEY_q:
 		{
 			options.done = true;
 			break;
 		}
-		case 0x00100067:	// 'g'
+		case KEY_g:
 		{
 			options.force_greyscale = not options.force_greyscale;
 			break;
 		}
-		case 0x00100077:	// 'w'
+		case KEY_w:
 		{
 			// save the file to disk, then re-load the same image
 			const std::string output_filename = "output.png";
-			cv::imwrite(output_filename, output_image, {CV_IMWRITE_PNG_COMPRESSION, 9});
+			cv::imwrite(output_filename, output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
 			std::cout << "-> output image saved to \"" << output_filename << "\"" << std::endl;
-			add_msg("saved image to \"" + output_filename + "\"");
+			set_msg(options, "saved image to \"" + output_filename + "\"");
 			break;
 		}
-		case 0x00100068:	// 'h'
+		case KEY_h:
 		{
 			show_help_window();
 			break;
 		}
-		case 0x0010ff50:	// HOME
+		case KEY_HOME:
 		{
 			options.in_slideshow = false;
 			options.file_index = 0;
 			break;
 		}
-		case 0x0010ff57:	// END
+		case KEY_END:
 		{
 			options.in_slideshow = false;
 			options.file_index = options.all_files.size() - 1;
 			break;
 		}
-		case 0x0010ff51:	// LEFT
+		case KEY_LEFT:
 		{
 			options.in_slideshow = false;
 			if (options.file_index > 0)
@@ -751,7 +837,7 @@ void process_image(Options & options)
 			}
 			break;
 		}
-		case 0x0010ff52:	// UP
+		case KEY_UP:
 		{
 			// quicker slideshow
 			options.wait_time_in_milliseconds_for_slideshow *= 0.5;
@@ -760,40 +846,40 @@ void process_image(Options & options)
 				options.wait_time_in_milliseconds_for_slideshow = 50;
 			}
 			std::cout << "-> slideshow timeout has been decreased to " << options.wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
-			add_msg("slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
+			set_msg(options, "slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
 			options.in_slideshow = true;
 			break;
 		}
-		case 0x0010ff54:	// DOWN
+		case KEY_DOWN:
 		{
 			// slower slideshow
 			options.wait_time_in_milliseconds_for_slideshow /= 0.5;
 			std::cout << "-> slideshow timeout has been increased to " << options.wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
-			add_msg("slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
+			set_msg(options, "slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
 			options.in_slideshow = true;
 			break;
 		}
-		case 0x0010ff55:	// PAGE-UP
+		case KEY_PAGE_UP:
 		{
 			options.dark_help.threshold += 0.1;
 			if (options.dark_help.threshold > 1.0)
 			{
 				options.dark_help.threshold = 1.0;
 			}
-			add_msg("increased threshold: " + std::to_string((int)std::round(options.dark_help.threshold * 100.0)) + "%");
+			set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.dark_help.threshold * 100.0)) + "%");
 			break;
 		}
-		case 0x0010ff56:	// PAGE-DOWN
+		case KEY_PAGE_DOWN:
 		{
 			options.dark_help.threshold -= 0.1;
 			if (options.dark_help.threshold < 0.01)
 			{
 				options.dark_help.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
 			}
-			add_msg("decreased threshold: " + std::to_string((int)std::round(options.dark_help.threshold * 100.0)) + "%");
+			set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.dark_help.threshold * 100.0)) + "%");
 			break;
 		}
-		case 0x00100070:	// 'p'
+		case KEY_p:
 		{
 			options.in_slideshow = not options.in_slideshow;
 			// don't increment the image index, stay on this image
@@ -821,8 +907,7 @@ int main(int argc, char *argv[])
 		magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
 		magic_load(magic_cookie, nullptr);
 
-		add_msg("press 'h' for help");
-
+		set_msg(options, "press 'h' for help");
 		options.file_index = 0;
 		while (options.file_index < options.all_files.size() && not options.done)
 		{

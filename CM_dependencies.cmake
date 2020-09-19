@@ -4,9 +4,13 @@
 # $Id$
 
 
-FIND_PACKAGE ( Threads	REQUIRED	)
-FIND_PACKAGE ( OpenCV	REQUIRED	)
-FIND_LIBRARY ( Magic	magic		) # sudo apt-get install libmagic-dev
-FIND_LIBRARY ( Darknet	darknet		)
+FIND_PACKAGE ( Threads			REQUIRED	)
+FIND_PACKAGE ( Darknet	CONFIG	REQUIRED	)
+FIND_PACKAGE ( OpenCV	CONFIG	REQUIRED	)
+#FIND_LIBRARY ( Magic	magic				) # sudo apt-get install libmagic-dev
 
-INCLUDE_DIRECTORIES ( ${OpenCV_INCLUDE_DIRS} )
+FIND_PATH ( TCLAP_INCLUDE_DIRS "tclap/Arg.h")
+
+INCLUDE_DIRECTORIES ( ${Darknet_INCLUDE_DIR}	)
+INCLUDE_DIRECTORIES ( ${OpenCV_INCLUDE_DIRS}	)
+INCLUDE_DIRECTORIES ( ${TCLAP_INCLUDE_DIRS}		)

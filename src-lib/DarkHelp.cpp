@@ -32,6 +32,7 @@
 /* OpenCV4 has renamed some common defines and placed them in the cv namespace.  Need to deal with this until older
  * versions of OpenCV are no longer in use.
  */
+#if 1 /// @todo remove this soon
 #ifndef CV_INTER_CUBIC
 #define CV_INTER_CUBIC cv::INTER_CUBIC
 #endif
@@ -43,6 +44,7 @@
 #endif
 #ifndef CV_FILLED
 #define CV_FILLED cv::FILLED
+#endif
 #endif
 
 

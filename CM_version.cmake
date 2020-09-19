@@ -4,22 +4,16 @@
 # $Id$
 
 
-EXECUTE_PROCESS (
-	COMMAND svnversion
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	OUTPUT_VARIABLE DH_VER_SVN
-	OUTPUT_STRIP_TRAILING_WHITESPACE )
+FILE ( READ version.txt VERSION_TXT )
+STRING ( STRIP "${VERSION_TXT}" VERSION_TXT )
+STRING ( REGEX MATCHALL "^([0-9]+)\\.([0-9]+)\\.([0-9]+)-([0-9]+)$" OUTPUT ${VERSION_TXT} )
 
-IF ( NOT DH_VER_SVN MATCHES "[0-9]+.*" )
-	# Maybe building from tarball without having done a svn checkout?  Use a fake version number
-	SET ( DH_VER_SVN 1 )
-	MESSAGE ( "exact version number is unavailable (building from source tarball?)" )
-ENDIF ()
+SET ( DH_VER_MAJOR	${CMAKE_MATCH_1} )
+SET ( DH_VER_MINOR	${CMAKE_MATCH_2} )
+SET ( DH_VER_PATCH	${CMAKE_MATCH_3} )
+SET ( DH_VER_COMMIT	${CMAKE_MATCH_4} )
 
-SET ( DH_VER_MAJOR 1 )
-SET ( DH_VER_MINOR 0 )
-SET ( DH_VER_PATCH 0-${DH_VER_SVN} )
-SET ( DH_VERSION ${DH_VER_MAJOR}.${DH_VER_MINOR}.${DH_VER_PATCH} )
+SET ( DH_VERSION ${DH_VER_MAJOR}.${DH_VER_MINOR}.${DH_VER_PATCH}-${DH_VER_COMMIT} )
 MESSAGE ( "Building ver: ${DH_VERSION}" )
 
 ADD_DEFINITIONS ( -DDH_VERSION="${DH_VERSION}" )

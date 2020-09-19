@@ -4,6 +4,15 @@
 # $Id$
 
 
-ADD_EXECUTABLE ( DarkHelp main.cpp)
-TARGET_LINK_LIBRARIES ( DarkHelp Threads::Threads darkhelp ${Darknet} ${OpenCV_LIBS} ${Magic} )
-INSTALL ( TARGETS DarkHelp DESTINATION bin )
+# the library is C++11, but the CLI tool uses std::filesystem from C++17
+SET ( CMAKE_CXX_STANDARD				17 )
+SET ( CMAKE_CXX_STANDARD_REQUIRED		ON )
+
+ADD_EXECUTABLE			( cli main.cpp )
+SET_TARGET_PROPERTIES	( cli PROPERTIES OUTPUT_NAME "DarkHelp" )
+TARGET_LINK_LIBRARIES	( cli PRIVATE Threads::Threads dh Darknet::dark ${OpenCV_LIBS} ${Magic} )
+
+# target_link_libraries(main PRIVATE opencv_ml opencv_dnn opencv_core opencv_flann)
+
+
+INSTALL ( TARGETS cli DESTINATION bin )
