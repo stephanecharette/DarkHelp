@@ -120,28 +120,30 @@ const int KEY_END		= 0x0010ff57;
 
 struct Options
 {
-	std::string cfg_fn;
-	std::string weights_fn;
-	std::string names_fn;
-	bool keep_annotated_images;
-	bool use_json_output;
-	nlohmann::json json;
-	DarkHelp dark_help;
-	bool force_greyscale;
-	bool done;
-	bool size1_is_set;
-	bool size2_is_set;
-	cv::Size size1;
-	cv::Size size2;
-	DarkHelp::VStr all_files;
-	bool in_slideshow;
-	int wait_time_in_milliseconds_for_slideshow;
-	std::string filename;
-	size_t file_index;
-	std::string message_text;	// Message that needs to be shown to the user.  This text will be printed overtop of the image.
-	std::time_t message_time;	// Time at which the message should be cleared.
+	magic_t			magic_cookie;
+	std::string		cfg_fn;
+	std::string		weights_fn;
+	std::string		names_fn;
+	bool			keep_annotated_images;
+	bool			use_json_output;
+	nlohmann::json	json;
+	DarkHelp		dark_help;
+	bool			force_greyscale;
+	bool			done;
+	bool			size1_is_set;
+	bool			size2_is_set;
+	cv::Size		size1;
+	cv::Size		size2;
+	DarkHelp::VStr	all_files;
+	bool			in_slideshow;
+	int				wait_time_in_milliseconds_for_slideshow;
+	std::string		filename;
+	size_t			file_index;
+	std::string		message_text;	// Message that needs to be shown to the user.  This text will be printed overtop of the image.
+	std::time_t		message_time;	// Time at which the message should be cleared.
 
 	Options() :
+		magic_cookie			(0),
 		keep_annotated_images	(false),
 		use_json_output			(false),
 		force_greyscale			(false),
@@ -394,6 +396,9 @@ void init(Options & options, int argc, char *argv[])
 		names.reset();
 	}
 
+	options.magic_cookie = magic_open(MAGIC_MIME_TYPE);
+	magic_load(options.magic_cookie, nullptr);
+
 	// Originally, it was very important that the cfg, weights, and names files be listed in the correct order.
 	// But now we have a function that looks at the contents of the files and makes an educated guess.
 	options.cfg_fn		= cfg		.getValue();
@@ -446,8 +451,47 @@ void init(Options & options, int argc, char *argv[])
 	options.size1			= get_WxH(resize1);
 	options.size2			= get_WxH(resize2);
 	options.done			= false;
-	options.all_files		= files.getValue();
 	options.file_index		= 0;
+
+	std::cout << "-> looking for image and video files" << std::endl;
+	size_t number_of_files_skipped = 0;
+
+	for (const auto & fn : files.getValue())
+	{
+		std::filesystem::path name(fn);
+		if (std::filesystem::exists(name) == false)
+		{
+			throw std::invalid_argument("\"" + fn + "\" does not exist or is not accessible");
+		}
+
+		if (std::filesystem::is_directory(name) == false)
+		{
+			// simple filename, not subdirectory, so add the name to our list
+			options.all_files.push_back(fn);
+			continue;
+		}
+
+		// if we get here, then we've been given a subdirectory instead of a specific filename
+
+		for (const auto & entry : std::filesystem::recursive_directory_iterator(name,  std::filesystem::directory_options::follow_directory_symlink))
+		{
+			const std::string filename = entry.path().string();
+			if (entry.is_directory() == false)
+			{
+				const std::string mime_type = magic_file(options.magic_cookie, filename.c_str());
+				const bool is_image = (mime_type.find("image/") == 0);
+				const bool is_video = (mime_type.find("video/") == 0);
+				if (is_image or is_video)
+				{
+					options.all_files.push_back(filename);
+				}
+				else
+				{
+					number_of_files_skipped ++;
+				}
+			}
+		}
+	}
 
 	if (inputlist.isSet())
 	{
@@ -467,6 +511,13 @@ void init(Options & options, int argc, char *argv[])
 			options.all_files.push_back(line);
 		}
 	}
+
+	std::cout << "-> found " << options.all_files.size() << " file" << (options.all_files.size() == 1 ? "" : "s");
+	if (number_of_files_skipped)
+	{
+		std::cout << " (" << number_of_files_skipped << " skipped)";
+	}
+	std::cout << std::endl;
 
 	if (random.getValue())
 	{
@@ -903,16 +954,13 @@ int main(int argc, char *argv[])
 
 		init(options, argc, argv);
 
-		magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
-		magic_load(magic_cookie, nullptr);
-
 		set_msg(options, "press 'h' for help");
 		options.file_index = 0;
 		while (options.file_index < options.all_files.size() && not options.done)
 		{
 			options.filename = options.all_files.at(options.file_index);
 
-			const std::string mime_type = magic_file(magic_cookie, options.filename.c_str());
+			const std::string mime_type = magic_file(options.magic_cookie, options.filename.c_str());
 			const bool is_image = (mime_type.find("image/") == 0);
 			const bool is_video = (mime_type.find("video/") == 0);
 
@@ -940,7 +988,8 @@ int main(int argc, char *argv[])
 
 		// Once we get here, we're done the loop.  Either we've shown all the images, or the user has pressed 'q' to quit.
 
-		magic_close(magic_cookie);
+		magic_close(options.magic_cookie);
+		options.magic_cookie = 0;
 
 		if (options.json.empty() or options.use_json_output == false)
 		{
