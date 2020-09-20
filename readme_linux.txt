@@ -1,7 +1,7 @@
 # DarkHelp - C++ helper class for Darknet's C API.
 # Copyright 2019-2020 Stephane Charette <stephanecharette@gmail.com>
 # MIT license applies.  See "license.txt" for details.
-# $Id: readme.txt 2901 2020-01-17 17:46:22Z stephane $
+# $Id$
 
 
 Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
@@ -13,7 +13,7 @@ Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
 
 Assuming Ubuntu or similar Debian-based Linux distribution, run the following command:
 
-	sudo apt-get install build-essential tar curl zip unzip git cmake libmagic-dev libgtk2.0-dev pkg-config
+	sudo apt-get install build-essential tar curl zip unzip git cmake libmagic-dev libgtk2.0-dev pkg-config yasm
 
 
 # ----------------
@@ -69,7 +69,7 @@ Save the portfile.cmake file, exit from the editor, and run *ONE* of the followi
 
 Note the install command will take some time to run since it has to download and build OpenCV, Darknet, and various dependencies.
 
-Once it has finished, you can free up some disk space by deleting the build directories with this command:
+Once it has finished, you can free up some disk space by deleting these two subdirectories:
 
 	rm -rf buildtrees downloads
 
@@ -89,6 +89,6 @@ Run the following commands:
 	make -j $(nproc)
 	make package
 
-This will build a static library named "DarkHelp/build/src-lib/libdarkhelp.a", and the DarkHelp command-line tool.
+This will build a static library named "libdarkhelp.a", and the "DarkHelp" command-line tool.
 
 See build_linux.cmd which contains the steps from "BUILDING DARKHELP".

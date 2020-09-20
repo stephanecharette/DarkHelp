@@ -13,12 +13,11 @@ SET ( StdCppFS "" )
 IF (NOT WIN32)
 	FIND_LIBRARY ( Magic magic ) # sudo apt-get install libmagic-dev
 
-	# On older 18.04, we need to use "experimental/filesystem" instead of "filesystem",
-	# and we need to pass in the -lstdc++fs flag when linking
-	FIND_PATH ( FILESYSTEM "filesystem" )
-	IF ( FILESYSTEM STREQUAL "FILESYSTEM-NOTFOUND" )
-		SET ( StdCppFS stdc++fs	)
-	ENDIF ()
+	# On older 18.04, we need to use "experimental/filesystem" instead of "filesystem"
+	# and we need to pass in the -lstdc++fs flag when linking.  This seems to have no
+	# impact even when using newer versions of g++ which technically doesn't need this
+	# to link.  (Does this need to be fixed in a different manner?)
+	SET ( StdCppFS stdc++fs	)
 ENDIF ()
 
 FIND_PATH ( TCLAP_INCLUDE_DIRS "tclap/Arg.h" )

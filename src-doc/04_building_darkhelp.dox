@@ -6,7 +6,10 @@ In September 2020, %DarkHelp was ported from Linux to Windows.  As part of this 
 
 The new process for building %DarkHelp involves leveraging @em vcpkg to install dependencies such as @em tclap, @em OpenCV, and @em Darknet.
 
-The steps on Linux and Windows are very similar with only a few minor differences.  Please see the files @p readme_linux.txt and @p readme_windows.txt included with the source code.
+The build steps on Linux and Windows are very similar with only a few minor differences.  Please see the files @p readme_linux.txt and @p readme_windows.txt included with the source code.
+
+@li @subpage Building_Linux
+@li @subpage Building_Windows
 
 Download either <a target="_blank" href="https://www.ccoderun.ca/download/?C=M;O=D">pre-built packages or the %DarkHelp source code from here</a>.
 
@@ -22,5 +25,25 @@ Now from within your application, you must @p "#include <DarkHelp.hpp>" and link
 @li @p libdarkhelp.a
 @li @p libdarknet.a
 @li OpenCV's libraries
+
+
+
+@page Building_Linux readme_linux.txt
+
+This file @p readme_linux.txt contains the build instructions for building in Ubuntu:
+
+<div style="padding:1em; margin:2em; border:1px solid black; white-space:pre-line">
+@htmlinclude "../readme_linux.txt"
+</div>
+
+
+
+@page Building_Windows readme_windows.txt
+
+This file @p readme_windows.txt contains the build instructions for building in Windows:
+
+<div style="padding:1em; margin:2em; border:1px solid black; white-space:pre-line">
+@htmlinclude "../readme_windows.txt"
+</div>
 
 */

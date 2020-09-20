@@ -1,7 +1,7 @@
 # DarkHelp - C++ helper class for Darknet's C API.
 # Copyright 2019-2020 Stephane Charette <stephanecharette@gmail.com>
 # MIT license applies.  See "license.txt" for details.
-# $Id: readme.txt 2901 2020-01-17 17:46:22Z stephane $
+# $Id$
 
 
 Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
@@ -59,7 +59,7 @@ Run *ONE* of the following two "install" commands:
 
 Note the install command will take some time to run since it has to download and build OpenCV, Darknet, and various dependencies.
 
-Once it has finished, you can free up some disk space by deleting the build directories with this command:
+Once it has finished, you can free up some disk space by deleting these two subdirectories:
 
 	rmdir /s /q buildtrees downloads
 
@@ -79,6 +79,6 @@ Run the following commands:
 	msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
 	msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
 
-This will build a static library named "DarkHelp\build\src-lib\Release\darkhelp.lib", and the DarkHelp.exe command-line tool.
+This will build a static library named "darkhelp.lib", and the "DarkHelp.exe" command-line tool.
 
 See build_windows.cmd which contains the steps from "BUILDING DARKHELP".
