@@ -10,6 +10,6 @@ SET ( CMAKE_CXX_STANDARD_REQUIRED		ON )
 
 ADD_EXECUTABLE			( cli main.cpp )
 SET_TARGET_PROPERTIES	( cli PROPERTIES OUTPUT_NAME "DarkHelp" )
-TARGET_LINK_LIBRARIES	( cli PRIVATE Threads::Threads dh Darknet::dark ${OpenCV_LIBS} ${Magic} )
+TARGET_LINK_LIBRARIES	( cli PRIVATE Threads::Threads dh Darknet::dark ${OpenCV_LIBS} ${Magic} ${StdCppFS} )
 
 INSTALL ( TARGETS cli DESTINATION bin )

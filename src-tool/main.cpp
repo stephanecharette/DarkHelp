@@ -11,9 +11,9 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <filesystem>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
+#include "filesystem.hpp"
 
 
 #ifdef WIN32
@@ -476,7 +476,8 @@ void init(Options & options, int argc, char *argv[])
 		for (const auto & entry : std::filesystem::recursive_directory_iterator(name,  std::filesystem::directory_options::follow_directory_symlink))
 		{
 			const std::string filename = entry.path().string();
-			if (entry.is_directory() == false)
+//			if (entry.is_directory() == false) -- experimental fs does not have this call
+			if (std::filesystem::is_directory(entry.path()) == false)
 			{
 				const std::string mime_type = magic_file(options.magic_cookie, filename.c_str());
 				const bool is_image = (mime_type.find("image/") == 0);
