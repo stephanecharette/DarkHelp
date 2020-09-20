@@ -68,7 +68,7 @@ Once it has finished, you can free up some disk space by deleting the build dire
 # BUILDING DARKHELP
 # -----------------
 
-Download DarkHelp from https://www.ccoderun.ca/programming/
+Download DarkHelp from https://www.ccoderun.ca/
 Extract the source into c:\src\DarkHelp\
 Run the following commands:
 

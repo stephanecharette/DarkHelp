@@ -10,9 +10,9 @@ Once you have successfully trained a neural network, the next question becomes: 
 
 (In case it helps, I did put together a blog post with a few details in late August 2019:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/">https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/</a>.)
 
-<b>%DarkHelp lets you skip those C function calls, and simplifies things with an extremely simple-to-use C++ API!</b>
+<b>%DarkHelp lets you skip those C function calls, and simplifies things with an extremely simple-to-use C++ API!</b>  The %DarkHelp C++ library is available for both @em Linux and @em Windows.
 
-You load the neural network and the weight files, then call @ref DarkHelp::predict() once per image you'd like analyzed.  Each time you get back a @p std::vector of predictions.
+You load the neural network and the weight files, then call @ref DarkHelp::predict() once per image you'd like analyzed.  Each time you get back a new @p std::vector of predictions.
 
 Since annotating pictures is something that many applications want -- especially during debugging -- @ref DarkHelp::annotate() is provided to easily mark up images with the detection results.  To ease integrating this into larger projects, %DarkHelp uses OpenCV's standard @p cv::Mat images, not Darknet's internal image structure.  This is an example of what @ref DarkHelp::annotate() can do with an image and a neural network that detects barcodes:
 
@@ -107,6 +107,6 @@ The example call to @p cv::imwrite() in the previous example might give somethin
 
 @image html driving_annotations.png
 
-Note that DarkHelp uses OpenCV internally, regardless of whether or not the client code calls @ref DarkHelp::annotate().  This means when you link against @p libdarkhelp.so (dynamic) or @p libdarkhelp.a (static) you'll also need to link against a modern version of OpenCV.
+Note that DarkHelp uses OpenCV internally, regardless of whether or not the client code calls @ref DarkHelp::annotate().  This means when you link against the @p libdarkhelp library you'll also need to link against OpenCV.
 
 */

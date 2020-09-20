@@ -12,7 +12,4 @@ ADD_EXECUTABLE			( cli main.cpp )
 SET_TARGET_PROPERTIES	( cli PROPERTIES OUTPUT_NAME "DarkHelp" )
 TARGET_LINK_LIBRARIES	( cli PRIVATE Threads::Threads dh Darknet::dark ${OpenCV_LIBS} ${Magic} )
 
-# target_link_libraries(main PRIVATE opencv_ml opencv_dnn opencv_core opencv_flann)
-
-
 INSTALL ( TARGETS cli DESTINATION bin )

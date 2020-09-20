@@ -8,9 +8,8 @@ The official web site for C Code Run's %DarkHelp is http://www.ccoderun.ca/. <br
 
 This documentation is available here:
 @li http://www.ccoderun.ca/DarkHelp/api/
-@li https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/
 
-Source code for %DarkHelp is available at http://www.ccoderun.ca/download/. <br/>
+Source code for %DarkHelp is available at http://www.ccoderun.ca/download/.<br/>
 
 @note %DarkHelp is @em not Darknet!  %DarkHelp is a C++ API layer used to call Darknet's original C API.
 

@@ -7,7 +7,10 @@
 FIND_PACKAGE ( Threads			REQUIRED	)
 FIND_PACKAGE ( Darknet	CONFIG	REQUIRED	)
 FIND_PACKAGE ( OpenCV	CONFIG	REQUIRED	)
-#FIND_LIBRARY ( Magic	magic				) # sudo apt-get install libmagic-dev
+
+IF (NOT WIN32)
+	FIND_LIBRARY ( Magic magic ) # sudo apt-get install libmagic-dev
+ENDIF ()
 
 FIND_PATH ( TCLAP_INCLUDE_DIRS "tclap/Arg.h")
 

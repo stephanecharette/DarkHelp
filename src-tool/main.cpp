@@ -81,6 +81,7 @@ const char* magic_file(magic_t cookie, const char* filename)
 	return result.c_str();
 }
 #else
+#include <unistd.h>
 #include <magic.h>
 #endif
 
@@ -322,9 +323,7 @@ class FileExistConstraint : public TCLAP::Constraint<std::string>
 		virtual std::string shortID() const		{ return "filename"; }
 		virtual bool check(const std::string & value) const
 		{
-			struct stat s;
-			const int result = stat(value.c_str(), &s);
-			return (result == 0);
+			return std::filesystem::exists(value);
 		}
 };
 

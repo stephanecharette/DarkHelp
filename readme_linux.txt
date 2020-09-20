@@ -11,9 +11,32 @@ Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
 # SETTING UP PRE-REQUISITES
 # -------------------------
 
-Assuming Ubuntu or Debian based Linux distribution, run the following commands:
+Assuming Ubuntu or similar Debian-based Linux distribution, run the following command:
 
-	sudo apt-get install build-essentials tar curl zip unzip git cmake
+	sudo apt-get install build-essential tar curl zip unzip git cmake libmagic-dev libgtk2.0-dev pkg-config
+
+
+# ----------------
+# CUDA/CUDNN & GPU
+# ----------------
+
+If you only want the "CPU" version of OpenCV and Darknet, then skip to the next section called "BUILDING OPENCV & DARKNET".
+
+If you want to use your CUDA-supported GPU with Darknet and DarkHelp:
+
+	- (These notes are from a while back.  The process may have changed.)
+	- Visit https://developer.nvidia.com/cuda-downloads or https://developer.nvidia.com/cuda-toolkit
+	- Click on Linux -> x86_64 -> Ubuntu -> 18.04, deb (network)
+	- The instructions should be similar to this:
+		wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+		sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+		sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+		sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+		sudo apt-get -y install cuda
+	- You'll need to add nsight-compute and cuda to the path.  For example, since I'm using fish as my shell, I run this:
+		set --universal fish_user_paths /opt/nvidia/nsight-compute/2019.5.0 $fish_user_paths
+		set --universal fish_user_paths /usr/local/cuda/bin $fish_user_paths
+	- At the end of the next section, the installation command you run needs to be the one that includes CUDA/CUDNN support.
 
 
 # -------------------------
@@ -28,8 +51,15 @@ Run the following commands:
 	cd vcpkg
 	./bootstrap-vcpkg.sh
 	./vcpkg integrate install
+	./vcpkg integrate bash
 
-Run *ONE* of the following two "install" commands:
+Edit the file ~/src/vcpkg/ports/opencv4/portfile.cmake and look for the this line:
+	-DWITH_GTK=OFF
+
+Change that line to this:
+	-DWITH_GTK=ON
+
+Save the portfile.cmake file, exit from the editor, and run *ONE* of the following two "install" commands:
 
 	- This one is if you have a supported GPU and CUDA:
 		./vcpkg install --triplet x64-linux tclap cuda cudnn opencv-cuda darknet[cuda,cudnn,opencv-cuda]
@@ -44,41 +74,21 @@ Once it has finished, you can free up some disk space by deleting the build dire
 	rm -rf buildtrees downloads
 
 
-# ------------------
-# SETTING UP DARKNET
-# ------------------
+# -----------------
+# BUILDING DARKHELP
+# -----------------
 
-cd ~
-git clone https://github.com/AlexeyAB/darknet.git
-cd darknet
-
-Edit the file "makefile" and at the top make certain that OPENCV=1 and LIBSO=1.
-
-There may be other build settings you want to change.  See this post for details:  https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/
-
-Save the "makefile", then run the following commands:
-
-make
-sudo cp include/darknet.h /usr/local/include/
-sudo cp libdarknet.so /usr/local/lib/
-sudo ldconfig
-
-
-# -------------------
-# SETTING UP DARKHELP
-# -------------------
-
-Make sure you follow the instructions for setting up darknet first.
-
-Download DarkHelp from https://www.ccoderun.ca/programming/
+Download DarkHelp from https://www.ccoderun.ca/
 Extract the source into ~/src/DarkHelp/
+Run the following commands:
 
-cd ~/src/DarkHelp/
-mkdir build
-cd build
-cmake ..
-make
-make package
-sudo dpkg -i darkhelp*.deb
+	cd ~/src/DarkHelp/
+	mkdir build
+	cd build
+	cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=~/src/vcpkg/installed/x64-linux -DVCPKG_TARGET_TRIPLET=x64-linux ..
+	make -j $(nproc)
+	make package
 
-Example application that uses libdarkhelp.so can be found in src-tool, or at https://www.ccoderun.ca/programming/2019-08-25_Darknet_C_CPP/.
+This will build a static library named "DarkHelp/build/src-lib/libdarkhelp.a", and the DarkHelp command-line tool.
+
+See build_linux.cmd which contains the steps from "BUILDING DARKHELP".
