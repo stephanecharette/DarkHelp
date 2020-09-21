@@ -15,5 +15,5 @@ TARGET_LINK_LIBRARIES	( cli PRIVATE Threads::Threads dh Darknet::dark ${OpenCV_L
 INSTALL ( TARGETS cli DESTINATION bin )
 
 IF ( WIN32 )
-	INSTALL ( FILE DarkHelp.ico DESTINATION bin )
+	INSTALL ( FILES DarkHelp.ico DESTINATION bin )
 ENDIF ()
