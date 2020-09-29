@@ -1,0 +1,61 @@
+/** @page Tiling Image Tiling
+
+There are 3 "sizes" which are important when working with Darknet:
+
+@li The dimensions of the neural network.  This is the @p width=... and @p height=... in the @p [net] section at the top of the config file.
+@li The size of the images, which may or may not match the network dimensions.  For example, @p 1024x768 or @p 1920x1080.
+@li The size of the objects within the images.  This becomes especially important when attempting to detect small objects.
+
+If your image size matches approximately your network dimensions, then you don't need to do anything else.  Darknet and the neural network you trained should have no problems, and you can skip the rest of this page.
+
+If your image size is much bigger (1.5x or more) than your network size -- especially if you are looking for small objects! -- then image tiling can help.
+
+The neural network is given a size when it is first trained.  Both the width and the height @b must be divisible by 32; this is a Darknet limitation.  Example sizes might be @p 640x480, or @p 608x448.  The @p YOLOv3-tiny.cfg and @p YOLOv4-tiny.cfg files for example default to @p 416x416, so many people getting started with Darknet begin with that size.
+
+Every image that is fed into Darknet will be resized to the network dimensions.  Both for training purposes, and then later during object detection when you apply the neural network against images.
+
+For the sake of this example, lets say we use a network size of @p 416x320, which gives an aspect ratio of 1.3, very close to the 1.3333 you'd get from a typical 4:3 image captured by a phone or webcam.
+
+That means an image measuring @p 1024x768 will be resized by Darknet to measure @p 416x320.  Here is what that looks like:
+
+@image html mailboxes_1024x768_and_416x320.png
+
+The neural network in this example detects the numbers and the locks on the mailboxes.  The problem is once Darknet has scaled the image down, it fails to detect anything.  The individual objects in the image are now too small to detect due to the new image size.
+
+Instead of resizing the @p 1024x768 image down to @p 416x320, the image can be broken up into smaller "tiles".  When the option has been enabled (via @ref DarkHelp::enable_tiles) %DarkHelp then automatically feeds each individual tile through Darknet, and the results are combined as if a single image had been processed.
+
+The size of the tiles is determined automatically by %DarkHelp according to the network dimensions.  In this example with a @p 1024x768 image and a neural network measuring @p 416x320 results in 2 horizontal tiles and 2 vertical tiles, like this:
+
+@image html mailboxes_2x2_tiles.png
+
+The tiles are then automatically processed by %DarkHelp and individually fed to Darknet:
+
+@image html mailboxes_2x2_tiles_detection.png
+
+The final result vector contains all the objects detected across all tiles for the original image:
+
+~~~~{.txt}
+> DarkHelp --tiles on -autohide off --duration off --threshold 0.2 mailboxes{.names,.cfg,_best.weights} DSCN0582.jpg
+...
+-> neural network dimensions: 416x320
+-> looking for image and video files
+-> found 1 file
+#1/1: loading "DSCN0582.jpg"
+-> prediction took 12 milliseconds across 4 tiles (2x2) each measuring 512x384
+-> prediction results: 87
+-> 1/87: "lock 96%" #0 prob=0.962067 x=312 y=257 w=21 h=22 entries=1
+-> 2/87: "1 96%" #1 prob=0.963509 x=143 y=254 w=33 h=29 entries=1
+-> 3/87: "9 98%" #9 prob=0.978319 x=342 y=248 w=38 h=31 entries=1
+-> 4/87: "lock 98%" #0 prob=0.980014 x=107 y=260 w=24 h=23 entries=1
+-> 5/87: "2 35%" #2 prob=0.349146 x=632 y=292 w=33 h=8 entries=1
+-> 6/87: "1 96%" #1 prob=0.959376 x=631 y=242 w=36 h=30 entries=1
+...
+~~~~
+
+Running the @p 1024x768 sample image through the @p 416x320 network without the use of tiles resulted in zero objects found.
+
+Using the same image but with @ref DarkHelp::enable_tiles "tiling enabled" resulted in much better results:
+
+@image html mailboxes_detection.png
+
+*/

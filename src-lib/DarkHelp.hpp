@@ -225,28 +225,42 @@ class DarkHelp
 		/// The opposite of @ref init().  This is automatically called by the destructor.
 		virtual void reset();
 
-		/** Use the neural network to predict what is contained in this image.
+		/** Use the neural network to predict what is contained in this image.  This results in a call to either
+		 * @ref predict_internal() or @ref predict_tile() depending on how @ref enable_tiles has been set.
 		 * @param [in] image_filename The name of the image file to load from disk and analyze.  The member
-		 * @ref original_image will be set to this image.
+		 * @ref original_image will be set to this image.  If the image is larger or smaller than the dimensions of the neural
+		 * network, then Darknet will stretch the image to match the exact size of the neural network.  Stretching the image
+		 * does <em>not</em> maintain the the aspect ratio.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 		 * If >= 0, then @ref threshold will be set to this new value.  The threshold must be either -1, or a value
 		 * between 0.0 and 1.0 meaning 0% to 100%.
 		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
 		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
+		 *
+		 * @see @ref Tiling
+		 * @see @ref predict_tile()
+		 * @see @ref enable_tiles
 		 * @see @ref PredictionResult
 		 * @see @ref sort_predictions
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(const std::string & image_filename, const float new_threshold = -1.0f);
 
-		/** Use the neural network to predict what is contained in this image.
+		/** Use the neural network to predict what is contained in this image.  This results in a call to either
+		 * @ref predict_internal() or @ref predict_tile() depending on how @ref enable_tiles has been set.
 		 * @param [in] mat A OpenCV2 image which has already been loaded and which needs to be analyzed.  The member
-		 * @ref original_image will be set to this image.
+		 * @ref original_image will be set to this image.  If the image is larger or smaller than the dimensions of the neural
+		 * network, then Darknet will stretch the image to match the exact size of the neural network.  Stretching the image
+		 * does <em>not</em> maintain the the aspect ratio.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 		 * If >= 0, then @ref threshold will be set to this new value.  The threshold must be either -1, or a value
 		 * between 0.0 and 1.0 meaning 0% to 100%.
 		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
 		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
+		 *
+		 * @see @ref Tiling
+		 * @see @ref predict_tile()
+		 * @see @ref enable_tiles
 		 * @see @ref PredictionResult
 		 * @see @ref sort_predictions
 		 * @see @ref duration
@@ -254,20 +268,46 @@ class DarkHelp
 		virtual PredictionResults predict(cv::Mat mat, const float new_threshold = -1.0f);
 
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
-		/** Use the neural network to predict what is contained in this image.
+		/** Use the neural network to predict what is contained in this image.    This results in a call to either
+		 * @ref predict_internal() or @ref predict_tile() depending on how @ref enable_tiles has been set.
 		 * @param [in] mat A Darknet-style image object which has already been loaded and which needs to be analyzed.
-		 * The member @ref original_image will be set to this image.
+		 * The member @ref original_image will be set to this image.  If the image is larger or smaller than the dimensions
+		 * of the neural network, then Darknet will stretch the image to match the exact size of the neural network.
+		 * Stretching the image does <em>not</em> maintain the the aspect ratio.
 		 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 		 * If >= 0, then @ref threshold will be set to this new value.  The threshold must be either -1, or a value
 		 * between 0.0 and 1.0 meaning 0% to 100%.
 		 * @returns A vector of @ref PredictionResult structures, each one representing a different object in the image.
 		 * The higher the threshold value, the more "certain" the network is that it has correctly identified the object.
+		 *
+		 * @see @ref Tiling
+		 * @see @ref predict_tile()
+		 * @see @ref enable_tiles
 		 * @see @ref PredictionResult
 		 * @see @ref sort_predictions
 		 * @see @ref duration
 		 */
 		virtual PredictionResults predict(image img, const float new_threshold = -1.0f);
 #endif
+
+		/** Similar to @ref predict(), but breaks the images down into individual tiles if it is larger than the network
+		 * dimensions.  This is explained in details in @ref Tiling.
+		 *
+		 * @note The method @ref predict() will @em automatically call @ref predict_tile() if necessary <b>when
+		 * @ref enable_tiles has been enabled.</b>  If you don't want to use image tiling, then @ref enable_tiles
+		 * must be set to @p false (which is the default).
+		 *
+		 * Here is a visual representation of a large image broken into 4 tiles for processing by Darknet.  It is important
+		 * to understand that neither the individual image tiles nor their results are returned to the caller.  %DarkHelp
+		 * only returns the final results once each tile has been processed and the @ref prediction_results "vectors"
+		 * have been merged together.
+		 *
+		 * @image html mailboxes_2x2_tiles_detection.png
+		 *
+		 * @see @ref Tiling
+		 * @see @ref predict()
+		 */
+		virtual PredictionResults predict_tile(cv::Mat mat, const float new_threshold = -1.0f);
 
 		/** Takes the most recent @ref prediction_results, and applies them to the most recent @ref original_image.
 		 * The output annotated image is stored in @ref annotated_image as well as returned to the caller.
@@ -308,6 +348,9 @@ class DarkHelp
 		 * @see @ref annotate()
 		 */
 		virtual std::string duration_string();
+
+		/// Determine the size of the network.  For example, 416x416, or 608x480.
+		virtual cv::Size network_size();
 
 		/** Obtain a vector of at least 25 different bright colours that may be used to annotate images.  OpenCV uses BGR, not RGB.
 		 * For example:
@@ -391,7 +434,8 @@ class DarkHelp
 		VStr names;
 
 		/** The length of time it took to initially load the network and weights (after the %DarkHelp object has been
-		 * constructed), or the length of time @ref predict() took to run on the last image to be processed.
+		 * constructed), or the length of time @ref predict() took to run on the last image to be processed.  If using
+		 * @ref predict_tile(), then this will store the sum of all durations across the entire set of tiles.
 		 * @see @ref duration_string()
 		 */
 		std::chrono::high_resolution_clock::duration duration;
@@ -562,12 +606,66 @@ class DarkHelp
 		 */
 		ESort sort_predictions;
 
+		/** Determines if calls to @ref predict() are sent directly to Darknet, or processed first by @ref predict_tile().
+		 *
+		 * This flag is only checked when @ref predict() is called.  If you call @ref predict_tile() directly, then it
+		 * bypasses the check for @p enable_tiles and %DarkHelp will assume that the image is a candidate for tiling.
+		 *
+		 * @note Only images which are much larger than the network dimensions will be considered for tiles.  If an image is
+		 * <b>less than</b> approximately 1.5 times the size of the network, then a 1x1 tile (meaning no tiling) will be used.
+		 *
+		 * Both @ref predict() and @ref predict_tile() will set the values @ref tile_size, @ref vertical_tiles, and
+		 * @ref horizontal_tiles once they have finished running.  The caller can then reference these to determine what
+		 * kind of tiling was used.  Even when an image is not tiled, these variables will be set; for example, @ref tile_size
+		 * may be set to 1x1, and the horizontal and vertical sizes will match the neural network dimensions.
+		 *
+		 * The default value for @p enable_tiles is @p false, meaning that calling @ref predict() wont automatically result
+		 * in image tiling.
+		 *
+		 * @see @ref Tiling
+		 * @see @ref horizontal_tiles
+		 * @see @ref vertical_tiles
+		 * @see @ref tile_size
+		 */
+		bool enable_tiles;
+
+		/** The number of horizontal tiles the image was split into by @ref predict_tile() prior to calling @ref predict().
+		 * This is set to @p 1 if calling @ref predict().  It may be &gt; 1 if calling @ref predict_tile() with an image
+		 * large enough to require multiple tiles.  @see @ref vertical_tiles
+		 *
+		 * @see @ref Tiling
+		 * @see @ref enable_tiles;
+		 */
+		size_t horizontal_tiles;
+
+		/** The number of vertical tiles the image was split into by @ref predict_tile() prior to calling @ref predict().
+		 * This is set to @p 1 if calling @ref predict().  It may be &gt; 1 if calling @ref predict_tile() with an image
+		 * large enough to require multiple tiles.  @see @ref horizontal_tiles
+		 *
+		 * @see @ref Tiling
+		 * @see @ref enable_tiles;
+		 */
+		size_t vertical_tiles;
+
+		/** The size that was used for each individual tile by @ref predict_tile().  This will be the size of the network
+		 * when calling @ref predict().
+		 *
+		 * For example, if the network is @p 416x416, and the image used with @ref predict_tile() measures @p 1280x960, then:
+		 * @li @ref horizontal_tiles will be set to @p 3
+		 * @li @ref vertical_tiles will be set to @p 2
+		 * @li @ref tile_size will be set to @p "(427, 480)"
+		 *
+		 * @see @ref Tiling
+		 * @see @ref enable_tiles;
+		 */
+		cv::Size tile_size;
+
 	protected:
 
 		/** Used by all the other @ref predict() calls to do the actual network prediction.  This uses the
 		 * image stored in @ref original_image.
 		 */
-		PredictionResults predict(const float new_threshold = -1.0f);
+		PredictionResults predict_internal(cv::Mat mat, const float new_threshold = -1.0f);
 };
 
 

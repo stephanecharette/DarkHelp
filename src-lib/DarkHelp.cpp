@@ -190,6 +190,9 @@ void DarkHelp::reset()
 	sort_predictions					= ESort::kAscending;
 	annotation_auto_hide_labels			= true;
 	annotation_shade_predictions		= 0.25;
+	enable_tiles						= false;
+	horizontal_tiles					= 1;
+	vertical_tiles						= 1;
 
 	return;
 }
@@ -216,9 +219,12 @@ DarkHelp::PredictionResults DarkHelp::predict(cv::Mat mat, const float new_thres
 		throw std::invalid_argument("cannot predict with an empty OpenCV image");
 	}
 
-	original_image = mat;
+	if (enable_tiles)
+	{
+		return predict_tile(mat, new_threshold);
+	}
 
-	return predict(new_threshold);
+	return predict_internal(mat, new_threshold);
 }
 
 
@@ -238,6 +244,93 @@ DarkHelp::PredictionResults DarkHelp::predict(image img, const float new_thresho
 	return predict(mat, new_threshold);
 }
 #endif
+
+
+DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_threshold)
+{
+	if (mat.empty())
+	{
+		/// @throw std::invalid_argument if the image is empty.
+		throw std::invalid_argument("cannot predict with an empty OpenCV image");
+	}
+
+	const cv::Size network_dimensions	= network_size();
+	const float horizontal_factor		= static_cast<float>(mat.cols) / static_cast<float>(network_dimensions.width);
+	const float vertical_factor			= static_cast<float>(mat.rows) / static_cast<float>(network_dimensions.height);
+	const float horizontal_tiles_count	= std::round(std::max(1.0f, horizontal_factor	));
+	const float vertical_tiles_count	= std::round(std::max(1.0f, vertical_factor		));
+	const float tile_width				= static_cast<float>(mat.cols) / horizontal_tiles_count;
+	const float tile_height				= static_cast<float>(mat.rows) / vertical_tiles_count;
+	const cv::Size new_tile_size		= cv::Size(std::round(tile_width), std::round(tile_height));
+
+	if (horizontal_tiles_count == 1 and vertical_tiles_count == 1)
+	{
+		// image is smaller than (or equal to) the network, so use the original predict() call
+		return predict_internal(mat, new_threshold);
+	}
+
+	// otherwise, if we get here then we have more than 1 tile
+
+	// divide the original image into the right number of tiles and call predict() on each tile
+	PredictionResults results;
+	std::vector<cv::Mat> all_tile_mats;
+	std::chrono::high_resolution_clock::duration total_duration = std::chrono::milliseconds(0);
+
+	for (float y = 0.0f; y < vertical_tiles_count; y ++)
+	{
+		for (float x = 0.0f; x < horizontal_tiles_count; x ++)
+		{
+			const int x_offset = std::round(x * tile_width);
+			const int y_offset = std::round(y * tile_height);
+			cv::Rect r(cv::Point(x_offset, y_offset), new_tile_size);
+
+			// make sure the rectangle does not extend beyond the edges of the image
+			if (r.x + r.width >= mat.cols)
+			{
+				r.width = mat.cols - r.x - 1;
+			}
+			if (r.y + r.height >= mat.rows)
+			{
+				r.height = mat.rows - r.y - 1;
+			}
+
+			cv::Mat roi = mat(r);
+
+			predict_internal(roi, new_threshold);
+
+			total_duration += duration;
+
+			// fix up the predictions -- need to compensate for the tile not being the top-left corner of the image, and the size of the tile being smaller than the image
+			for (auto & prediction : prediction_results)
+			{
+				// every prediction needs to have x_offset and y_offset added to it
+				prediction.rect.x += x_offset;
+				prediction.rect.y += y_offset;
+
+				// the original point and size are based on only 1 tile, so they also need to be fixed
+
+				prediction.original_point.x = (static_cast<float>(prediction.rect.x) + static_cast<float>(prediction.rect.width	) / 2.0f) / static_cast<float>(mat.cols);
+				prediction.original_point.y = (static_cast<float>(prediction.rect.y) + static_cast<float>(prediction.rect.height) / 2.0f) / static_cast<float>(mat.rows);
+
+				prediction.original_size.width	= static_cast<float>(prediction.rect.width	) / static_cast<float>(mat.cols);
+				prediction.original_size.height	= static_cast<float>(prediction.rect.height	) / static_cast<float>(mat.rows);
+
+				results.push_back(prediction);
+			}
+		}
+	}
+
+	/// @todo Would be nice if we went through all the results from the various tiles and merged together the ones that are side-by-side.
+
+	original_image		= mat;
+	prediction_results	= results;
+	duration			= total_duration;
+	horizontal_tiles	= horizontal_tiles_count;
+	vertical_tiles		= vertical_tiles_count;
+	tile_size			= new_tile_size;
+
+	return results;
+}
 
 
 cv::Mat DarkHelp::annotate(const float new_threshold)
@@ -424,6 +517,20 @@ std::string DarkHelp::duration_string()
 	else /* use milliseconds for anything longer */			{ str = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()) + " milliseconds";	}
 
 	return str;
+}
+
+
+cv::Size DarkHelp::network_size()
+{
+	if (net == nullptr)
+	{
+		/// @throw std::logic_error if the neural network has not yet been initialized.
+		throw std::logic_error("cannot determine the size of uninitialized neural network");
+	}
+
+	network * nw = reinterpret_cast<network*>(net);
+
+	return cv::Size(nw->w, nw->h);
 }
 
 
@@ -651,10 +758,16 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 }
 
 
-DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
+DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float new_threshold)
 {
+	// this method is private and cannot be called directly -- instead, see predict()
+
+	original_image = mat;
 	prediction_results.clear();
 	annotated_image = cv::Mat();
+	horizontal_tiles = 1;
+	vertical_tiles = 1;
+	tile_size = cv::Size(0, 0);
 
 	if (net == nullptr)
 	{
@@ -690,6 +803,7 @@ DarkHelp::PredictionResults DarkHelp::predict(const float new_threshold)
 
 	cv::Mat resized_image;
 	cv::resize(original_image, resized_image, cv::Size(nw->w, nw->h));
+	tile_size = cv::Size(resized_image.cols, resized_image.rows);
 	image img = convert_opencv_mat_to_darknet_image(resized_image);
 
 	float * X = img.data;

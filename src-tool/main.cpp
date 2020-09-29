@@ -365,6 +365,7 @@ void init(Options & options, int argc, char *argv[])
 
 	TCLAP::ValueArg<std::string> hierarchy	("y", "hierarchy"	, "The hierarchy threshold to use when predicting."					, false, "0.5"		, &float_constraint	, cli);
 	TCLAP::ValueArg<std::string> threshold	("t", "threshold"	, "The threshold to use when predicting with the neural net."		, false, "0.5"		, &float_constraint	, cli);
+	TCLAP::ValueArg<std::string> use_tiles	("T", "tiles"		, "Determines if large images are processed by breaking into tiles.", false, "true"		, &allowed_booleans	, cli);
 	TCLAP::SwitchArg slideshow				("s", "slideshow"	, "Show the images in a slideshow."																			, cli, false );
 	TCLAP::SwitchArg random					("r", "random"		, "Randomly shuffle the set of images."																		, cli, false );
 	TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."				, false, "true"		, &allowed_booleans	, cli);
@@ -420,8 +421,9 @@ void init(Options & options, int argc, char *argv[])
 	// we already verified the files several lines up, so no need to do it again
 	options.dark_help.init(options.cfg_fn, options.weights_fn, options.names_fn, false);
 
-	options.json["network"]["loading"]			=  options.dark_help.duration_string();
-	std::cout << "-> loading network took " << options.dark_help.duration_string() << std::endl;
+	options.json["network"]["loading"]				=  options.dark_help.duration_string();
+	std::cout	<< "-> loading network took "		<< options.dark_help.duration_string() << std::endl
+				<< "-> neural network dimensions: "	<< options.dark_help.network_size().width << "x" << options.dark_help.network_size().height << std::endl;
 
 	options.dark_help.threshold							= std::stof(threshold.getValue());
 	options.dark_help.hierarchy_threshold				= std::stof(hierarchy.getValue());
@@ -432,6 +434,7 @@ void init(Options & options, int argc, char *argv[])
 	options.dark_help.annotation_include_timestamp		= get_bool(timestamp);
 	options.dark_help.annotation_shade_predictions		= std::stof(shade.getValue());
 	options.dark_help.annotation_auto_hide_labels		= get_bool(autohide);
+	options.dark_help.enable_tiles						= get_bool(use_tiles);
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["threshold"]				= options.dark_help.threshold;
 	options.json["settings"]["hierarchy"]				= options.dark_help.hierarchy_threshold;
@@ -439,6 +442,8 @@ void init(Options & options, int argc, char *argv[])
 	options.json["settings"]["include_percentage"]		= options.dark_help.names_include_percentage;
 	options.json["settings"]["force_greyscale"]			= options.force_greyscale;
 	options.json["settings"]["keep_annotations"]		= options.keep_annotated_images;
+	options.json["settings"]["enable_tiles"]			= options.dark_help.enable_tiles;
+
 	if (resize1.isSet())
 	{
 		options.json["settings"]["resize"]				= resize1.getValue();
@@ -672,7 +677,11 @@ void process_video(Options & options)
 	}
 	std::cout << std::endl;
 
-	options.json["file"][options.file_index]["frames"] = number_of_frames;
+	options.json["file"][options.file_index]["frames"				] = number_of_frames;
+	options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.dark_help.horizontal_tiles;
+	options.json["file"][options.file_index]["tiles"]["vertical"	] = options.dark_help.vertical_tiles;
+	options.json["file"][options.file_index]["tiles"]["width"		] = options.dark_help.tile_size.width;
+	options.json["file"][options.file_index]["tiles"]["height"		] = options.dark_help.tile_size.height;
 	options.file_index ++;
 
 	return;
@@ -729,8 +738,15 @@ void process_image(Options & options)
 
 	const auto results = options.dark_help.predict(input_image);
 
-	std::cout	<< "-> prediction took " << options.dark_help.duration_string()	<< std::endl
-				<< "-> " << results												<< std::endl;
+	std::cout	<< "-> prediction took " << options.dark_help.duration_string();
+	if (options.dark_help.horizontal_tiles > 1 or options.dark_help.vertical_tiles > 1)
+	{
+		std::cout	<< " across " << (options.dark_help.horizontal_tiles * options.dark_help.vertical_tiles) << " tiles "
+					<< "(" << options.dark_help.horizontal_tiles << "x" << options.dark_help.vertical_tiles << ")"
+					<< " each measuring " << options.dark_help.tile_size.width << "x" << options.dark_help.tile_size.height;
+	}
+	std::cout	<< std::endl
+				<< "-> " << results << std::endl;
 
 	cv::Mat output_image;
 	if (options.keep_annotated_images or options.use_json_output == false)
@@ -771,8 +787,12 @@ void process_image(Options & options)
 
 	if (options.use_json_output)
 	{
-		options.json["file"][options.file_index]["duration"	] = options.dark_help.duration_string();
-		options.json["file"][options.file_index]["count"	] = results.size();
+		options.json["file"][options.file_index]["count"				] = results.size();
+		options.json["file"][options.file_index]["duration"				] = options.dark_help.duration_string();
+		options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.dark_help.horizontal_tiles;
+		options.json["file"][options.file_index]["tiles"]["vertical"	] = options.dark_help.vertical_tiles;
+		options.json["file"][options.file_index]["tiles"]["width"		] = options.dark_help.tile_size.width;
+		options.json["file"][options.file_index]["tiles"]["height"		] = options.dark_help.tile_size.height;
 
 		size_t count = 0;
 		for (const auto & pred : results)
