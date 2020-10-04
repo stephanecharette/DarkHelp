@@ -63,7 +63,7 @@ ELSE ()
 	SET ( CPACK_DEBIAN_PACKAGE_PRIORITY		"optional"	)
 	SET ( CPACK_DEBIAN_PACKAGE_MAINTAINER	"Stephane Charette <stephanecharette@gmail.com>" )
 	SET ( CPACK_GENERATOR					"DEB"		)
-	SET ( CPACK_SOURCE_IGNORE_FILES			".svn" ".kdev4" "build/" )
+	SET ( CPACK_SOURCE_IGNORE_FILES			".svn" ".kdev4" "build/" "build_and_upload" )
 	SET ( CPACK_SOURCE_GENERATOR			"TGZ;ZIP"	)
 ENDIF ()
 
