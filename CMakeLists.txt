@@ -6,7 +6,7 @@
 
 # for anyone trying to build this in Ubuntu 18.04, if the minimum version is causing you problems,
 # use the cmake that vcpkg downloads into vcpkg/downloads/tools/cmake-xxx/cmake-xxx/bin/cmake
-CMAKE_MINIMUM_REQUIRED ( VERSION 3.15 )
+CMAKE_MINIMUM_REQUIRED ( VERSION 3.10 )
 
 PROJECT ( DarkHelp C CXX )
 
