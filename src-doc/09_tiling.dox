@@ -54,7 +54,7 @@ The final result vector contains all the objects detected across all tiles for t
 
 Running the @p 1024x768 sample image through the @p 416x320 network without the use of tiles resulted in zero objects found.
 
-Using the same image but with @ref DarkHelp::enable_tiles "tiling enabled" resulted in much better results:
+Using the same image but with @ref DarkHelp::enable_tiles "tiling enabled" provides much better results:
 
 @image html mailboxes_detection.png
 

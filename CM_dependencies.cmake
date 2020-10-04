@@ -5,8 +5,11 @@
 
 
 FIND_PACKAGE ( Threads			REQUIRED	)
-FIND_PACKAGE ( Darknet	CONFIG	REQUIRED	)
 FIND_PACKAGE ( OpenCV	CONFIG	REQUIRED	)
+
+# vcpkg was causing problems -- see docs for details
+#FIND_PACKAGE ( Darknet CONFIG REQUIRED )
+FIND_LIBRARY ( Darknet darknet )
 
 SET ( StdCppFS "" )
 
@@ -20,7 +23,7 @@ IF (NOT WIN32)
 	SET ( StdCppFS stdc++fs	)
 ENDIF ()
 
-FIND_PATH ( TCLAP_INCLUDE_DIRS "tclap/Arg.h" )
+FIND_PATH ( TCLAP_INCLUDE_DIRS "tclap/Arg.h" ) # sudo apt-get install libtclap-dev
 
 INCLUDE_DIRECTORIES ( ${Darknet_INCLUDE_DIR}	)
 INCLUDE_DIRECTORIES ( ${OpenCV_INCLUDE_DIRS}	)

@@ -290,8 +290,8 @@ class DarkHelp
 		virtual PredictionResults predict(image img, const float new_threshold = -1.0f);
 #endif
 
-		/** Similar to @ref predict(), but breaks the images down into individual tiles if it is larger than the network
-		 * dimensions.  This is explained in details in @ref Tiling.
+		/** Similar to @ref predict(), but automatically breaks the images down into individual tiles if it is significantly
+		 * larger than the network dimensions.  This is explained in details in @ref Tiling.
 		 *
 		 * @note The method @ref predict() will @em automatically call @ref predict_tile() if necessary <b>when
 		 * @ref enable_tiles has been enabled.</b>  If you don't want to use image tiling, then @ref enable_tiles
@@ -606,7 +606,8 @@ class DarkHelp
 		 */
 		ESort sort_predictions;
 
-		/** Determines if calls to @ref predict() are sent directly to Darknet, or processed first by @ref predict_tile().
+		/** Determines if calls to @ref predict() are sent directly to Darknet, or processed first by @ref predict_tile()
+		 * to break the image file into smaller sections.
 		 *
 		 * This flag is only checked when @ref predict() is called.  If you call @ref predict_tile() directly, then it
 		 * bypasses the check for @p enable_tiles and %DarkHelp will assume that the image is a candidate for tiling.
@@ -634,7 +635,7 @@ class DarkHelp
 		 * large enough to require multiple tiles.  @see @ref vertical_tiles
 		 *
 		 * @see @ref Tiling
-		 * @see @ref enable_tiles;
+		 * @see @ref enable_tiles
 		 */
 		size_t horizontal_tiles;
 
@@ -643,7 +644,7 @@ class DarkHelp
 		 * large enough to require multiple tiles.  @see @ref horizontal_tiles
 		 *
 		 * @see @ref Tiling
-		 * @see @ref enable_tiles;
+		 * @see @ref enable_tiles
 		 */
 		size_t vertical_tiles;
 
@@ -656,7 +657,7 @@ class DarkHelp
 		 * @li @ref tile_size will be set to @p "(427, 480)"
 		 *
 		 * @see @ref Tiling
-		 * @see @ref enable_tiles;
+		 * @see @ref enable_tiles
 		 */
 		cv::Size tile_size;
 

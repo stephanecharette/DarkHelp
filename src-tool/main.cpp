@@ -365,7 +365,7 @@ void init(Options & options, int argc, char *argv[])
 
 	TCLAP::ValueArg<std::string> hierarchy	("y", "hierarchy"	, "The hierarchy threshold to use when predicting."					, false, "0.5"		, &float_constraint	, cli);
 	TCLAP::ValueArg<std::string> threshold	("t", "threshold"	, "The threshold to use when predicting with the neural net."		, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> use_tiles	("T", "tiles"		, "Determines if large images are processed by breaking into tiles.", false, "true"		, &allowed_booleans	, cli);
+	TCLAP::ValueArg<std::string> use_tiles	("T", "tiles"		, "Determines if large images are processed by breaking into tiles.", false, "false"	, &allowed_booleans	, cli);
 	TCLAP::SwitchArg slideshow				("s", "slideshow"	, "Show the images in a slideshow."																			, cli, false );
 	TCLAP::SwitchArg random					("r", "random"		, "Randomly shuffle the set of images."																		, cli, false );
 	TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."				, false, "true"		, &allowed_booleans	, cli);
@@ -541,7 +541,12 @@ void process_video(Options & options)
 	cv::VideoCapture input_video;
 	cv::VideoWriter output_video;
 
-	input_video.open(options.filename);
+	const bool success = input_video.open(options.filename);
+	if (not success)
+	{
+		throw std::runtime_error("failed to open video file " + options.filename);
+	}
+
 	const double input_width	= input_video.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH	);
 	const double input_height	= input_video.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT	);
 	const double input_fps		= input_video.get(cv::VideoCaptureProperties::CAP_PROP_FPS			);

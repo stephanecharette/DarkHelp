@@ -1,7 +1,13 @@
 @echo off
 
-echo This script assumes you've already read through and run the steps described in readme_windows.txt!
-echo The entire "build" directory will be deleted and re-created.
+echo These build instructions are no longer supported.  See the project page
+echo for details.  Once vcpkg can be made to work better with OpenCV, then
+echo this script can be revived.
+pause
+
+echo This script assumes you've already read through and run the steps described
+echo in readme_windows.txt!  The entire "build" directory will be deleted and
+echo re-created.
 pause
 
 rmdir /q /s build

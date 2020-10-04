@@ -1,17 +1,46 @@
 /** @page Building Building %DarkHelp
 
-In September 2020, %DarkHelp was ported from Linux to Windows.  As part of this process, the %DarkHelp cmake files were converted to rely on @em vcpkg.
+For a brief period, the %DarkHelp build process was changed to use vcpkg.  However, vcpkg doesn't build OpenCV correctly which causes problems with %DarkHelp.  For example, it doesn't include support for highgui, and it doesn't build the OpenCV plugins required to process videos.
 
-(If you're not already familiar with it, @em vcpkg is a tool that uses cmake to build and install 3rd-party C/C++ libraries and tools.  The cool thing is, it works the same way on Windows as it does on Linux.)
+Due to these issues, in October 2020 both %DarkHelp and DarkMark were changed back to their original build procedures.
 
-The new process for building %DarkHelp involves leveraging @em vcpkg to install dependencies such as @em tclap, @em OpenCV, and @em Darknet.
+@section Windows
 
-The build steps on Linux and Windows are very similar with only a few minor differences.  Please see the files @p readme_linux.txt and @p readme_windows.txt included with the source code.
+Unfortunately, a Windows build is no longer provided due to the vcpkg issues.  If you'd like to sponsor a Windows build, please contact <a href="mailto:stephanecharette@gmail.com">Stéphane Charette by email</a> or on the <a target="_blank" href="https://discord.gg/zSq8rtW">Darknet/Yolo discord</a>.
 
-@li @subpage Building_Linux
-@li @subpage Building_Windows
+@section Linux
 
-Download either <a target="_blank" href="https://www.ccoderun.ca/download/?C=M;O=D">pre-built packages or the %DarkHelp source code from here</a>.
+Download Linux builds for recent versions of Ubuntu:  <a target="_blank" href="https://www.ccoderun.ca/download/?C=M;O=D">https://www.ccoderun.ca/download/</a>.  These builds require that you have Darknet already built and isntalled.  (Continue reading for instruction.)
+
+Building both Darknet and %DarkHelp should not take more than 5 minutes combined.  If you have not already done so, you must first build Darknet with the flag @p LIBSO=1.  This will ensure you build the @p "libdarknet.so" dynamic library.
+
+Once Darknet has built, remember to copy the library and header file to a location where %DarkHelp and other applications can find them.  For example:
+
+~~~~{.sh}
+sudo apt-get install build-essential git libopencv-dev
+cd ~/
+git clone https://github.com/AlexeyAB/darknet.git
+cd darknet
+vi makefile # to set LIBSO=1, and possibly other flags
+make
+sudo cp libdarknet.so /usr/local/lib/
+sudo cp include/darknet.h /usr/local/include/
+sudo ldconfig
+~~~~
+
+For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.
+
+Now that Darknet is built, <a target="_blank" href="https://www.ccoderun.ca/download/?C=M;O=D">download the source code to %DarkHelp</a> and build like this:
+
+~~~~{.sh}
+sudo apt-get install cmake libtclap-dev libmagic-dev libopencv-dev
+cd ~/src/DarkHelp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+make package
+~~~~
 
 @section BuildingDoxygen Doxygen
 
@@ -22,28 +51,9 @@ If desired, the doxygen documentation can be created with @p "make doc".
 To install %DarkHelp so the API can be used within your own C++ application, run @p "sudo dpkg -i darkhelp-*.deb" after having run @p "make package".
 
 Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against the following:
-@li @p libdarkhelp.a
-@li @p libdarknet.a
+@li @p libdarkhelp.so
+@li @p libdarknet.so
 @li OpenCV's libraries
 
-
-
-@page Building_Linux readme_linux.txt
-
-This file @p readme_linux.txt contains the build instructions for building in Ubuntu:
-
-<div style="padding:1em; margin:2em; border:1px solid black; white-space:pre-line">
-@htmlinclude "../readme_linux.txt"
-</div>
-
-
-
-@page Building_Windows readme_windows.txt
-
-This file @p readme_windows.txt contains the build instructions for building in Windows:
-
-<div style="padding:1em; margin:2em; border:1px solid black; white-space:pre-line">
-@htmlinclude "../readme_windows.txt"
-</div>
 
 */

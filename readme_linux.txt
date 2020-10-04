@@ -6,6 +6,10 @@
 
 Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
 
+@warning These instructions are no longer up-to-date.  Using vcpkg was causing too many problems since it doesn't build
+OpenCV correctly.  (For example, vcpkg doesn't build highgui or the video plugins required to import video files.)  For
+this reason, building with vcpkg is no longer supported.  See the build instructions on the DarkHelp project page instead.
+
 
 # -------------------------
 # SETTING UP PRE-REQUISITES
