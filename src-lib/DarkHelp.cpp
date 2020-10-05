@@ -121,6 +121,16 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		verify_cfg_and_weights(cfg_fn, weights_fn, names_fn);
 	}
 
+	if (modify_batch_and_subdivisions)
+	{
+		const MStr m =
+		{
+			{"batch"		, "1"},
+			{"subdivisions"	, "1"}
+		};
+		edit_cfg_file(cfg_fn, m);
+	}
+
 	// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
@@ -193,6 +203,7 @@ void DarkHelp::reset()
 	enable_tiles						= false;
 	horizontal_tiles					= 1;
 	vertical_tiles						= 1;
+	modify_batch_and_subdivisions		= true;
 
 	return;
 }
@@ -758,16 +769,152 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 }
 
 
+size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr m)
+{
+	if (m.empty())
+	{
+		// nothing to do!
+		return 0;
+	}
+
+	std::ifstream ifs(cfg_filename);
+	if (not ifs.is_open())
+	{
+		/// @throw std::invalid_argument if the cfg file does not exist or cannot be opened
+		throw std::invalid_argument("failed to open the configuration file " + cfg_filename);
+	}
+
+	// read the file and look for the [net] section
+	bool net_section_found	= false;
+	size_t net_idx_start	= 0;
+	size_t net_idx_end		= 0;
+	VStr v;
+	std::string line;
+	while (std::getline(ifs, line))
+	{
+		if (line == "[net]")
+		{
+			net_idx_start	= v.size();
+			net_idx_end		= v.size();
+			net_section_found = true;
+		}
+		else if (line.size() >= 3)
+		{
+			if (net_section_found == true)
+			{
+				if (net_idx_end == net_idx_start)
+				{
+					if (line[0] == '[')
+					{
+						// we found the start of a new section, so this must mean the end of [net] has been found
+						net_idx_end = v.size();
+					}
+				}
+			}
+		}
+
+		v.push_back(line);
+	}
+	ifs.close();
+
+	if (net_idx_start == net_idx_end)
+	{
+		/// @throw std::runtime_error if a valid start and end to the [net] section wasn't found in the .cfg file
+		throw std::runtime_error("failed to properly identify the [net] section in " + cfg_filename);
+	}
+
+	// look at every line in the [net] section to see if it matches one of the keys we want to modify
+	const std::regex rx(
+		"^"				// start of text
+		"\\s*"			// consume all whitespace
+		"("				// group #1
+			"[^#=\\s]+"	// not "#", "=", or whitespace
+		")"
+		"\\s*"			// consume all whitespace
+		"="				// "="
+		"\\s*"			// consume all whitespace
+		"("				// group #2
+			".*"		// old value and any trailing text (e.g., comments)
+		")"
+		"$"				// end of text
+	);
+
+	size_t number_of_changed_lines = 0;
+	for (size_t idx = net_idx_start; idx < net_idx_end; idx ++)
+	{
+		std::string & line = v[idx];
+
+		std::smatch sm;
+		if (std::regex_match(line, sm, rx))
+		{
+			const std::string key = sm[1].str();
+			const std::string val = sm[2].str();
+
+			// now see if this key is one of the ones we want to modify
+			if (m.count(key) == 1)
+			{
+				if (val != m.at(key))
+				{
+					line = key + "=" + m.at(key);
+					number_of_changed_lines ++;
+				}
+				m.erase(key);
+			}
+		}
+	}
+
+	// whatever is left in the map at this point needs to be inserted at the end of the [net] section (must be a new key)
+	for (auto iter : m)
+	{
+		const std::string & key = iter.first;
+		const std::string & val = iter.second;
+		const std::string line = key + "=" + val;
+
+		v.insert(v.begin() + net_idx_end, line);
+		number_of_changed_lines ++;
+		net_idx_end ++;
+	}
+
+	if (number_of_changed_lines == 0)
+	{
+		// nothing to do, no need to re-write the .cfg file
+		return 0;
+	}
+
+	// now we need to re-create the .cfg file
+	const std::string tmp_filename = cfg_filename + "_TMP";
+	std::ofstream ofs(tmp_filename);
+	if (not ofs.is_open())
+	{
+		/// @throw std::runtime_error if we cannot write a new .cfg file
+		throw std::runtime_error("failed save changes to .cfg file " + tmp_filename);
+	}
+	for (const auto & line : v)
+	{
+		ofs << line << std::endl;
+	}
+	ofs.close();
+	const int result = std::rename(tmp_filename.c_str(), cfg_filename.c_str());
+	if (result)
+	{
+		/// @throw std::runtime_error if we cannot rename the .cfg file
+		throw std::runtime_error("failed to overwrite .cfg file " + cfg_filename);
+	}
+
+	return number_of_changed_lines;
+}
+
+
 DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float new_threshold)
 {
 	// this method is private and cannot be called directly -- instead, see predict()
 
-	original_image = mat;
 	prediction_results.clear();
-	annotated_image = cv::Mat();
-	horizontal_tiles = 1;
-	vertical_tiles = 1;
-	tile_size = cv::Size(0, 0);
+	original_image		= mat;
+	annotated_image		= cv::Mat();
+	horizontal_tiles	= 1;
+	vertical_tiles		= 1;
+	tile_size			= cv::Size(0, 0);
 
 	if (net == nullptr)
 	{

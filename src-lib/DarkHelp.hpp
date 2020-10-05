@@ -408,6 +408,16 @@ class DarkHelp
 		 */
 		static MStr verify_cfg_and_weights(std::string & cfg_filename, std::string & weights_filename, std::string & names_filename);
 
+		/** This is used to insert lines into the @p [net] section of the configuration file.  Pass in a map of key-value pairs,
+		 * and if the key exists it will be modified.  If the key does not exist, then it will be added to the bottom of the
+		 * @p [net] section.
+		 *
+		 * For example, this is used by @ref init() when @ref modify_batch_and_subdivisions is enabled.
+		 *
+		 * @returns The number of lines that were modified or had to be inserted into the configuration file.
+		 */
+		static size_t edit_cfg_file(const std::string & cfg_filename, MStr m);
+
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
 		/** Static function to convert the OpenCV @p cv::Mat objects to Darknet's internal @p image format.
 		 * Provided for convenience in case you need to call into one of Darknet's functions.
@@ -660,6 +670,15 @@ class DarkHelp
 		 * @see @ref enable_tiles
 		 */
 		cv::Size tile_size;
+
+		/** When training, the @p batch=... and @p subdivisions=... in the .cfg file are typically set to a large value.
+		 * But when loading a neural network for inference (when calling @ref predict() or @ref predict_tile()) both
+		 * of those should be set to @p 1.  When @p modify_batch_and_subdivisions is enabled, %DarkHelp will edit the
+		 * configuration file to set these values to @p prior to calling Darknet.
+		 *
+		 * The default value for @p modify_batch_and_subdivisions is @p true, meaning the .cfg file will be modified.
+		 */
+		bool modify_batch_and_subdivisions;
 
 	protected:
 
