@@ -887,7 +887,7 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 	if (not ofs.is_open())
 	{
 		/// @throw std::runtime_error if we cannot write a new .cfg file
-		throw std::runtime_error("failed save changes to .cfg file " + tmp_filename);
+		throw std::runtime_error("failed to save changes to .cfg file " + tmp_filename);
 	}
 	for (const auto & line : v)
 	{

@@ -21,7 +21,7 @@ sudo apt-get install build-essential git libopencv-dev
 cd ~/
 git clone https://github.com/AlexeyAB/darknet.git
 cd darknet
-vi makefile # to set LIBSO=1, and possibly other flags
+vi Makefile # to set LIBSO=1, and possibly other flags
 make
 sudo cp libdarknet.so /usr/local/lib/
 sudo cp include/darknet.h /usr/local/include/

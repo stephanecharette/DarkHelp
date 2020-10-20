@@ -671,12 +671,22 @@ class DarkHelp
 		 */
 		cv::Size tile_size;
 
-		/** When training, the @p batch=... and @p subdivisions=... in the .cfg file are typically set to a large value.
-		 * But when loading a neural network for inference (when calling @ref predict() or @ref predict_tile()) both
-		 * of those should be set to @p 1.  When @p modify_batch_and_subdivisions is enabled, %DarkHelp will edit the
-		 * configuration file to set these values to @p prior to calling Darknet.
+		/** When training, the @p "batch=..." and @p "subdivisions=..." values in the .cfg file are typically set to a large
+		 * value.  But when loading a neural network for inference as %DarkHelp is designed to help with, @em both of those
+		 * values in the .cfg should be set to @p "1".  When @p modify_batch_and_subdivisions is enabled, %DarkHelp will edit
+		 * the configuration file once @ref DarkHelp::init() is called.  This ensures the values are set as needed prior to
+		 * Darknet loading the .cfg file.
 		 *
-		 * The default value for @p modify_batch_and_subdivisions is @p true, meaning the .cfg file will be modified.
+		 * The default value for @p modify_batch_and_subdivisions is @p true, meaning the .cfg file will be modified.  If set
+		 * to @p false, %DarkHelp will not modify the configuration file.
+		 *
+		 * Example use:
+		 *
+		 * ~~~~
+		 * DarkHelp dh;
+		 * dh.modify_batch_and_subdivisions = true;
+		 * dh.init("cars.cfg", "cars_best.weights", "cars.names");
+		 * ~~~~
 		 */
 		bool modify_batch_and_subdivisions;
 
