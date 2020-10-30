@@ -839,6 +839,18 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 		"$"				// end of text
 	);
 
+	bool initial_modification = false;
+	if (m.size()				== 2	and
+		m.count("batch")		== 1	and
+		m.count("subdivisions")	== 1	and
+		m["batch"]				== "1"	and
+		m["subdivisions"]		== "1"	)
+	{
+		// we need to know if this is the initial batch/subdivisions modification performed by init()
+		// because there are cases were we'll need to abort modifying the .cfg file if this is the case
+		initial_modification = true;
+	}
+
 	size_t number_of_changed_lines = 0;
 	for (size_t idx = net_idx_start; idx < net_idx_end; idx ++)
 	{
@@ -852,11 +864,7 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 
 			if (key						== "contrastive"	and
 				val						== "1"				and
-				m.size()				== 2				and
-				m.count("batch")		== 1				and
-				m.count("subdivisions")	== 1				and
-				m["batch"]				== "1"				and
-				m["subdivisions"]		== "1"				)
+				initial_modification	== true				)
 			{
 				// this is one of the new configuration files that uses "contrastive", so don't modify "batch" and "subdivisions" so we
 				// can avoid the darknet error about "mini_batch size (batch/subdivisions) should be higher than 1 for Contrastive loss"
