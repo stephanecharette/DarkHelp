@@ -850,6 +850,19 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 			const std::string key = sm[1].str();
 			const std::string val = sm[2].str();
 
+			if (key						== "contrastive"	and
+				val						== "1"				and
+				m.size()				== 2				and
+				m.count("batch")		== 1				and
+				m.count("subdivisions")	== 1				and
+				m["batch"]				== "1"				and
+				m["subdivisions"]		== "1"				)
+			{
+				// this is one of the new configuration files that uses "contrastive", so don't modify "batch" and "subdivisions" so we
+				// can avoid the darknet error about "mini_batch size (batch/subdivisions) should be higher than 1 for Contrastive loss"
+				return 0;
+			}
+
 			// now see if this key is one of the ones we want to modify
 			if (m.count(key) == 1)
 			{
