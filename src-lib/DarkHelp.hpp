@@ -9,6 +9,7 @@
 #include <chrono>
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <opencv2/opencv.hpp>
 
@@ -340,6 +341,7 @@ class DarkHelp
 		 * @see @ref annotation_include_timestamp
 		 * @see @ref annotation_auto_hide_labels
 		 * @see @ref annotation_shade_predictions
+		 * @see @ref annotation_suppress_classes
 		 */
 		virtual cv::Mat annotate(const float new_threshold = -1.0f);
 
@@ -689,6 +691,37 @@ class DarkHelp
 		 * ~~~~
 		 */
 		bool modify_batch_and_subdivisions;
+
+		/** Determines which classes to suppress during the call to @ref annotate().  Any prediction returned by Darknet for
+		 * a class listed in this @p std::set will be ignored:  no bounding box will be drawn, and no label will be shown.
+		 * The set may be modified at any point and will take effect the next time @ref annotate() is called.
+		 *
+		 * It is initialized by @ref init() to contain any classes where the label name begins with the text @p "dont_show"
+		 * as described in https://github.com/AlexeyAB/darknet/issues/2122.
+		 *
+		 * For example, when considering this annotated image:
+		 *
+		 * @image html mailboxes.png
+		 *
+		 * If the @p .names file is modified in this manner:
+		 *
+		 * ~~~~{.txt}
+		 * lock
+		 * 1
+		 * dont_show 2
+		 * 3
+		 * 4
+		 * ...
+		 * ~~~~
+		 *
+		 * Then the annotated image will look like this:
+		 *
+		 * @image html mailboxes_suppress.png
+		 *
+		 * @note This does not suppress the @em detection of classes.  The vector returned when calling @ref predict() will
+		 * contain all of the objects found by Darknet, regardless of what classes are listed in @p annotation_suppress_classes.
+		 */
+		std::set<int> annotation_suppress_classes;
 
 	protected:
 

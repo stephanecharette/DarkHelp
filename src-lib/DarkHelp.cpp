@@ -164,6 +164,15 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		}
 	}
 
+	// see which classes need to be suppressed (https://github.com/AlexeyAB/darknet/issues/2122)
+	for (size_t i = 0; i < names.size(); i ++)
+	{
+		if (names.at(i).find("dont_show") == 0)
+		{
+			annotation_suppress_classes.insert(i);
+		}
+	}
+
 	return *this;
 }
 
@@ -204,6 +213,7 @@ void DarkHelp::reset()
 	horizontal_tiles					= 1;
 	vertical_tiles						= 1;
 	modify_batch_and_subdivisions		= true;
+	annotation_suppress_classes			.clear();
 
 	return;
 }
@@ -367,6 +377,11 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 
 	for (const auto & pred : prediction_results)
 	{
+		if (annotation_suppress_classes.count(pred.best_class) != 0)
+		{
+			continue;
+		}
+
 		if (annotation_line_thickness > 0 and pred.best_probability >= threshold)
 		{
 			const auto colour = annotation_colours[pred.best_class % annotation_colours.size()];
