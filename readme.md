@@ -10,7 +10,7 @@ Example annotated image after calling [`DarkHelp::predict()`](https://www.ccoder
 
 ![annotated image example](src-doc/shade_25pcnt.png)
 
-DarkHelp also has [a very simple command-line tool[(https://www.ccoderun.ca/darkhelp/api/Tool.html) that uses the DarkHelp API so some of the functionality can be accessed directly from the command-line.  This can be useful to run tests or for shell scripting.
+DarkHelp also has [a very simple command-line tool](https://www.ccoderun.ca/darkhelp/api/Tool.html) that uses the DarkHelp API so some of the functionality can be accessed directly from the command-line.  This can be useful to run tests or for shell scripting.
 
 # License
 
@@ -22,7 +22,7 @@ DarkHelp requires that [Darknet](https://github.com/AlexeyAB/darknet) has alread
 
 ## Building Darknet
 
-You must build Darknet with the `LIBSO=1` variable set to have it build `libdarknet.so`:
+You must build Darknet with the `LIBSO=1` variable set to have it build `libdarknet.so`.  On Ubuntu:
 
 	sudo apt-get install build-essential git libopencv-dev
 	cd ~/src
@@ -36,7 +36,7 @@ You must build Darknet with the `LIBSO=1` variable set to have it build `libdark
 
 ## Building DarkHelp
 
-Now that Darknet is built and installed, you can go ahead and build DarkHelp like this:
+Now that Darknet is built and installed, you can go ahead and build DarkHelp.  On Ubuntu:
 
 	sudo apt-get install cmake build-essential libtclap-dev libmagic-dev libopencv-dev
 	cd ~/src
