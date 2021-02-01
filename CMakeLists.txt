@@ -1,7 +1,6 @@
 # DarkHelp - C++ helper class for Darknet's C API.
-# Copyright 2019-2020 Stephane Charette <stephanecharette@gmail.com>
+# Copyright 2019-2021 Stephane Charette <stephanecharette@gmail.com>
 # MIT license applies.  See "license.txt" for details.
-# $Id$
 
 
 # for anyone trying to build this in Ubuntu 18.04, if the minimum version is causing you problems,

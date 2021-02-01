@@ -9,7 +9,7 @@ The official web site for C Code Run's %DarkHelp is http://www.ccoderun.ca/. <br
 This documentation is available here:
 @li http://www.ccoderun.ca/DarkHelp/api/
 
-Source code for %DarkHelp is available at http://www.ccoderun.ca/download/.<br/>
+Source code for %DarkHelp is available at https://github.com/stephanecharette/DarkHelp/.<br/>
 
 @note %DarkHelp is @em not Darknet!  %DarkHelp is a C++ API layer used to call Darknet's original C API.
 
@@ -19,7 +19,7 @@ The original author of the Darknet neural network framework is <a target="_blank
 
 <div style="padding:1em; margin:2em; border:1px solid black; display:inline-block;">
 %DarkHelp is written by <a target="_blank" href="https://www.ccoderun.ca/stephane/">Stéphane Charette d.b.a. C Code Run</a><br/>
-&copy; 2019-2020 <a target="_blank" href="/stephane/">Stéphane Charette</a><br/>
+&copy; 2019-2021 <a target="_blank" href="/stephane/">Stéphane Charette</a><br/>
 http://www.ccoderun.ca/darkhelp/ <br/>
 stephane@ccoderun.ca <br/>
 stephane.charette@gmail.com <br/>

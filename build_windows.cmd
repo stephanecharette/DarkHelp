@@ -14,8 +14,8 @@ rmdir /q /s build
 mkdir build
 cd build
 
-set ARCHITECTURE=x64
-#set BUILD_TYPE=Release
+#set ARCHITECTURE=x64
+set BUILD_TYPE=Release
 set BUILD_TYPE=Debug
 set VCPKG_PATH=C:\src\vcpkg
 set TRIPLET=x64-windows-static

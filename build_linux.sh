@@ -8,8 +8,8 @@ rm -rf build
 mkdir build
 cd build
 
-#BUILD_TYPE=Release
-BUILD_TYPE=Debug
+BUILD_TYPE=Release
+#BUILD_TYPE=Debug
 
 # vcpkg is no longer used due to problems with how it builds OpenCV
 #VCPKG_PATH=~/src/vcpkg
@@ -19,4 +19,3 @@ BUILD_TYPE=Debug
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
 make -j $(nproc)
 make package
-

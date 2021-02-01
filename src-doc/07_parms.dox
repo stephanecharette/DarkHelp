@@ -27,15 +27,18 @@ Short Name						| Long Name			| Description
 -d &lt;true,false,on,off,1,0&gt;| --duration ...	| Determines if the duration is added to top left of the annotated image.  See @ref DarkHelp::annotation_include_duration for dtails.
 -f &lt;float&gt;				| --fontscale ...	| Determines how the font in OpenCV2 is scaled when drawing the annotated image.  See @ref DarkHelp::annotation_font_scale for details.
 -g								| --greyscale		| Forces all input images to be loaded in greyscale.
+-e &lt;float&gt;				| --shade ...		| Amount of alpha-blending to use when shading in rectangles.
 -h								| --help			| Display short or extended help information on each parameter.
 -i &lt;true,false,on,off,1,0&gt;| --timestamp ...	| Determines if a timestamp is added to the bottom of the annotated image.See @ref DarkHelp::annotation_include_timestamp for details.
 -j								| --json			| Enable the JSON-format output once %DarkHelp has finished processing all images.  See @ref ShellScripting for details.
 -k								| --keep			| Annotated images will be kept (written to disk).  The location of each image is logged at the time the image is saved.  For example: <br/> `-> annotated image saved to "/tmp/darkhelp_14111/darkhelp_14111_output_0.png"`. <br/> Especially useful when combined with the @p -j flag, or when preparing a large number of images for a presentation.
 -l &lt;filename&gt;				| --list ...		| Read the list of image files to load from the given text file.  One image per line.  Blank lines and lines that start with @p # are ignored.
 -n &lt;float&gt;				| --nms ...			| The non-maximal suppression threshold to use when predicting.  See @ref DarkHelp::non_maximal_suppression_threshold for details.
+-o &lt;true,false,on,off,1,0&gt;| --autohide ...	| Auto-hide labels.
 -p &lt;true,false,on,off,1,0&gt;| --percentage ...	| Determines if percentages are added to annotation labels.  See @ref DarkHelp::names_include_percentage for details.
 -r								| --random			| Randomizes the order in which images are loaded.
 -s								| --slideshow		| Starts %DarkHelp in "slideshow" mode, where a new image is shown regularly.
+-T &lt;true,false,on,off,1,0&gt;| --tiles ...		| Determines if large images are processed by breaking into tiles.
 -t &lt;float&gt;				| --threshold ...	| The threshold to use when predicting with the neural net.  See @ref DarkHelp::threshold for details.
 -y &lt;float&gt;				| --hierarchy ...	| The hierarchy threshold to use when predicting.  See @ref DarkHelp::hierarchy_threshold for details.
 &nbsp;							| --version			| Display the version string.

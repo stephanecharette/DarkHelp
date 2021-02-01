@@ -10,15 +10,13 @@ Unfortunately, a Windows build is no longer provided due to the vcpkg issues.  I
 
 @section Linux
 
-Download Linux builds for recent versions of Ubuntu:  <a target="_blank" href="https://www.ccoderun.ca/download/?C=M;O=D">https://www.ccoderun.ca/download/</a>.  These builds require that you have Darknet already built and isntalled.  (Continue reading for instruction.)
-
 Building both Darknet and %DarkHelp should not take more than 5 minutes combined.  If you have not already done so, you must first build Darknet with the flag @p LIBSO=1.  This will ensure you build the @p "libdarknet.so" dynamic library.
 
 Once Darknet has built, remember to copy the library and header file to a location where %DarkHelp and other applications can find them.  For example:
 
 ~~~~{.sh}
 sudo apt-get install build-essential git libopencv-dev
-cd ~/
+cd ~/src/
 git clone https://github.com/AlexeyAB/darknet.git
 cd darknet
 vi Makefile # to set LIBSO=1, and possibly other flags
@@ -30,11 +28,13 @@ sudo ldconfig
 
 For additional details on building Darknet, see this tutorial:  <a target="_blank" href="https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/">https://www.ccoderun.ca/programming/2019-08-18_Installing_and_building_Darknet/</a>.
 
-Now that Darknet is built, <a target="_blank" href="https://www.ccoderun.ca/download/?C=M;O=D">download the source code to %DarkHelp</a> and build like this:
+Now that Darknet is built, <a target="_blank" href="https://github.com/stephanecharette/DarkHelp/">download the source code to %DarkHelp</a> and build like this:
 
 ~~~~{.sh}
-sudo apt-get install cmake libtclap-dev libmagic-dev libopencv-dev
-cd ~/src/DarkHelp
+sudo apt-get install cmake build-essential libtclap-dev libmagic-dev libopencv-dev
+cd ~/src/
+git clone https://github.com/stephanecharette/DarkHelp.git
+cd DarkHelp
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..

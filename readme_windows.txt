@@ -1,10 +1,9 @@
 # DarkHelp - C++ helper class for Darknet's C API.
-# Copyright 2019-2020 Stephane Charette <stephanecharette@gmail.com>
+# Copyright 2019-2021 Stephane Charette <stephanecharette@gmail.com>
 # MIT license applies.  See "license.txt" for details.
-# $Id$
 
 
-Most recent documentation for DarkHelp:  https://www.ccoderun.ca/DarkHelp/
+Most recent documentation for DarkHelp:  https://github.com/stephanecharette/DarkHelp/
 
 @warning These instructions are no longer up-to-date.  Using vcpkg was causing too many problems since it doesn't build
 OpenCV correctly.  (For example, vcpkg doesn't build highgui or the video plugins required to import video files.)  For
