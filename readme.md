@@ -57,33 +57,27 @@ DarkHelp has many optional settings that impact the output -- especially [`DarkH
 3. display some results as plain text on the console
 4. save the output images
 
-	#include <iostream>
-	#include <DarkHelp.hpp>
-	
-	int main(int argc, char *argv[])
-	{
-		const auto samples_images = {"dog.jpg", "cat.jpg", "horse.jpg"};
 
-		// Only do this once.  You don't want to keep reloading the network in
-		// the loop because loading the network is actually a long process.
-		DarkHelp darkhelp("animals.cfg", "animals_best.weights", "animals.names");
-	
-		for (const auto & filename : samples_images)
-		{
-			// get the predictions for the given image
-			const auto results = darkhelp.predict(filename);
-	
-			// display the results on the console (meaning coordinates and confidence levels, not displaying the image)
-			std::cout << results << std::endl;
-	
-			// annotate the image and save the results
-			cv::Mat output = darkhelp.annotate();
-			cv::imwrite("output_" + filename, output, {CV_IMWRITE_PNG_COMPRESSION, 9});
-		}
-	
-		return 0;
-	}
-
+    // include DarkHelp.hpp and link against libdarkhelp.so, libdarknet.so, and OpenCV
+    //
+    const auto samples_images = {"dog.jpg", "cat.jpg", "horse.jpg"};
+    
+    // Only do this once.  You don't want to keep reloading the network in
+    // the loop because loading the network is actually a long process.
+    DarkHelp darkhelp("animals.cfg", "animals_best.weights", "animals.names");
+    
+    for (const auto & filename : samples_images)
+    {
+        // get the predictions for the given image
+        const auto results = darkhelp.predict(filename);
+    
+        // display the results on the console (meaning coordinates and confidence levels, not displaying the image)
+        std::cout << results << std::endl;
+    
+        // annotate the image and save the results
+        cv::Mat output = darkhelp.annotate();
+        cv::imwrite("output_" + filename, output, {CV_IMWRITE_PNG_COMPRESSION, 9});
+    }
 
 # C++ API Doxygen Output
 
