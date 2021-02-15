@@ -39,6 +39,7 @@ DarkHelp -j -t 0.5 barcodetest.cfg barcodetest_best.weights barcodetest.names *.
 In addition to command-line arguments, there are several keys you can use in the viewer.  They are:
 
 @li @p q or @p ESC to exit from the viewer.
+@li @p t to toggle image tiling (see @ref Tiling)
 @li @p w to write the current image to disk in the current working directory (see @p "output.png")
 @li @p HOME to return to the first image in the data set
 @li @p END to skip to the last image in the data set

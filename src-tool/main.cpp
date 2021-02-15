@@ -92,6 +92,7 @@ const int KEY_g			= 0x00000067;
 const int KEY_h			= 0x00000068;
 const int KEY_p			= 0x00000070;
 const int KEY_q			= 0x00000071;
+const int KEY_t			= 0x00000074;
 const int KEY_w			= 0x00000077;
 const int KEY_PAGE_UP	= 0x00210000;
 const int KEY_PAGE_DOWN = 0x00220000;
@@ -106,6 +107,7 @@ const int KEY_g			= 0x00100067;
 const int KEY_h			= 0x00100068;
 const int KEY_p			= 0x00100070;
 const int KEY_q			= 0x00100071;
+const int KEY_t			= 0x00100074;
 const int KEY_w			= 0x00100077;
 const int KEY_HOME		= 0x0010ff50;
 const int KEY_LEFT		= 0x0010ff51;
@@ -875,6 +877,12 @@ void process_image(Options & options)
 		case KEY_g:
 		{
 			options.force_greyscale = not options.force_greyscale;
+			break;
+		}
+		case KEY_t:
+		{
+			options.dark_help.enable_tiles = not options.dark_help.enable_tiles;
+			set_msg(options, "image tiling has been turned " + std::string(options.dark_help.enable_tiles ? "on" : "off"));
 			break;
 		}
 		case KEY_w:
