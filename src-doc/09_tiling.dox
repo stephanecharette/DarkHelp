@@ -1,5 +1,9 @@
 /** @page Tiling Image Tiling
 
+@htmlonly[block]
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Oz-49MpO2rQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+@endhtmlonly
+
 There are 3 "sizes" which are important when working with Darknet:
 
 @li The dimensions of the neural network.  This is the @p width=... and @p height=... in the @p [net] section at the top of the config file.
