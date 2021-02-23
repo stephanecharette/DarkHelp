@@ -208,9 +208,13 @@ void DarkHelp::reset()
 	sort_predictions					= ESort::kAscending;
 	annotation_auto_hide_labels			= true;
 	annotation_shade_predictions		= 0.25;
+	enable_debug						= false;
 	enable_tiles						= false;
 	horizontal_tiles					= 1;
 	vertical_tiles						= 1;
+	combine_tile_predictions			= true;
+	tile_edge_factor					= 0.25f;
+	tile_rect_factor					= 1.20f;
 	modify_batch_and_subdivisions		= true;
 	annotation_suppress_classes			.clear();
 
@@ -293,6 +297,7 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 
 	// divide the original image into the right number of tiles and call predict() on each tile
 	PredictionResults results;
+	std::vector<size_t> indexes_of_predictions_near_edges;
 	std::vector<cv::Mat> all_tile_mats;
 	std::chrono::high_resolution_clock::duration total_duration = std::chrono::milliseconds(0);
 
@@ -300,6 +305,8 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 	{
 		for (float x = 0.0f; x < horizontal_tiles_count; x ++)
 		{
+			const int tile_count = y * horizontal_tiles_count + x;
+
 			const int x_offset = std::round(x * tile_width);
 			const int y_offset = std::round(y * tile_height);
 			cv::Rect r(cv::Point(x_offset, y_offset), new_tile_size);
@@ -323,9 +330,49 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 			// fix up the predictions -- need to compensate for the tile not being the top-left corner of the image, and the size of the tile being smaller than the image
 			for (auto & prediction : prediction_results)
 			{
+				// track which predictions are near the edges, because we may need to re-examine them and join them after we finish with all the tiles
+				if (combine_tile_predictions)
+				{
+					const int minimum_horizontal_distance	= tile_edge_factor * prediction.rect.width;
+					const int minimum_vertical_distance		= tile_edge_factor * prediction.rect.height;
+					if (prediction.rect.x <= minimum_horizontal_distance					or
+						prediction.rect.y <= minimum_vertical_distance						or
+						roi.cols - prediction.rect.br().x <= minimum_horizontal_distance	or
+						roi.rows - prediction.rect.br().y <= minimum_vertical_distance		)
+					{
+						// this prediction is near one of the tile borders so we need to remember it
+						indexes_of_predictions_near_edges.push_back(results.size());
+					}
+				}
+
 				// every prediction needs to have x_offset and y_offset added to it
 				prediction.rect.x += x_offset;
 				prediction.rect.y += y_offset;
+				prediction.tile = tile_count;
+
+				if (enable_debug)
+				{
+					// draw a black-on-white debug label on the top side of the annotation
+
+					const std::string label		= std::to_string(results.size());
+					const auto font				= cv::HersheyFonts::FONT_HERSHEY_PLAIN;
+					const auto scale			= 0.75;
+					const auto thickness		= 1;
+					int baseline				= 0;
+					const cv::Size text_size	= cv::getTextSize(label, font, scale, thickness, &baseline);
+					const int text_half_width	= text_size.width			/ 2;
+					const int text_half_height	= text_size.height			/ 2;
+					const int pred_half_width	= prediction.rect.width		/ 2;
+					const int pred_half_height	= prediction.rect.height	/ 2;
+
+					// put the text exactly in the middle of the prediction
+					const cv::Rect label_rect(
+							prediction.rect.x + pred_half_width - text_half_width,
+							prediction.rect.y + pred_half_height - text_half_height,
+							text_size.width, text_size.height);
+					cv::rectangle(mat, label_rect, {255, 255, 255}, cv::FILLED, cv::LINE_AA);
+					cv::putText(mat, label, cv::Point(label_rect.x, label_rect.y + label_rect.height), font, scale, cv::Scalar(0,0,0), thickness, CV_AA);
+				}
 
 				// the original point and size are based on only 1 tile, so they also need to be fixed
 
@@ -340,7 +387,115 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 		}
 	}
 
-	/// @todo Would be nice if we went through all the results from the various tiles and merged together the ones that are side-by-side.
+	if (indexes_of_predictions_near_edges.empty() == false)
+	{
+		// we need to go through all the results from the various tiles and merged together the ones that are side-by-side
+
+		for (const auto & lhs_idx : indexes_of_predictions_near_edges)
+		{
+			if (results[lhs_idx].rect.area() == 0 and results[lhs_idx].tile == -1)
+			{
+				// this items has already been consumed and is marked for deletion
+				continue;
+			}
+
+			const cv::Rect & lhs_rect = results[lhs_idx].rect;
+
+			// now compare this rect against all other rects that come *after* this
+			for (const auto & rhs_idx : indexes_of_predictions_near_edges)
+			{
+				if (rhs_idx <= lhs_idx)
+				{
+					// if the RHS object is on an earlier tile, then we've already compared it
+					continue;
+				}
+
+				if (results[lhs_idx].tile == results[rhs_idx].tile)
+				{
+					// if two objects are on the exact same tile, don't bother trying to combine them
+					continue;
+				}
+
+				if (results[rhs_idx].rect.area() == 0 and results[rhs_idx].tile == -1)
+				{
+					// this items has already been consumed and is marked for deletion
+					continue;
+				}
+
+				const cv::Rect & rhs_rect		= results[rhs_idx].rect;
+				const cv::Rect combined_rect	= lhs_rect | rhs_rect;
+
+				// if this is a good match, then the area of the combined rect will be similar to the area of lhs+rhs
+				const int lhs_area		= lhs_rect		.area();
+				const int rhs_area		= rhs_rect		.area();
+				const int lhs_plus_rhs	= (lhs_area + rhs_area) * tile_rect_factor;
+				const int combined_area	= combined_rect	.area();
+
+				if (combined_area <= lhs_plus_rhs)
+				{
+					auto & lhs = results[lhs_idx];
+					auto & rhs = results[rhs_idx];
+
+					lhs.rect = combined_rect;
+
+					lhs.original_point.x = (static_cast<float>(lhs.rect.x) + static_cast<float>(lhs.rect.width	) / 2.0f) / static_cast<float>(mat.cols);
+					lhs.original_point.y = (static_cast<float>(lhs.rect.y) + static_cast<float>(lhs.rect.height	) / 2.0f) / static_cast<float>(mat.rows);
+
+					lhs.original_size.width		= static_cast<float>(lhs.rect.width	) / static_cast<float>(mat.cols);
+					lhs.original_size.height	= static_cast<float>(lhs.rect.height) / static_cast<float>(mat.rows);
+
+					// rebuild "all_probabilities" by combining both objects and keeping the max percentage
+					for (auto iter : rhs.all_probabilities)
+					{
+						const auto & key		= iter.first;
+						const auto & rhs_val	= iter.second;
+						const auto & lhs_val	= lhs.all_probabilities[key];
+
+						lhs.all_probabilities[key] = std::max(lhs_val, rhs_val);
+					}
+
+					// come up with a decent + consistent name to use for this object
+					name_prediction(lhs);
+
+					// mark the RHS to be deleted once we're done looping through all the results
+					rhs.rect = {0, 0, 0, 0};
+					rhs.tile = -1;
+				}
+			}
+		}
+
+		// now go through the results and delete any with an empty rect and tile of -1
+		auto iter = results.begin();
+		while (iter != results.end())
+		{
+			if (iter->rect.area() == 0 and iter->tile == -1)
+			{
+				// delete this prediction from the results since it has been combined with something else
+				iter = results.erase(iter);
+			}
+			else
+			{
+				iter ++;
+			}
+		}
+	}
+
+	if (enable_debug)
+	{
+		// draw vertical lines to show the tiles
+		for (float x=1.0; x < horizontal_tiles_count; x++)
+		{
+			const int x_pos = std::round(mat.cols / horizontal_tiles_count * x);
+			cv::line(mat, cv::Point(x_pos, 0), cv::Point(x_pos, mat.rows), {255, 0, 0});
+		}
+
+		// draw horizontal lines to show the tiles
+		for (float y=1.0; y < vertical_tiles_count; y++)
+		{
+			const int y_pos = std::round(mat.rows / vertical_tiles_count * y);
+			cv::line(mat, cv::Point(0, y_pos), cv::Point(mat.cols, y_pos), {255, 0, 0});
+		}
+	}
 
 	original_image		= mat;
 	prediction_results	= results;
@@ -445,9 +600,8 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 		const std::time_t tt = std::time(nullptr);
 		char timestamp[100];
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", std::localtime(&tt));
-		std::cout << "timestamp=" << timestamp << std::endl;
 
-		const cv::Size text_size	= cv::getTextSize(timestamp, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+		const cv::Size text_size = cv::getTextSize(timestamp, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 		cv::Rect r(cv::Point(2, annotated_image.rows - text_size.height - 4), cv::Size(text_size.width + 2, text_size.height + 2));
 		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
@@ -1025,9 +1179,10 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 		 */
 
 		PredictionResult pr;
-		pr.best_class = 0;
-		pr.best_probability = 0.0f;
-		
+		pr.tile				= 0;
+		pr.best_class		= 0;
+		pr.best_probability	= 0.0f;
+
 		for (int class_idx = 0; class_idx < det.classes; class_idx ++)
 		{
 			if (det.prob[class_idx] >= threshold)
@@ -1084,29 +1239,7 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 			pr.original_size	= cv::Size2f(det.bbox.w, det.bbox.h);
 
 			// now we come up with a decent name to use for this object
-			pr.name = names.at(pr.best_class);
-			if (names_include_percentage)
-			{
-				const int percentage = std::round(100.0 * pr.best_probability);
-				pr.name += " " + std::to_string(percentage) + "%";
-			}
-			if (include_all_names and pr.all_probabilities.size() > 1)
-			{
-				// we have multiple probabilities!
-				for (auto iter : pr.all_probabilities)
-				{
-					const int & key = iter.first;
-					if (key != pr.best_class)
-					{
-						pr.name += ", " + names.at(key);
-						if (names_include_percentage)
-						{
-							const int percentage = std::round(100.0 * iter.second);
-							pr.name += " " + std::to_string(percentage) + "%";
-						}
-					}
-				}
-			}
+			name_prediction(pr);
 
 			prediction_results.push_back(pr);
 		}
@@ -1136,6 +1269,52 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 }
 
 
+DarkHelp & DarkHelp::name_prediction(PredictionResult & pred)
+{
+	pred.best_class = 0;
+	pred.best_probability = 0.0f;
+
+	for (auto iter : pred.all_probabilities)
+	{
+		const auto & key = iter.first;
+		const auto & val = iter.second;
+
+		if (val > pred.best_probability)
+		{
+			pred.best_class			= key;
+			pred.best_probability	= val;
+		}
+	}
+
+	pred.name = names.at(pred.best_class);
+	if (names_include_percentage)
+	{
+		const int percentage = std::round(100.0 * pred.best_probability);
+		pred.name += " " + std::to_string(percentage) + "%";
+	}
+
+	if (include_all_names and pred.all_probabilities.size() > 1)
+	{
+		// we have multiple probabilities!
+		for (auto iter : pred.all_probabilities)
+		{
+			const int & key = iter.first;
+			if (key != pred.best_class)
+			{
+				pred.name += ", " + names.at(key);
+				if (names_include_percentage)
+				{
+					const int percentage = std::round(100.0 * iter.second);
+					pred.name += " " + std::to_string(percentage) + "%";
+				}
+			}
+		}
+	}
+
+	return *this;
+}
+
+
 std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred)
 {
 	os	<< "\""			<< pred.name << "\""
@@ -1145,7 +1324,9 @@ std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & 
 		<< " y="		<< pred.rect.y
 		<< " w="		<< pred.rect.width
 		<< " h="		<< pred.rect.height
-		<< " entries="	<< pred.all_probabilities.size();
+		<< " tile="		<< pred.tile
+		<< " entries="	<< pred.all_probabilities.size()
+		;
 
 	if (pred.all_probabilities.size() > 1)
 	{

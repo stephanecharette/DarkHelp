@@ -88,6 +88,7 @@ const char* magic_file(magic_t cookie, const char* filename)
 // possible return values from cv::waitKeyEx()
 #ifdef WIN32
 const int KEY_ESC		= 0x0000001b;
+const int KEY_c			= 0x00000063;
 const int KEY_g			= 0x00000067;
 const int KEY_h			= 0x00000068;
 const int KEY_p			= 0x00000070;
@@ -103,6 +104,7 @@ const int KEY_UP		= 0x00260000;
 const int KEY_DOWN		= 0x00280000;
 #else
 const int KEY_ESC		= 0x0010001b;
+const int KEY_c			= 0x00100063;
 const int KEY_g			= 0x00100067;
 const int KEY_h			= 0x00100068;
 const int KEY_p			= 0x00100070;
@@ -872,6 +874,12 @@ void process_image(Options & options)
 		case KEY_q:
 		{
 			options.done = true;
+			break;
+		}
+		case KEY_c:
+		{
+			options.dark_help.combine_tile_predictions = ! options.dark_help.combine_tile_predictions;
+			set_msg(options, "combining tile predictions has been turned " + std::string(options.dark_help.combine_tile_predictions ? "on" : "off"));
 			break;
 		}
 		case KEY_g:

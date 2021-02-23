@@ -188,6 +188,11 @@ class DarkHelp
 			 * is used as a label when calling @ref annotate().  @see @ref names_include_percentage
 			 */
 			std::string name;
+
+			/** The tile number on which this object was found.  This is mostly for debug purposes and only tiling has
+			 * been enabled (see @ref DarkHelp::enable_tiles), otherwise the value will always be zero.
+			 */
+			int tile;
 		};
 
 		/** A vector of predictions for the image analyzed by @ref predict().  Each @ref PredictionResult entry in the
@@ -355,10 +360,10 @@ class DarkHelp
 
 		/** Obtain a vector of at least 25 different bright colours that may be used to annotate images.  OpenCV uses BGR, not RGB.
 		 * For example:
-		 * 
+		 *
 		 * @li @p "{0, 0, 255}" is pure red
 		 * @li @p "{255, 0, 0}" is pure blue
-		 * 
+		 *
 		 * The colours returned by this function are intended to be used by OpenCV, and thus are in BGR format.
 		 * @see @ref annotation_colours
 		 *
@@ -545,7 +550,7 @@ class DarkHelp
 		bool include_all_names;
 
 		/** The colours to use in @ref annotate().  Defaults to @ref get_default_annotation_colours().
-		 * 
+		 *
 		 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "(0, 0, 255)".
 		 */
 		VColours annotation_colours;
@@ -617,6 +622,12 @@ class DarkHelp
 		 */
 		ESort sort_predictions;
 
+		/** This enables some non-specific debug functionality within the DarkHelp library.  The exact results of enabling
+		 * this is undocumented, and will change or may be completely removed without prior notice.  It is not meant for the
+		 * end-user, but instead is used for developers debugging DarkHelp and Darknet.  Default value is @p false.
+		 */
+		bool enable_debug;
+
 		/** Determines if calls to @ref predict() are sent directly to Darknet, or processed first by @ref predict_tile()
 		 * to break the image file into smaller sections.
 		 *
@@ -635,6 +646,7 @@ class DarkHelp
 		 * in image tiling.
 		 *
 		 * @see @ref Tiling
+		 * @see @ref combine_tile_predictions
 		 * @see @ref horizontal_tiles
 		 * @see @ref vertical_tiles
 		 * @see @ref tile_size
@@ -722,12 +734,59 @@ class DarkHelp
 		 */
 		std::set<int> annotation_suppress_classes;
 
+		/** When tiling is enabled, objects may span multiple tiles.  When this flag is set to @p true, %DarkHelp will attempt
+		 * to combine predictions that cross two or more tiles into a single prediction.  This has no impact when tiling is off,
+		 * or when the image processed fits within a single tile.  Default is @p true.
+		 *
+		 * @see @ref enable_tiles
+		 * @see @ref tile_edge_factor
+		 * @see @ref tile_rect_factor
+		 *
+		 * Image								| Description
+		 * -------------------------------------|------------
+		 * @image html tile_combine_1.png ""	| For example, the image on the left is a portion of a much larger image.
+		 * @image html tile_combine_2.png ""	| The blue horizontal line in this image shows the location of the boundary between two image tiles.
+		 * @image html tile_combine_3.png ""	| When @p combine_tile_predictions=false, the predictions which are split by a tile boundary look like this.
+		 * @image html tile_combine_4.png ""	| When @p combine_tile_predictions=true, the predictions split by a tile boundary are re-combined into a single object.
+		 */
+		bool combine_tile_predictions;
+
+		/** This value controls how close to the edge of a tile an object must be to be considered for re-combining when both
+		 * tiling and recombining have been enabled.  The smaller the value, the closer the object must be to the edge of a
+		 * tile.  The factor is multiplied by the width and height of the detected object.
+		 *
+		 * Possible range to consider would be @p 0.01 to @p 0.5.  If set to zero, then the detected object must be right on the
+		 * tile boundary to be considered.  The default is @p 0.25.
+		 *
+		 * @see @ref enable_tiles
+		 * @see @ref combine_tile_predictions
+		 */
+		float tile_edge_factor;
+
+		/** This value controls how close the rectangles needs to line up on two tiles before the predictions are combined.
+		 * This is only used when both tiling and recombining have been enabled.  As the value approaches @p 1.0, the closer
+		 * the rectangles have to be "perfect" to be combined.  Values below @p 1.0 are impossible, and predictions will
+		 * never be combined.  Possible range to consider might be @p 1.10 to @p 1.50 or even higher; this also depends on
+		 * the nature/shape of the objects detected and how the tiles are split up.  For example, if the objects are pear-shaped,
+		 * where the smaller end is on one tile and the larger end on another tile, you may need to increase this value as the
+		 * object on the different tiles will be of different sizes.  The default is @p 1.20.
+		 *
+		 * @see @ref enable_tiles
+		 * @see @ref combine_tile_predictions
+		 */
+		float tile_rect_factor;
+
 	protected:
 
 		/** Used by all the other @ref predict() calls to do the actual network prediction.  This uses the
 		 * image stored in @ref original_image.
 		 */
 		PredictionResults predict_internal(cv::Mat mat, const float new_threshold = -1.0f);
+
+		/** Give a consistent name to the given production result.  This gets called by both @ref predict_internal() and
+		 * @ref predict_tile() and is intended for internal use only.
+		 */
+		DarkHelp & name_prediction(PredictionResult & pred);
 };
 
 
