@@ -142,8 +142,7 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 
 	network * nw = reinterpret_cast<network*>(net);
 
-	// what do these 2 calls do?
-	fuse_conv_batchnorm(*nw);
+	// what does this call do?
 	calculate_binary_weights(*nw);
 
 	const auto t2 = std::chrono::high_resolution_clock::now();
