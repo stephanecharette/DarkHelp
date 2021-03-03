@@ -2,7 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
-1.1.9-1		| 2021-03-02	| DarkHelp now sets @p use_cuda_graph (see @ref DarkHelp::modify_batch_and_subdivisions).
+1.1.9-1		| 2021-03-02	| @ref DarkHelp::init() now sets @p use_cuda_graph (see @ref DarkHelp::modify_batch_and_subdivisions).
 1.1.7-1		| 2021-02-22	| Added the ability to merge annotations when using image tiling.
 1.1.4-1		| 2021-02-01	| Converted from private subversion repo to Github repo (https://github.com/stephanecharette/DarkHelp/).
 1.1.3-3101	| 2020-12-13	| Added @ref DarkHelp::annotation_suppress_classes.
