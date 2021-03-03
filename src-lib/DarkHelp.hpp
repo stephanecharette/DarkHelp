@@ -700,6 +700,10 @@ class DarkHelp
 		 * dh.modify_batch_and_subdivisions = true;
 		 * dh.init("cars.cfg", "cars_best.weights", "cars.names");
 		 * ~~~~
+		 *
+		 * @date 2021-03-02 Starting with version 1.1.9 on 2021-03-02, this was modified to also include the new
+		 * @p use_cuda_graph flag in the @p [net] section.
+		 * See <a target="_blank" href="https://github.com/AlexeyAB/darknet/issues/7444">issue #7444</a> for details.
 		 */
 		bool modify_batch_and_subdivisions;
 

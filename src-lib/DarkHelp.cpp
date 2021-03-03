@@ -128,6 +128,10 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 			{"subdivisions"	, "1"}
 		};
 		edit_cfg_file(cfg_fn, m);
+
+		// do not combine this settings with the previous two since there is code that
+		// needs to behave differently when only the batch+subdivisions are modified
+		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
 	}
 
 	// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
