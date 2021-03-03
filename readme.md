@@ -47,6 +47,7 @@ Now that Darknet is built and installed, you can go ahead and build DarkHelp.  O
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 	make package
+	sudo dpkg -i darkhelp*.deb
 
 # Example Code
 
