@@ -692,13 +692,16 @@ static inline cv::Mat convert_darknet_image_to_opencv_mat(const image img)
 
 std::string DarkHelp::duration_string()
 {
-	std::string str;
-	if		(duration <= std::chrono::nanoseconds(1000))	{ str = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>	(duration).count()) + " nanoseconds";	}
-	else if	(duration <= std::chrono::microseconds(1000))	{ str = std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(duration).count()) + " microseconds";	}
-	else if	(duration <= std::chrono::milliseconds(1000))	{ str = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()) + " milliseconds";	}
-	else /* use milliseconds for anything longer */			{ str = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()) + " milliseconds";	}
+	const auto length_in_milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+	const auto length_in_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration - length_in_milliseconds);
 
-	return str;
+	std::stringstream ss;
+	ss	<< length_in_milliseconds.count()
+		<< "." << std::setw(3) << std::setfill('0')
+		<< length_in_microseconds.count()
+		<< " milliseconds";
+
+	return ss.str();
 }
 
 
