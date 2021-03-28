@@ -6,9 +6,15 @@ Due to these issues, in October 2020 both %DarkHelp and DarkMark were changed ba
 
 @section Windows
 
-Unfortunately, a Windows build is no longer provided due to the vcpkg issues.  If you'd like to sponsor a Windows build, please contact <a href="mailto:stephanecharette@gmail.com">Stéphane Charette by email</a> or on the <a target="_blank" href="https://discord.gg/zSq8rtW">Darknet/Yolo discord</a>.
+Unfortunately, a Windows build is no longer maintained nor provided due to the vcpkg issues.  If you'd like to sponsor a Windows build, please contact <a href="mailto:stephanecharette@gmail.com">Stéphane Charette by email</a> or on the <a target="_blank" href="https://discord.gg/zSq8rtW">Darknet/Yolo discord</a>.
 
 @section Linux
+
+Extremely simple easy-to-follow tutorial on how to build Darknet, %DarkHelp, and <a target="_blank" href="https://github.com/stephanecharette/DarkMark">DarkMark</a>:
+
+@htmlonly[block]
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pJ2iyf_E9PM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+@endhtmlonly
 
 Building both Darknet and %DarkHelp should not take more than 5 minutes combined.  If you have not already done so, you must first build Darknet with the flag @p LIBSO=1.  This will ensure you build the @p "libdarknet.so" dynamic library.
 

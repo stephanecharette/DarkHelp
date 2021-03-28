@@ -18,6 +18,10 @@ DarkHelp is open source and published using the MIT license.  Meaning you can us
 
 # How to Build DarkHelp
 
+Extremely simple easy-to-follow tutorial on how to build Darknet, DarkHelp, and [DarkMark](https://github.com/stephanecharette/DarkMark).
+
+[![DarkHelp build tutorial](src-doc/darkmark_build_thumbnail.png)](https://www.youtube.com/watch?v=pJ2iyf_E9PM)
+
 DarkHelp requires that [Darknet](https://github.com/AlexeyAB/darknet) has already been built and installed, since DarkHelp is a *wrapper* for the C functionality available in `libdarknet.so`.
 
 ## Building Darknet
