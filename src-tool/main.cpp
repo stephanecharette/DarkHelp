@@ -366,31 +366,33 @@ void init(Options & options, int argc, char *argv[])
 	auto WxH_constraint = WxHConstraint();
 	auto exist_constraint = FileExistConstraint();
 
-	TCLAP::ValueArg<std::string> hierarchy	("y", "hierarchy"	, "The hierarchy threshold to use when predicting."					, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> threshold	("t", "threshold"	, "The threshold to use when predicting with the neural net."		, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> use_tiles	("T", "tiles"		, "Determines if large images are processed by breaking into tiles.", false, "false"	, &allowed_booleans	, cli);
-	TCLAP::SwitchArg slideshow				("s", "slideshow"	, "Show the images in a slideshow."																			, cli, false );
-	TCLAP::SwitchArg random					("r", "random"		, "Randomly shuffle the set of images."																		, cli, false );
-	TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."				, false, "true"		, &allowed_booleans	, cli);
-	TCLAP::ValueArg<std::string> nms		("n", "nms"			, "The non-maximal suppression threshold to use when predicting."	, false, "0.45"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."				, false, "false"	, &allowed_booleans	, cli);
-	TCLAP::SwitchArg use_json				("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."									, cli, false );
-	TCLAP::SwitchArg keep_images			("k", "keep"		, "Keep annotated images (write images to disk). Especially useful when combined with the -j option."		, cli, false );
-	TCLAP::ValueArg<std::string> autohide	("o", "autohide"	, "Auto-hide labels."												, false, "true"		, &allowed_booleans	, cli);
-	TCLAP::ValueArg<std::string> shade		("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles"		, false, "0.25"		, &float_constraint	, cli);
-	TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																, cli, false );
-	TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations."				, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."				, false, "true"		, &allowed_booleans	, cli);
-	TCLAP::ValueArg<std::string> resize1	("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."					, false, "640x480"	, &WxH_constraint	, cli);
-	TCLAP::ValueArg<std::string> resize2	("a", "resize2"		, "Resize the output image (\"after\") to \"WxH\"."					, false, "640x480"	, &WxH_constraint	, cli);
+	TCLAP::ValueArg<std::string> resize2	("a", "resize2"		, "Resize the output image (\"after\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint	, cli);
+	TCLAP::ValueArg<std::string> resize1	("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint	, cli);
+	TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."														, false, "true"		, &allowed_booleans	, cli);
+	TCLAP::ValueArg<std::string> shade		("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles. Default is 0.25."							, false, "0.25"		, &float_constraint	, cli);
+	TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations. Default is 0.5."										, false, "0.5"		, &float_constraint	, cli);
+	TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																										, cli, false );
+	TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."														, false, "false"	, &allowed_booleans	, cli);
+	TCLAP::SwitchArg use_json				("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."																			, cli, false );
+	TCLAP::SwitchArg keep_images			("k", "keep"		, "Keep annotated images (write images to disk). Especially useful when combined with the -j option."												, cli, false );
 	TCLAP::ValueArg<std::string> inputlist	("l", "list"		, "Text file that contains a list of images to use (one per line). "
-																	"Blank lines and lines beginning with '#' are ignored."			, false	, ""		, &exist_constraint	, cli);
-	TCLAP::UnlabeledValueArg<std::string> cfg		("config"	, "The darknet config filename, usually ends in \".cfg\"."			, true	, ""		, &exist_constraint	, cli);
-	TCLAP::UnlabeledValueArg<std::string> weights	("weights"	, "The darknet weights filename, usually ends in \".weights\"."		, true	, ""		, &exist_constraint	, cli);
+																	"Blank lines and lines beginning with '#' are ignored."													, false	, ""		, &exist_constraint	, cli);
+	TCLAP::ValueArg<std::string> nms		("n", "nms"			, "The non-maximal suppression threshold to use when predicting. Default is 0.45."							, false, "0.45"		, &float_constraint	, cli);
+	TCLAP::ValueArg<std::string> autohide	("o", "autohide"	, "Auto-hide labels."																						, false, "true"		, &allowed_booleans	, cli);
+	TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."														, false, "true"		, &allowed_booleans	, cli);
+	TCLAP::SwitchArg random					("r", "random"		, "Randomly shuffle the set of images."																												, cli, false );
+	TCLAP::SwitchArg slideshow				("s", "slideshow"	, "Show the images in a slideshow."																													, cli, false );
+	TCLAP::ValueArg<std::string> threshold	("t", "threshold"	, "The threshold to use when predicting with the neural net. Default is 0.5."								, false, "0.5"		, &float_constraint	, cli);
+	TCLAP::ValueArg<std::string> use_tiles	("T", "tiles"		, "Determines if large images are processed by breaking into tiles. Default is \"false\"."					, false, "false"	, &allowed_booleans	, cli);
+	TCLAP::ValueArg<std::string> hierarchy	("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint	, cli);
+	TCLAP::ValueArg<std::string> tile_edge	("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint	, cli);
+	TCLAP::ValueArg<std::string> tile_rect	("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint	, cli);
+	TCLAP::UnlabeledValueArg<std::string> cfg		("config"	, "The darknet config filename, usually ends in \".cfg\"."													, true	, ""		, &exist_constraint	, cli);
+	TCLAP::UnlabeledValueArg<std::string> weights	("weights"	, "The darknet weights filename, usually ends in \".weights\"."												, true	, ""		, &exist_constraint	, cli);
 	TCLAP::UnlabeledValueArg<std::string> names		("names"	, "The darknet class names filename, usually ends in \".names\". "
-													"Set to \"none\" if you don't have (or don't care about) the class names."		, true	, ""		, &exist_constraint	, cli);
+													"Set to \"none\" if you don't have (or don't care about) the class names."												, true	, ""		, &exist_constraint	, cli);
 	TCLAP::UnlabeledMultiArg<std::string> files		("files"	, "The name of images or videos to process with the given neural network. "
-																	"May be unspecified if the --list parameter is used instead."	, false				, "files..."		, cli);
+																	"May be unspecified if the --list parameter is used instead."											, false				, "files..."		, cli);
 
 	cli.parse(argc, argv);
 
@@ -438,6 +440,9 @@ void init(Options & options, int argc, char *argv[])
 	options.dark_help.annotation_shade_predictions		= std::stof(shade.getValue());
 	options.dark_help.annotation_auto_hide_labels		= get_bool(autohide);
 	options.dark_help.enable_tiles						= get_bool(use_tiles);
+	options.dark_help.tile_edge_factor					= std::stof(tile_edge.getValue());
+	options.dark_help.tile_rect_factor					= std::stof(tile_rect.getValue());
+
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["threshold"]				= options.dark_help.threshold;
 	options.json["settings"]["hierarchy"]				= options.dark_help.hierarchy_threshold;
