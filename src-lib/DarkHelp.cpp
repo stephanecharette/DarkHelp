@@ -216,6 +216,7 @@ void DarkHelp::reset()
 	horizontal_tiles					= 1;
 	vertical_tiles						= 1;
 	combine_tile_predictions			= true;
+	only_combine_similar_predictions	= true;
 	tile_edge_factor					= 0.25f;
 	tile_rect_factor					= 1.20f;
 	modify_batch_and_subdivisions		= true;
@@ -421,8 +422,23 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 
 				if (results[rhs_idx].rect.area() == 0 and results[rhs_idx].tile == -1)
 				{
-					// this items has already been consumed and is marked for deletion
+					// this item has already been consumed and is marked for deletion
 					continue;
+				}
+
+				if (only_combine_similar_predictions)
+				{
+					// check the probabilities to see if there is any similarity:
+					//
+					// 1) does the LHS contain the best class from the RHS?
+					// 2) does the RHS contain the best class from the LHS?
+					//
+					if (results[lhs_idx].all_probabilities.count(results[rhs_idx].best_class) == 0 and
+						results[rhs_idx].all_probabilities.count(results[lhs_idx].best_class) == 0)
+					{
+						// the two objects have completely different classes, so we cannot combine them together
+						continue;
+					}
 				}
 
 				const cv::Rect & rhs_rect		= results[rhs_idx].rect;

@@ -745,6 +745,7 @@ class DarkHelp
 		 * @see @ref enable_tiles
 		 * @see @ref tile_edge_factor
 		 * @see @ref tile_rect_factor
+		 * @see @ref only_combine_similar_predictions
 		 *
 		 * Image								| Description
 		 * -------------------------------------|------------
@@ -755,6 +756,15 @@ class DarkHelp
 		 */
 		bool combine_tile_predictions;
 
+		/** When @p combine_tile_predictions is enabled, this determines if an attempt is made to combine predictions even
+		 * when the class does not match.  Default is @p true.
+		 *
+		 * @see @ref combine_tile_predictions
+		 * @see @ref tile_edge_factor
+		 * @see @ref tile_rect_factor
+		 */
+		bool only_combine_similar_predictions;
+
 		/** This value controls how close to the edge of a tile an object must be to be considered for re-combining when both
 		 * tiling and recombining have been enabled.  The smaller the value, the closer the object must be to the edge of a
 		 * tile.  The factor is multiplied by the width and height of the detected object.
@@ -764,6 +774,7 @@ class DarkHelp
 		 *
 		 * @see @ref enable_tiles
 		 * @see @ref combine_tile_predictions
+		 * @see @ref only_combine_similar_predictions
 		 */
 		float tile_edge_factor;
 
@@ -777,6 +788,7 @@ class DarkHelp
 		 *
 		 * @see @ref enable_tiles
 		 * @see @ref combine_tile_predictions
+		 * @see @ref only_combine_similar_predictions
 		 */
 		float tile_rect_factor;
 
