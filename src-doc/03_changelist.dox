@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.1.13-1	| 2021-04-08	| Don't automatically enable @p use_cuda_graph since it seems to cause problems for video cards.
 1.1.12-1	| 2021-04-08	| Combining tiles works better with the introduction of @ref DarkHelp::only_combine_similar_predictions.
 1.1.9-1		| 2021-03-02	| @ref DarkHelp::init() now sets @p use_cuda_graph (see @ref DarkHelp::modify_batch_and_subdivisions).
 1.1.7-1		| 2021-02-22	| Added the ability to merge annotations when using image tiling.

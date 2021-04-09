@@ -131,7 +131,9 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 
 		// do not combine this settings with the previous two since there is code that
 		// needs to behave differently when only the batch+subdivisions are modified
-		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
+		//
+		// 2021-04-08:  It looks like use_cuda_graph _may_ be causing problems.  Don't explicitely set it in DarkHelp.
+//		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
 	}
 
 	// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
