@@ -981,22 +981,22 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 	size_t net_idx_start	= 0;
 	size_t net_idx_end		= 0;
 	VStr v;
-	std::string line;
-	while (std::getline(ifs, line))
+	std::string cfg_line;
+	while (std::getline(ifs, cfg_line))
 	{
-		if (line == "[net]")
+		if (cfg_line == "[net]")
 		{
 			net_idx_start	= v.size();
 			net_idx_end		= v.size();
 			net_section_found = true;
 		}
-		else if (line.size() >= 3)
+		else if (cfg_line.size() >= 3)
 		{
 			if (net_section_found == true)
 			{
 				if (net_idx_end == net_idx_start)
 				{
-					if (line[0] == '[')
+					if (cfg_line[0] == '[')
 					{
 						// we found the start of a new section, so this must mean the end of [net] has been found
 						net_idx_end = v.size();
@@ -1005,7 +1005,7 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 			}
 		}
 
-		v.push_back(line);
+		v.push_back(cfg_line);
 	}
 	ifs.close();
 
@@ -1107,6 +1107,7 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 		ofs << line << std::endl;
 	}
 	ofs.close();
+	std::remove(cfg_filename.c_str());	// Windows seems to require we remove the file before we can rename
 	const int result = std::rename(tmp_filename.c_str(), cfg_filename.c_str());
 	if (result)
 	{

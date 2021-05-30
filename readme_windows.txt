@@ -5,10 +5,6 @@
 
 Most recent documentation for DarkHelp:  https://github.com/stephanecharette/DarkHelp/
 
-@warning These instructions are no longer up-to-date.  Using vcpkg was causing too many problems since it doesn't build
-OpenCV correctly.  (For example, vcpkg doesn't build highgui or the video plugins required to import video files.)  For
-this reason, building with vcpkg is no longer supported.  See the build instructions on the DarkHelp project page instead.
-
 
 # -------------------------
 # SETTING UP PRE-REQUISITES
@@ -16,26 +12,13 @@ this reason, building with vcpkg is no longer supported.  See the build instruct
 
 Install Visual Studio 2019 from https://visualstudio.microsoft.com/vs/
 During installation, select "Desktop development with C++".
+
 Download and install WinGet from https://github.com/microsoft/winget-cli/releases
 Run the following commands:
 
 	winget install git.git
 	winget install kitware.cmake
-	winget install nullsoft.nsis
-
-
-# ----------------
-# CUDA/CUDNN & GPU
-# ----------------
-
-If you only want the "CPU" version of OpenCV and Darknet, then skip to the next section called "BUILDING OPENCV & DARKNET".
-
-If you want to use your CUDA-supported GPU with Darknet and DarkHelp:
-
-	- Visit https://developer.nvidia.com/cuda-downloads
-	- Click on Windows -> x86_64 -> 10 -> exe (network) -> Download
-	- Accept the defaults and finish the CUDA install.
-	- At the end of the next section, the installation command you run needs to be the one that includes CUDA/CUDNN support.
+	winget install nsis
 
 
 # -------------------------
@@ -51,37 +34,32 @@ Run the following commands:
 	bootstrap-vcpkg.bat
 	vcpkg.exe integrate install
 	vcpkg.exe integrate powershell
-
-Run *ONE* of the following two "install" commands:
-
-	- This one is if you have a supported GPU and CUDA:
-		vcpkg.exe install --triplet x64-windows-static tclap cuda cudnn opencv-cuda darknet[cuda,cudnn,opencv-cuda]
-
-	- This one is if you only want support for CPU:
-		vcpkg.exe install --triplet x64-windows-static tclap opencv darknet[opencv-base]
-
-Note the install command will take some time to run since it has to download and build OpenCV, Darknet, and various dependencies.
-
-Once it has finished, you can free up some disk space by deleting these two subdirectories:
-
-	rmdir /s /q buildtrees downloads
+	vcpkg.exe install opencv[contrib,core,dnn,ffmpeg,jpeg,png,quirc,tiff,webp]:x64-windows darknet[opencv-base]:x64-windows
 
 
 # -----------------
 # BUILDING DARKHELP
 # -----------------
 
-Download DarkHelp from https://www.ccoderun.ca/
-Extract the source into c:\src\DarkHelp\
-Run the following commands:
+Assuming you already followed the steps above which included installing vcpkg, run the following commands:
 
-	cd c:\src\DarkHelp\
+	cd c:\src\vcpkg
+	vcpkg.exe install tclap:x64-windows
+	cd c:\src
+	git clone https://github.com/stephanecharette/DarkHelp.git
+	cd darkhelp
 	mkdir build
 	cd build
-	cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:\src\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_PREFIX_PATH=c:\src\vcpkg\installed\x64-windows-static -DVCPKG_TARGET_TRIPLET=x64-windows-static ..
+	cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+
+You should now have a Visual Studio project file.  You can build using Visual Studio, or from the command line:
+
 	msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
+
+This will build a static library named "darkhelp.lib", and the "DarkHelp.exe" example command-line tool.
+
+Create the installation package:
+
 	msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
 
-This will build a static library named "darkhelp.lib", and the "DarkHelp.exe" command-line tool.
-
-See build_windows.cmd which contains the steps from "BUILDING DARKHELP".
+Also see the script build_windows.cmd.

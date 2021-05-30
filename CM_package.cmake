@@ -17,7 +17,7 @@ SET ( CPACK_PACKAGE_DESCRIPTION			"DarkHelp C++ library" )
 SET ( CPACK_PACKAGE_HOMEPAGE_URL		"https://www.ccoderun.ca/DarkHelp/"	)
 
 IF ( WIN32 )
-	SET ( CPACK_PACKAGE_FILE_NAME						"darkhelp-${DH_VERSION}-Windows10-64" )
+	SET ( CPACK_PACKAGE_FILE_NAME						"darkhelp-${DH_VERSION}-Windows-64" )
 	SET ( CPACK_NSIS_PACKAGE_NAME						"DarkHelp"						)
 	SET ( CPACK_NSIS_DISPLAY_NAME						"DarkHelp v${DH_VERSION}"		)
 	SET ( CPACK_NSIS_MUI_ICON							"${CMAKE_CURRENT_SOURCE_DIR}\\\\src-tool\\\\DarkHelp.ico" )

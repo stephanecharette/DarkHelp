@@ -5,15 +5,21 @@
 
 FIND_PACKAGE ( Threads			REQUIRED	)
 FIND_PACKAGE ( OpenCV	CONFIG	REQUIRED	)
+INCLUDE_DIRECTORIES (${OpenCV_INCLUDE_DIRS}	)
 
-# vcpkg was causing problems -- see docs for details
-#FIND_PACKAGE ( Darknet CONFIG REQUIRED )
-FIND_LIBRARY ( Darknet darknet )
+IF (WIN32)
+	# Assume that vcpkg was used on Windows
+	FIND_PACKAGE (Darknet REQUIRED)
+	INCLUDE_DIRECTORIES (${Darknet_INCLUDE_DIR})
+	SET (Darknet Darknet::dark)
+ELSE ()
+	FIND_LIBRARY (Darknet darknet)
+ENDIF ()
 
-SET ( StdCppFS "" )
+SET (StdCppFS "")
 
 IF (NOT WIN32)
-	FIND_LIBRARY ( Magic magic ) # sudo apt-get install libmagic-dev
+	FIND_LIBRARY (Magic magic) # sudo apt-get install libmagic-dev
 
 	# On older 18.04, we need to use "experimental/filesystem" instead of "filesystem"
 	# and we need to pass in the -lstdc++fs flag when linking.  This seems to have no
@@ -22,8 +28,5 @@ IF (NOT WIN32)
 	SET ( StdCppFS stdc++fs	)
 ENDIF ()
 
-FIND_PATH ( TCLAP_INCLUDE_DIRS "tclap/Arg.h" ) # sudo apt-get install libtclap-dev
-
-INCLUDE_DIRECTORIES ( ${Darknet_INCLUDE_DIR}	)
-INCLUDE_DIRECTORIES ( ${OpenCV_INCLUDE_DIRS}	)
-INCLUDE_DIRECTORIES ( ${TCLAP_INCLUDE_DIRS}		)
+FIND_PATH (TCLAP_INCLUDE_DIRS "tclap/Arg.h") # sudo apt-get install libtclap-dev
+INCLUDE_DIRECTORIES (${TCLAP_INCLUDE_DIRS})
