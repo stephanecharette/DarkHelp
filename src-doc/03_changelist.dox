@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.1.14-3	| 2021-05-30	| Created <a target="_blank" href="https://github.com/stephanecharette/DarkHelp/tree/master/example_project">example project</a> to help people understand how to use the C++ library.
 1.1.14-1	| 2021-05-30	| Restart the Windows port of %DarkHelp.
 1.1.13-1	| 2021-04-08	| Don't automatically enable @p use_cuda_graph since it seems to cause problems for video cards.
 1.1.12-1	| 2021-04-08	| Combining tiles works better with the introduction of @ref DarkHelp::only_combine_similar_predictions.
