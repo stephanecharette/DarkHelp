@@ -1,16 +1,45 @@
 /** @page Building Building %DarkHelp
 
-For a brief period, the %DarkHelp build process was changed to use vcpkg.  However, vcpkg doesn't build OpenCV correctly which causes problems with %DarkHelp.  For example, it doesn't include support for highgui, and it doesn't build the OpenCV plugins required to process videos.
-
-Due to these issues, in October 2020 both %DarkHelp and DarkMark were changed back to their original build procedures.
-
 @section Windows
 
-Unfortunately, a Windows build is no longer maintained nor provided due to the vcpkg issues.  If you'd like to sponsor a Windows build, please contact <a href="mailto:stephanecharette@gmail.com">Stéphane Charette by email</a> or on the <a target="_blank" href="https://discord.gg/zSq8rtW">Darknet/Yolo discord</a>.
+The Windows build uses @p vcpkg to install the necessary 3rd-party libraries such as OpenCV.
+
+See the files
+<a target="_blank" href="https://github.com/stephanecharette/DarkHelp/blob/master/readme_windows.txt">readme_windows.txt</a> and
+<a target="_blank" href="https://github.com/stephanecharette/DarkHelp/blob/master/build_windows.cmd">build_windows.cmd</a> on GitHub for details.
+
+The Darknet/OpenCV portion is like this:
+
+~~~~{.sh}
+cd c:\src
+git clone https://github.com/microsoft/vcpkg
+cd vcpkg
+bootstrap-vcpkg.bat
+vcpkg.exe integrate install
+vcpkg.exe integrate powershell
+vcpkg.exe install opencv[contrib,core,dnn,ffmpeg,jpeg,png,quirc,tiff,webp]:x64-windows darknet[opencv-base]:x64-windows
+~~~~
+
+Once that completes, the %DarkHelp portion is like this:
+
+~~~~{.sh}
+cd c:\src\vcpkg
+vcpkg.exe install tclap:x64-windows
+cd c:\src
+git clone https://github.com/stephanecharette/DarkHelp.git
+cd darkhelp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
+msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
+~~~~
+
+Make sure you update the path to the toolchain file if you used a different directory.
 
 @section Linux
 
-Extremely simple easy-to-follow tutorial on how to build Darknet, %DarkHelp, and <a target="_blank" href="https://github.com/stephanecharette/DarkMark">DarkMark</a>:
+Extremely simple tutorial on how to build Darknet, %DarkHelp, and <a target="_blank" href="https://github.com/stephanecharette/DarkMark">DarkMark</a>:
 
 @htmlonly[block]
 <iframe width="560" height="315" src="https://www.youtube.com/embed/pJ2iyf_E9PM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

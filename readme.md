@@ -16,7 +16,7 @@ DarkHelp also has [a very simple command-line tool](https://www.ccoderun.ca/dark
 
 DarkHelp is open source and published using the MIT license.  Meaning you can use it in your commercial application.  See license.txt for details.
 
-# How to Build DarkHelp
+# How to Build DarkHelp (Linux)
 
 Extremely simple easy-to-follow tutorial on how to build Darknet, DarkHelp, and [DarkMark](https://github.com/stephanecharette/DarkMark).
 
@@ -24,7 +24,7 @@ Extremely simple easy-to-follow tutorial on how to build Darknet, DarkHelp, and 
 
 DarkHelp requires that [Darknet](https://github.com/AlexeyAB/darknet) has already been built and installed, since DarkHelp is a *wrapper* for the C functionality available in `libdarknet.so`.
 
-## Building Darknet
+## Building Darknet (Linux)
 
 You must build Darknet with the `LIBSO=1` variable set to have it build `libdarknet.so`.  On Ubuntu:
 
@@ -38,7 +38,7 @@ You must build Darknet with the `LIBSO=1` variable set to have it build `libdark
 	sudo cp include/darknet.h /usr/local/include/
 	sudo ldconfig
 
-## Building DarkHelp
+## Building DarkHelp (Linux)
 
 Now that Darknet is built and installed, you can go ahead and build DarkHelp.  On Ubuntu:
 
@@ -52,6 +52,37 @@ Now that Darknet is built and installed, you can go ahead and build DarkHelp.  O
 	make
 	make package
 	sudo dpkg -i darkhelp*.deb
+
+## Building Darknet (Windows)
+
+The Windows build uses `vcpkg` to install the necessary 3rd-party libraries such as OpenCV.  See the files `readme_windows.txt` and `build_windows.cmd` for details.
+
+Run the following commands to build Darknet and OpenCV:
+
+	cd c:\src
+	git clone https://github.com/microsoft/vcpkg
+	cd vcpkg
+	bootstrap-vcpkg.bat
+	vcpkg.exe integrate install
+	vcpkg.exe integrate powershell
+	vcpkg.exe install opencv[contrib,core,dnn,ffmpeg,jpeg,png,quirc,tiff,webp]:x64-windows darknet[opencv-base]:x64-windows
+
+## Building DarkHelp (Windows)
+
+Once you finish building Darknet and OpenCV, run the following commands to build DarkHelp:
+
+	cd c:\src\vcpkg
+	vcpkg.exe install tclap:x64-windows
+	cd c:\src
+	git clone https://github.com/stephanecharette/DarkHelp.git
+	cd darkhelp
+	mkdir build
+	cd build
+	cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+	msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
+	msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
+
+Make sure you update the path to the toolchain file if you used a different directory.
 
 # Example Code
 
