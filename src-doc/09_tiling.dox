@@ -39,7 +39,7 @@ The tiles are then automatically processed by %DarkHelp and individually fed to 
 The final result vector contains all the objects detected across all tiles for the original image:
 
 ~~~~{.txt}
-> DarkHelp --tiles on -autohide off --duration off --threshold 0.2 mailboxes{.names,.cfg,_best.weights} DSCN0582.jpg
+> DarkHelp --tiles on --autohide off --duration off --threshold 0.2 mailboxes{.names,.cfg,_best.weights} DSCN0582.jpg
 ...
 -> neural network dimensions: 416x320
 -> looking for image and video files
