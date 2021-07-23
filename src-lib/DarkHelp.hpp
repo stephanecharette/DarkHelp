@@ -761,6 +761,17 @@ class DarkHelp
 		/** When @p combine_tile_predictions is enabled, this determines if an attempt is made to combine predictions even
 		 * when the class does not match.  Default is @p true.
 		 *
+		 * Note that when set to @p true, this compares @em all classes for the annotations.  For example:
+		 *
+		 * Image										| Description
+		 * ---------------------------------------------|------------
+		 * @image html tile_combine_similar_0.png ""	| Portion of original image.
+		 * @image html tile_combine_similar_1.png ""	| Annotated image when tiling is enabled and combination is disabled.  This shows how the lock and @p "5" are split across multiple tiles, and how a tiny portion of the @p "5" seems to initially be annotated as a @p "6".
+		 * @image html tile_combine_similar_2.png ""	| The blue lines show where the tile edges are located.  There are 4 tiles involved in this example.
+		 * @image html tile_combine_similar_3.png ""	| Annotated image with full text labels.  It is important to note how the small sliver on the right is 49% likely to be a @p "6" and 20% to be a @p "5".  This is important since by default %DarkHelp only combines annotations which have a class in common.
+		 * @image html tile_combine_similar_4.png ""	| Once @ref combine_tile_predictions has been enabled, the small sliver on the right was successfully combined into the @p "5".
+		 * @image html tile_combine_similar_5.png ""	| The final annotations once combination has been performed.
+		 *
 		 * @see @ref combine_tile_predictions
 		 * @see @ref tile_edge_factor
 		 * @see @ref tile_rect_factor
@@ -773,6 +784,12 @@ class DarkHelp
 		 *
 		 * Possible range to consider would be @p 0.01 to @p 0.5.  If set to zero, then the detected object must be right on the
 		 * tile boundary to be considered.  The default is @p 0.25.
+		 *
+		 * Image							| Setting
+		 * ---------------------------------|--------
+		 * @image html tile_edge_0.png ""	| @p combine_tile_predictions=false
+		 * @image html tile_edge_1.png ""	| @p combine_tile_predictions=true <br/> @p tile_edge_factor=0.05
+		 * @image html tile_edge_2.png ""	| @p combine_tile_predictions=true <br/> @p tile_edge_factor=0.15
 		 *
 		 * @see @ref enable_tiles
 		 * @see @ref combine_tile_predictions
@@ -787,6 +804,12 @@ class DarkHelp
 		 * the nature/shape of the objects detected and how the tiles are split up.  For example, if the objects are pear-shaped,
 		 * where the smaller end is on one tile and the larger end on another tile, you may need to increase this value as the
 		 * object on the different tiles will be of different sizes.  The default is @p 1.20.
+		 *
+		 * Image							| Setting
+		 * ---------------------------------|--------
+		 * @image html tile_rect_0.png ""	| @p tile_rect_factor=1.00
+		 * @image html tile_rect_1.png ""	| @p tile_rect_factor=1.10
+		 * @image html tile_rect_2.png ""	| @p tile_rect_factor=1.20
 		 *
 		 * @see @ref enable_tiles
 		 * @see @ref combine_tile_predictions

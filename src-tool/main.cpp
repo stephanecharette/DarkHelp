@@ -91,8 +91,10 @@ const int KEY_ESC		= 0x0000001b;
 const int KEY_c			= 0x00000063;
 const int KEY_g			= 0x00000067;
 const int KEY_h			= 0x00000068;
+const int KEY_l			= 0x0000006c;
 const int KEY_p			= 0x00000070;
 const int KEY_q			= 0x00000071;
+const int KEY_s			= 0x00000073;
 const int KEY_t			= 0x00000074;
 const int KEY_w			= 0x00000077;
 const int KEY_PAGE_UP	= 0x00210000;
@@ -107,8 +109,10 @@ const int KEY_ESC		= 0x0010001b;
 const int KEY_c			= 0x00100063;
 const int KEY_g			= 0x00100067;
 const int KEY_h			= 0x00100068;
+const int KEY_l			= 0x0010006c;
 const int KEY_p			= 0x00100070;
 const int KEY_q			= 0x00100071;
+const int KEY_s			= 0x00100073;
 const int KEY_t			= 0x00100074;
 const int KEY_w			= 0x00100077;
 const int KEY_HOME		= 0x0010ff50;
@@ -180,7 +184,10 @@ void show_help_window()
 		{ "PAGE UP"		, "Increase threshold by 10%."		},
 		{ "g"			, "Toggle greyscale."				},
 		// misc
+		{ "c"			, "Combine predictions."			},
 		{ "h"			, "Show help."						},
+		{ "l"			, "Toggle labels."					},
+		{ "t"			, "Toggle image tiling."			},
 		{ "w"			, "Write image to disk."			},
 		{ "q or ESC"	, "Exit from DarkHelp."				}
 	};
@@ -890,6 +897,23 @@ void process_image(Options & options)
 		case KEY_g:
 		{
 			options.force_greyscale = not options.force_greyscale;
+			break;
+		}
+		case KEY_l:
+		{
+			options.dark_help.annotation_auto_hide_labels = ! options.dark_help.annotation_auto_hide_labels;
+			set_msg(options, "auto-labels has been turned " + std::string(options.dark_help.annotation_auto_hide_labels ? "on" : "off"));
+			break;
+		}
+		case KEY_s:
+		{
+			auto & shade = options.dark_help.annotation_shade_predictions;
+			if		(shade < 0.25)	shade = 0.25;
+			else if	(shade < 0.50)	shade = 0.50;
+			else if	(shade < 0.75)	shade = 0.75;
+			else					shade = 0.0;
+
+			set_msg(options, "annotation shading has been set to " + std::to_string(int(shade * 100.0)) + "%");
 			break;
 		}
 		case KEY_t:
