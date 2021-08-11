@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <ctime>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
 #include "filesystem.hpp"
@@ -131,6 +132,8 @@ struct Options
 	std::string		cfg_fn;
 	std::string		weights_fn;
 	std::string		names_fn;
+	std::string		out_dir;
+	std::string		image_type; // either "png" or "jpg"
 	bool			keep_annotated_images;
 	bool			use_json_output;
 	nlohmann::json	json;
@@ -326,7 +329,25 @@ class FloatConstraint : public TCLAP::Constraint<std::string>
 };
 
 
-// Class used to validate that an input file exists
+// Class used to validate the output image type (png vs jpg)
+class OutputImageConstraint : public TCLAP::Constraint<std::string>
+{
+public:
+
+	virtual std::string description() const	{ return "known image type of \"png\" or \"jpg\""; }
+	virtual std::string shortID() const		{ return "type"; }
+	virtual bool check(const std::string & value) const
+	{
+		if (value == "png" or value == "jpg")
+		{
+			return true;
+		}
+		return false;
+	}
+};
+
+
+// Class used to validate that an input file exists.
 class FileExistConstraint : public TCLAP::Constraint<std::string>
 {
 	public:
@@ -336,6 +357,27 @@ class FileExistConstraint : public TCLAP::Constraint<std::string>
 		virtual bool check(const std::string & value) const
 		{
 			return std::filesystem::exists(value);
+		}
+};
+
+
+// Class used to validate that a directory exists.
+class DirExistConstraint : public TCLAP::Constraint<std::string>
+{
+	public:
+
+		virtual std::string description() const	{ return "directory must exist"; }
+		virtual std::string shortID() const		{ return "dirname"; }
+		virtual bool check(const std::string & value) const
+		{
+			if (std::filesystem::exists(value))
+			{
+				if (std::filesystem::is_directory(value))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 };
 
@@ -371,35 +413,39 @@ void init(Options & options, int argc, char *argv[])
 	auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
 	auto float_constraint = FloatConstraint();
 	auto WxH_constraint = WxHConstraint();
-	auto exist_constraint = FileExistConstraint();
+	auto dir_exist_constraint = DirExistConstraint();
+	auto file_exist_constraint = FileExistConstraint();
+	auto image_type_constraint = OutputImageConstraint();
 
-	TCLAP::ValueArg<std::string> resize2	("a", "resize2"		, "Resize the output image (\"after\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint	, cli);
-	TCLAP::ValueArg<std::string> resize1	("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint	, cli);
-	TCLAP::ValueArg<std::string> duration	("d", "duration"	, "Determines if the duration is added to annotations."														, false, "true"		, &allowed_booleans	, cli);
-	TCLAP::ValueArg<std::string> shade		("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles. Default is 0.25."							, false, "0.25"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> fontscale	("f", "fontscale"	, "Determines how the font is scaled for annotations. Default is 0.5."										, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::SwitchArg greyscale				("g", "greyscale"	, "Force the images to be loaded in greyscale."																										, cli, false );
-	TCLAP::ValueArg<std::string> timestamp	("i", "timestamp"	, "Determines if a timestamp is added to annotations."														, false, "false"	, &allowed_booleans	, cli);
-	TCLAP::SwitchArg use_json				("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."																			, cli, false );
-	TCLAP::SwitchArg keep_images			("k", "keep"		, "Keep annotated images (write images to disk). Especially useful when combined with the -j option."												, cli, false );
-	TCLAP::ValueArg<std::string> inputlist	("l", "list"		, "Text file that contains a list of images to use (one per line). "
-																	"Blank lines and lines beginning with '#' are ignored."													, false	, ""		, &exist_constraint	, cli);
-	TCLAP::ValueArg<std::string> nms		("n", "nms"			, "The non-maximal suppression threshold to use when predicting. Default is 0.45."							, false, "0.45"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> autohide	("o", "autohide"	, "Auto-hide labels."																						, false, "true"		, &allowed_booleans	, cli);
-	TCLAP::ValueArg<std::string> percentage	("p", "percentage"	, "Determines if percentages are added to annotations."														, false, "true"		, &allowed_booleans	, cli);
-	TCLAP::SwitchArg random					("r", "random"		, "Randomly shuffle the set of images."																												, cli, false );
-	TCLAP::SwitchArg slideshow				("s", "slideshow"	, "Show the images in a slideshow."																													, cli, false );
-	TCLAP::ValueArg<std::string> threshold	("t", "threshold"	, "The threshold to use when predicting with the neural net. Default is 0.5."								, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> use_tiles	("T", "tiles"		, "Determines if large images are processed by breaking into tiles. Default is \"false\"."					, false, "false"	, &allowed_booleans	, cli);
-	TCLAP::ValueArg<std::string> hierarchy	("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> tile_edge	("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint	, cli);
-	TCLAP::ValueArg<std::string> tile_rect	("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint	, cli);
-	TCLAP::UnlabeledValueArg<std::string> cfg		("config"	, "The darknet config filename, usually ends in \".cfg\"."													, true	, ""		, &exist_constraint	, cli);
-	TCLAP::UnlabeledValueArg<std::string> weights	("weights"	, "The darknet weights filename, usually ends in \".weights\"."												, true	, ""		, &exist_constraint	, cli);
-	TCLAP::UnlabeledValueArg<std::string> names		("names"	, "The darknet class names filename, usually ends in \".names\". "
-													"Set to \"none\" if you don't have (or don't care about) the class names."												, true	, ""		, &exist_constraint	, cli);
-	TCLAP::UnlabeledMultiArg<std::string> files		("files"	, "The name of images or videos to process with the given neural network. "
-																	"May be unspecified if the --list parameter is used instead."											, false				, "files..."		, cli);
+	TCLAP::ValueArg<std::string> resize2			("a", "resize2"		, "Resize the output image (\"after\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint		, cli);
+	TCLAP::ValueArg<std::string> resize1			("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint		, cli);
+	TCLAP::ValueArg<std::string> duration			("d", "duration"	, "Determines if the duration is added to annotations."														, false, "true"		, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> shade				("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles. Default is 0.25."							, false, "0.25"		, &float_constraint		, cli);
+	TCLAP::ValueArg<std::string> fontscale			("f", "fontscale"	, "Determines how the font is scaled for annotations. Default is 0.5."										, false, "0.5"		, &float_constraint		, cli);
+	TCLAP::SwitchArg greyscale						("g", "greyscale"	, "Force the images to be loaded in greyscale."																											, cli, false );
+	TCLAP::ValueArg<std::string> timestamp			("i", "timestamp"	, "Determines if a timestamp is added to annotations."														, false, "false"	, &allowed_booleans		, cli);
+	TCLAP::SwitchArg use_json						("j", "json"		, "Enable JSON output (useful when DarkHelp is used in a shell script)."																				, cli, false );
+	TCLAP::SwitchArg keep_images					("k", "keep"		, "Keep annotated images (write images to disk). Especially useful when combined with the -j option."													, cli, false );
+	TCLAP::ValueArg<std::string> inputlist			("l", "list"		, "Text file that contains a list of images to use (one per line). "
+																		"Blank lines and lines beginning with '#' are ignored."														, false	, ""		, &file_exist_constraint, cli);
+	TCLAP::ValueArg<std::string> nms				("n", "nms"			, "The non-maximal suppression threshold to use when predicting. Default is 0.45."							, false, "0.45"		, &float_constraint		, cli);
+	TCLAP::ValueArg<std::string> autohide			("o", "autohide"	, "Auto-hide labels."																						, false, "true"		, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> percentage			("p", "percentage"	, "Determines if percentages are added to annotations."														, false, "true"		, &allowed_booleans		, cli);
+	TCLAP::SwitchArg random							("r", "random"		, "Randomly shuffle the set of images."																													, cli, false );
+	TCLAP::SwitchArg slideshow						("s", "slideshow"	, "Show the images in a slideshow."																														, cli, false );
+	TCLAP::ValueArg<std::string> threshold			("t", "threshold"	, "The threshold to use when predicting with the neural net. Default is 0.5."								, false, "0.5"		, &float_constraint		, cli);
+	TCLAP::ValueArg<std::string> use_tiles			("T", "tiles"		, "Determines if large images are processed by breaking into tiles. Default is \"false\"."					, false, "false"	, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> hierarchy			("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint		, cli);
+	TCLAP::ValueArg<std::string> image_type			("Y", "type"		, "The image type to use when --keep has also been enabled. Can be \"png\" or \"jpg\". Default is \"png\"."	, false, "png"		, &image_type_constraint, cli);
+	TCLAP::ValueArg<std::string> out_dir			("", "outdir"		, "Output directory to use when --keep has also been enabled. Default is /tmp/."							, false, ""			, &dir_exist_constraint	, cli);
+	TCLAP::ValueArg<std::string> tile_edge			("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint		, cli);
+	TCLAP::ValueArg<std::string> tile_rect			("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint		, cli);
+	TCLAP::UnlabeledValueArg<std::string> cfg		("config"			, "The darknet config filename, usually ends in \".cfg\"."													, true	, ""		, &file_exist_constraint, cli);
+	TCLAP::UnlabeledValueArg<std::string> weights	("weights"			, "The darknet weights filename, usually ends in \".weights\"."												, true	, ""		, &file_exist_constraint, cli);
+	TCLAP::UnlabeledValueArg<std::string> names		("names"			, "The darknet class names filename, usually ends in \".names\". "
+																		"Set to \"none\" if you don't have (or don't care about) the class names."									, true	, ""		, &file_exist_constraint, cli);
+	TCLAP::UnlabeledMultiArg<std::string> files		("files"			, "The name of images or videos to process with the given neural network. "
+																		"May be unspecified if the --list parameter is used instead."												, false				, "files..."			, cli);
 
 	cli.parse(argc, argv);
 
@@ -408,6 +454,13 @@ void init(Options & options, int argc, char *argv[])
 		// special value -- pretend the "names" argument hasn't been set
 		names.reset();
 	}
+
+	const std::time_t tt = std::time(nullptr);
+	auto lt = std::localtime(&tt);
+	char buffer[50];
+	std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z", lt);
+	options.json["timestamp"]["epoch"]	= tt;
+	options.json["timestamp"]["text"]	= buffer;
 
 	options.magic_cookie = magic_open(MAGIC_MIME_TYPE);
 	magic_load(options.magic_cookie, nullptr);
@@ -419,8 +472,10 @@ void init(Options & options, int argc, char *argv[])
 	options.names_fn	= names		.getValue();
 	DarkHelp::verify_cfg_and_weights(options.cfg_fn, options.weights_fn, options.names_fn);
 
-	options.keep_annotated_images	= keep_images.getValue();
-	options.use_json_output			= use_json.getValue();
+	options.image_type				= image_type	.getValue();
+	options.out_dir					= out_dir		.getValue();
+	options.keep_annotated_images	= keep_images	.getValue();
+	options.use_json_output			= use_json		.getValue();
 
 	options.json["network"]["cfg"			] = options.cfg_fn;
 	options.json["network"]["weights"		] = options.weights_fn;
@@ -472,6 +527,31 @@ void init(Options & options, int argc, char *argv[])
 	options.size2			= get_WxH(resize2);
 	options.done			= false;
 	options.file_index		= 0;
+
+	if (options.out_dir.empty())
+	{
+		// default to "current directory"
+		options.out_dir = ".";
+
+		// ...but if we're going to be keeping a lot of images, create something new in /tmp/
+		if (options.keep_annotated_images)
+		{
+			auto dir = std::filesystem::temp_directory_path();
+
+			#ifdef WIN32
+			const auto pid = _getpid();
+			#else
+			const auto pid = getpid();
+			#endif
+			dir /= "darkhelp_" + std::to_string(pid);
+			std::filesystem::create_directories(dir);
+
+			options.out_dir = dir.string();
+		}
+	}
+
+	std::cout << "-> output directory: " << options.out_dir << std::endl;
+	options.json["settings"]["outdir"] = options.out_dir;
 
 	std::cout << "-> looking for image and video files" << std::endl;
 	size_t number_of_files_skipped = 0;
@@ -601,7 +681,9 @@ void process_video(Options & options)
 		short_filename.erase(pos);
 	}
 	short_filename += "_output.mp4";
-	options.json["file"][options.file_index]["output"] = short_filename;
+	auto long_filename = std::filesystem::path(options.out_dir) / short_filename;
+
+	options.json["file"][options.file_index]["output"] = long_filename.string();
 
 	const double seconds = input_frames / input_fps;
 	const std::string length_str =
@@ -624,13 +706,15 @@ void process_video(Options & options)
 		cv::setWindowTitle("DarkHelp", short_filename);
 		cv::imshow("DarkHelp", mat);
 		cv::resizeWindow("DarkHelp", output_width, output_height);
+		cv::waitKey(10);
 	}
 
-	output_video.open(short_filename, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), input_fps, {output_width, output_height});
+	output_video.open(long_filename.string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), input_fps, {output_width, output_height});
 
 	// reset to the start of the video and process every frame
 	input_video.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0.0);
 
+	const auto start_time = std::chrono::high_resolution_clock::now();
 	const size_t rounded_fps = std::round(input_fps);
 	size_t number_of_frames = 0;
 	while (true)
@@ -686,18 +770,50 @@ void process_video(Options & options)
 
 		if (number_of_frames == input_frames or (number_of_frames % rounded_fps) == 0)
 		{
-			std::cout << "\rprocessing frame " << number_of_frames << "/" << input_frames << " (" << std::round(number_of_frames * 100 / input_frames) << "%)" << std::flush;
+			const double percentage_done		= static_cast<double>(number_of_frames) / input_frames;
+			const double percentage_remaining	= 1.0 - percentage_done;
+			const double milliseconds_elapsed	= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() -start_time).count();
+			const double milliseconds_remaining	= milliseconds_elapsed * percentage_remaining / percentage_done;
+			const double seconds_remaining		= milliseconds_remaining / 1000.0;
+			const double fps					= static_cast<double>(number_of_frames) / (milliseconds_elapsed / 1000.0);
+
+			std::stringstream ss1;
+			ss1 << " @ " << std::fixed << std::setprecision(1) << fps << " FPS";
+
+			std::stringstream ss2;
+			if (seconds_remaining >= 7200.0)
+			{
+				ss2 << ", done in " << int(std::round(seconds_remaining / 3600.0)) << " hours ";
+			}
+			else if (seconds_remaining >= 120)
+			{
+				ss2 << ", done in " << int(std::round(seconds_remaining / 60.0)) << " minutes ";
+			}
+			else if (seconds_remaining > 1.5)
+			{
+				ss2 << ", done in " << int(std::round(seconds_remaining)) << " seconds ";
+			}
+			else
+			{
+				ss2 << "                     "; // must be long enough to overwrite the "done in X seconds" message
+			}
+
+			std::cout << "\rprocessing frame " << number_of_frames << "/" << input_frames << " (" << std::round(100.0 * percentage_done) << "%" << ss1.str() << ")" << ss2.str() << std::flush;
 
 			if (show_video)
 			{
 				cv::imshow("DarkHelp", frame);
-				cv::waitKeyEx(1);
+				cv::waitKey(1);
 			}
 		}
 	}
 	std::cout << std::endl;
 
+	const auto milliseconds_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count();
+
 	options.json["file"][options.file_index]["frames"				] = number_of_frames;
+	options.json["file"][options.file_index]["milliseconds_elapsed"	] = milliseconds_elapsed;
+	options.json["file"][options.file_index]["average_fps"			] = number_of_frames / (milliseconds_elapsed / 1000.0);
 	options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.dark_help.horizontal_tiles;
 	options.json["file"][options.file_index]["tiles"]["vertical"	] = options.dark_help.vertical_tiles;
 	options.json["file"][options.file_index]["tiles"]["width"		] = options.dark_help.tile_size.width;
@@ -782,26 +898,32 @@ void process_image(Options & options)
 		{
 			// save the annotated image to disk
 
-			auto basedir = std::filesystem::temp_directory_path();
-
-			#ifdef WIN32
-			const auto pid = _getpid();
-			#else
-			const auto pid = getpid();
-			#endif
-
-			if (options.all_files.size() > 1)
+			std::string basename = options.filename;
+			size_t pos = basename.find_last_of("/\\");
+			if (pos != std::string::npos)
 			{
-				// since we're dealing with multiple images at once, put them in a subdirectory
-				basedir /= "darkhelp_" + std::to_string(pid);
-				std::filesystem::create_directories(basedir);
+				basename.erase(0, pos + 1);
+			}
+			pos = basename.find(".");
+			if (pos != std::string::npos)
+			{
+				basename.erase(pos);
 			}
 
-			auto output_file = basedir / ("darkhelp_" + std::to_string(pid) + "_output_" + std::to_string(options.file_index) + ".png");
-//			const std::string output_filename = basedir + "/darkhelp_" + std::to_string(pid) + "_output_" + std::to_string(options.file_index) + ".png";
-			cv::imwrite(output_file.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
-			std::cout << "-> annotated image saved to \"" << output_file.string() << "\"" << std::endl;
-			options.json["file"][options.file_index]["annotated_image"] = output_file.string();
+			auto output_filename = std::filesystem::path(options.out_dir);
+
+			if (options.image_type == "png")
+			{
+				output_filename /= (basename + ".png");
+				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
+			}
+			else
+			{
+				output_filename /= (basename + ".jpg");
+				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_JPEG_QUALITY, 75});
+			}
+			std::cout << "-> annotated image saved to \"" << output_filename.string() << "\"" << std::endl;
+			options.json["file"][options.file_index]["annotated_image"] = output_filename.string();
 		}
 	}
 
@@ -925,10 +1047,19 @@ void process_image(Options & options)
 		case KEY_w:
 		{
 			// save the file to disk, then re-load the same image
-			const std::string output_filename = "output.png";
-			cv::imwrite(output_filename, output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
-			std::cout << "-> output image saved to \"" << output_filename << "\"" << std::endl;
-			set_msg(options, "saved image to \"" + output_filename + "\"");
+			auto output_filename = std::filesystem::path(options.out_dir);
+			if (options.image_type == "png")
+			{
+				output_filename /= "output.png";
+				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
+			}
+			else
+			{
+				output_filename /= "output.jpg";
+				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_JPEG_QUALITY, 75});
+			}
+			std::cout << "-> output image saved to \"" << output_filename.string() << "\"" << std::endl;
+			set_msg(options, "saved image to \"" + output_filename.string() + "\"");
 			break;
 		}
 		case KEY_h:
@@ -1076,6 +1207,15 @@ int main(int argc, char *argv[])
 		{
 			std::cout	<< "JSON OUTPUT"		<< std::endl
 						<< options.json.dump(4)	<< std::endl;
+		}
+
+		if (options.keep_annotated_images or options.use_json_output)
+		{
+			std::ofstream ofs(options.out_dir + "/output.json");
+			if (ofs.good())
+			{
+				ofs << options.json.dump(4) << std::endl;
+			}
 		}
 	}
 	catch (const TCLAP::ArgException & e)

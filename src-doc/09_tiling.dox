@@ -28,6 +28,15 @@ The neural network in this example detects the numbers and the locks on the mail
 
 Instead of resizing the @p 1024x768 image down to @p 416x320, the image can be broken up into smaller "tiles".  When the option has been enabled (via @ref DarkHelp::enable_tiles) %DarkHelp then automatically feeds each individual tile through Darknet, and the results are combined as if a single image had been processed.
 
+@htmlonly[block]
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Dp303GuxjFs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+@endhtmlonly
+@see @ref DarkHelp::enable_tiles
+@see @ref DarkHelp::combine_tile_predictions
+@see @ref DarkHelp::only_combine_similar_predictions
+@see @ref DarkHelp::tile_edge_factor
+@see @ref DarkHelp::tile_rect_factor
+
 The size of the tiles is determined automatically by %DarkHelp according to the network dimensions.  In this example with a @p 1024x768 image and a neural network measuring @p 416x320 results in 2 horizontal tiles and 2 vertical tiles, like this:
 
 @image html mailboxes_2x2_tiles.png

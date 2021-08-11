@@ -4,12 +4,15 @@ With minimal effort, %DarkHelp can be used from within shell scripts to analyze 
 
 @note Before trying this out, first run the %DarkHelp CLI tool in the "normal" interactive mode as described in @ref Tool and @ref Parameters.  Once that works correctly, then test it with the @p -j flag to generate the JSON output.
 
-When you run the @ref Tool with the @p -j or @p --json command line switch, two things will happen:
+When you run the @ref Tool with the @p -j or @p --json command line switch, three things will happen:
 
 - The interactive GUI window normally created using OpenCV is skipped, and %DarkHelp will automatically process all the image and video files as quickly as it can without waiting for user input.
 - The results are stored in a JSON structure which is output to @p STDOUT once %DarkHelp has finished running.
+- The JSON results will be saved to a file called @p output.json once %DarkHelp has finished running.
 
-However, Darknet itself outputs a large amount of text to @em both @p STDOUT and @p STDERR while it runs.  Instead of modifying the original Darknet source to remove all the various calls to @p printf(), what we do instead is the following:
+@note Darknet itself outputs a large amount of text to @em both @p STDOUT and @p STDERR while it runs.  For this reason, it is normally easier to use the file @p output.json than to parse the output.
+
+If you need to parse the Darknet and %DarkHelp output to get the JSON, you'll need to do the following:
 
 - Combine @p STDOUT and @p STDERR into a single output stream.
 - Use a tool such as @p sed to find where the JSON output starts, and only keep the JSON portion of the output.
@@ -21,14 +24,7 @@ The solution you'll want to use when scripting with %DarkHelp would be similar t
 DarkHelp -j driving.cfg driving_best.weights driving.names *.jpg 2>&1 | sed -e '1,/JSON OUTPUT/ d'
 ~~~~
 
-Used within a shell script where you might want to store the results, the command would look like this:
-
-~~~~{.txt}
-# same as above, but store the JSON output in a variable
-result=$(DarkHelp -j driving.cfg driving_best.weights driving.names *.jpg 2>&1 | sed -e '1,/JSON OUTPUT/ d')
-~~~~
-
-The output should be similar to this:
+The JSON output will be similar to this:
 ~~~~{.txt}
 {
     "file": [
@@ -128,6 +124,8 @@ Name								| Example								| Meaning
 ["settings"]["nms"]					| "nms": 0.44999998807907104			| Non-maximal suppression threshold.  See @ref DarkHelp::non_maximal_suppression_threshold.
 ["settings"]["resize"]				| "resize": "640x480"					| Images are resized to this prior to calling @ref DarkHelp::predict().  See @ref resize_keeping_aspect_ratio().
 ["settings"]["threshold"]			| "threshold": 0.5						| Prediction threshold.  See @ref DarkHelp::threshold.
+
+@note This example does @em not show every field.  Run %DarkHelp with @p -j to see the JSON output for details.
 
 The %DarkHelp CLI tool always returns zero.  When using @p -j, you'll need to parse the JSON structure to find out if something didn't work correctly.
 

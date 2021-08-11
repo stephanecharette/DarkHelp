@@ -18,7 +18,7 @@ DarkHelp cars.cfg cars.weights cars.names *.mp4
 
 Any video file or image type that can be opened using OpenCV is valid.
 
-@note The filename at the end of the command is optional when @p -l is used.  See the table below for details.
+@note The filename or directory name at the end of the command is optional when @p -l is used.  See the table below for details.
 
 Short Name						| Long Name			| Description
 --------------------------------|-------------------|------------
@@ -35,12 +35,16 @@ Short Name						| Long Name			| Description
 -l &lt;filename&gt;				| --list ...		| Read the list of image files to load from the given text file.  One image per line.  Blank lines and lines that start with @p # are ignored.
 -n &lt;float&gt;				| --nms ...			| The non-maximal suppression threshold to use when predicting.  See @ref DarkHelp::non_maximal_suppression_threshold for details.
 -o &lt;true,false,on,off,1,0&gt;| --autohide ...	| Auto-hide labels.
+
 -p &lt;true,false,on,off,1,0&gt;| --percentage ...	| Determines if percentages are added to annotation labels.  See @ref DarkHelp::names_include_percentage for details.
 -r								| --random			| Randomizes the order in which images are loaded.
 -s								| --slideshow		| Starts %DarkHelp in "slideshow" mode, where a new image is shown regularly.
 -T &lt;true,false,on,off,1,0&gt;| --tiles ...		| Determines if large images are processed by breaking into tiles.
 -t &lt;float&gt;				| --threshold ...	| The threshold to use when predicting with the neural net.  See @ref DarkHelp::threshold for details.
 -y &lt;float&gt;				| --hierarchy ...	| The hierarchy threshold to use when predicting.  See @ref DarkHelp::hierarchy_threshold for details.
+-Y &lt;jpg|png&gt;				| --type ...		| The file type DarkHelp should use when saving image files.  @p PNG files are larger and slower to write.  @p JPG files are faster but use lossy compreesion.
+&nbsp;							| --outdir ...		| Output directory to use when saving files.  Default is /tmp/.
+&nbsp;							| --tile-edge ...	| When tiling is enabled, this determines how close objects must be to the tile's edge to be re-combined.  Range is 0.01-1.0+. Default is 0.25.
+&nbsp;							| --tile-rect ...	| When tiling is enabled, this determines how similarly objects must line up across tiles to be re-combined.  Range is 1.0-2.0+. Default is 1.20.
 &nbsp;							| --version			| Display the version string.
-
 */

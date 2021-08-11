@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.1.17-1	| 2021-08-02	| Added @p --type and @p --outdir parameters.  JSON results now saved to @p output.json.
 1.1.15-1	| 2021-07-22	| Fixed a DOS end-of-line reading problem when parsing the .cfg file in Linux.
 1.1.14-3	| 2021-05-30	| Created <a target="_blank" href="https://github.com/stephanecharette/DarkHelp/tree/master/example_project">example project</a> to help people understand how to use the C++ library.
 1.1.14-1	| 2021-05-30	| Restart the Windows port of %DarkHelp.
