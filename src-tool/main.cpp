@@ -202,11 +202,8 @@ void show_help_window()
 	const auto font_thickness	= 1;
 
 	int y = 25;
-	for (const auto iter : help)
+	for (const auto & [key, val] : help)
 	{
-		const auto & key = iter.first;
-		const auto & val = iter.second;
-
 		const cv::Point p1(10, y);
 		const cv::Point p2(120, y);
 
