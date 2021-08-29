@@ -271,8 +271,10 @@ bool get_bool(TCLAP::ValueArg<std::string> & arg)
 {
 	const std::string str = arg.getValue();
 	if (str == "true"	||
+		str == "yes"	||
 		str == "on"		||
 		str == "t"		||
+		str == "y"		||
 		str == "1"		)
 	{
 		return true;
@@ -406,7 +408,7 @@ void init(Options & options, int argc, char *argv[])
 
 	TCLAP::CmdLine cli("Load a darknet neural network and run prediction on the given image file(s).", ' ', DH_VERSION);
 
-	std::vector<std::string> booleans = { "true", "false", "on", "off", "t", "f", "1", "0" };
+	std::vector<std::string> booleans = { "true", "false", "on", "off", "yes", "no", "t", "f", "y", "n", "1", "0" };
 	auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
 	auto float_constraint = FloatConstraint();
 	auto WxH_constraint = WxHConstraint();

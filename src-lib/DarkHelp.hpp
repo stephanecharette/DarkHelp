@@ -189,8 +189,8 @@ class DarkHelp
 			 */
 			std::string name;
 
-			/** The tile number on which this object was found.  This is mostly for debug purposes and only tiling has
-			 * been enabled (see @ref DarkHelp::enable_tiles), otherwise the value will always be zero.
+			/** The tile number on which this object was found.  This is mostly for debug purposes and only if tiling
+			 * has been enabled (see @ref DarkHelp::enable_tiles), otherwise the value will always be zero.
 			 */
 			int tile;
 		};
