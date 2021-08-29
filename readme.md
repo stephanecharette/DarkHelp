@@ -57,7 +57,7 @@ Now that Darknet is built and installed, you can go ahead and build DarkHelp.  O
 
 The Windows build uses `vcpkg` to install the necessary 3rd-party libraries such as OpenCV.  See the files `readme_windows.txt` and `build_windows.cmd` for details.
 
-Run the following commands to build Darknet and OpenCV:
+Start the "Developer Command Prompt for Visual Studio" (not Power Shell!) and run the following commands to build Darknet and OpenCV:
 
 	cd c:\src
 	git clone https://github.com/microsoft/vcpkg
@@ -69,7 +69,7 @@ Run the following commands to build Darknet and OpenCV:
 
 ## Building DarkHelp (Windows)
 
-Once you finish building Darknet and OpenCV, run the following commands to build DarkHelp:
+Once you finish building Darknet and OpenCV, run the following commands in the "Developer Command Prompt for VS" to build DarkHelp:
 
 	cd c:\src\vcpkg
 	vcpkg.exe install tclap:x64-windows
@@ -80,9 +80,12 @@ Once you finish building Darknet and OpenCV, run the following commands to build
 	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 	msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
-	msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
 
 Make sure you update the path to the toolchain file if you used a different directory.
+
+If you have [NSIS](https://nsis.sourceforge.io/) installed, then you can create an installation package with this command:
+
+	msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
 
 # Example Code
 
