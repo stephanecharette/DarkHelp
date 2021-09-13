@@ -218,7 +218,7 @@ class DarkHelp
 		 */
 		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
 
-		/// Get a version string for the DarkHelp library.  E.g., could be `1.0.0-123`.
+		/// Get a version string for the %DarkHelp library.  E.g., could be `1.0.0-123`.
 		virtual std::string version() const;
 
 		/** Initialize ("load") the darknet neural network.  If @p verify_files_first has been enabled (the default)
@@ -408,7 +408,7 @@ class DarkHelp
 		 * On @em input, it doesn't matter which file goes into which parameter.  Simply pass in the filenames in any order.
 		 *
 		 * On @em output, the @p .cfg, @p .weights, and @p .names will be set correctly.  If needed for display purposes, some
-		 * additional information is also passed back using the @p MStr string map, but most callers should ignore this.
+		 * additional information is also passed back using the @p MStr string map, but most callers should ignore this output.
 		 *
 		 * @see @ref init()
 		 */
