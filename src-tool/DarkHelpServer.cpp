@@ -295,7 +295,12 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 			if (run_cmd_after_processing_images.empty() == false)
 			{
 				std::cout << "-> calling script after processing new images: " << number_of_images_processed << std::endl;
-				system(run_cmd_after_processing_images.c_str());
+				const auto rc = system(run_cmd_after_processing_images.c_str());
+				if (rc)
+				{
+					std::cout << "-> WARNING: command returned rc=" << rc << std::endl;
+				}
+
 				if (purge_files_after_cmd_completes)
 				{
 					std::filesystem::remove_all(output_dir);
