@@ -51,6 +51,7 @@ JSON																| Example						| Description
 @p darkhelp/server/settings/clear_output_directory_on_startup		| @p true						| If old images might remain in the input directory, this can be set to @p true to force all those images to be deleted.  If set to @p false then those old images will be processed as soon as the %DarkHelp Server starts.
 @p darkhelp/server/settings/save_annotated_image					| @p false						| When set to @p true, images will be annotated using %DarkHelp and saved in the output directory.
 @p darkhelp/server/settings/save_txt_annotations					| @p false						| When set to @p true, the annotations in Darknet format will be saved in the output directory.
+@p darkhelp/server/settings/save_original_image						| @p true						| When set to @p true, the original video frame will be saved in the output directory.
 @p darkhelp/server/settings/save_json_results						| @p true						| When set to @p true, the results of inference in JSON format will be saved in the output directory.
 @p darkhelp/server/settings/crop_and_save_detected_objects			| @p false						| When set to @p true, all the objects detected during inference will be cropped and saved in the output directory.
 @p darkhelp/server/settings/exit_if_idle							| @p false						| When set to @p true, %DarkHelp Server will exit once there are no images left to process.  Also see @p idle_time_in_seconds.
@@ -58,6 +59,12 @@ JSON																| Example						| Description
 @p darkhelp/server/settings/max_images_to_process_at_once			| @p 10							| The maximum number of images from the input directory that are processed before @p run_cmd_after_processing_images is called.
 @p darkhelp/server/settings/run_cmd_after_processing_images			| &nbsp;						| The name of an external application or script which is called every once in a while after images have been processed.
 @p darkhelp/server/settings/purge_files_after_cmd_completes			| @p true						| When set to @p true, all the files in @p output_directory will be deleted
+@p darkhelp/server/settings/use_camera_for_input					| @p false						| When set to @p false, this means images will be loaded from @p output_directory.  When set to @p true, this means images will be loaded from the digital camera.
+@p darkhelp/server/settings/camera/buffersize						| @p 3							| When a digital camera is used for input, this determines the number of image buffers OpenCV should attempt to use.
+@p darkhelp/server/settings/camera/fps								| @p 30							| When a digital camera is used for input, this determines the FPS OpenCV should attempt to use.
+@p darkhelp/server/settings/camera/height							| @p 480						| When a digital camera is used for input, this determines the image height OpenCV should attempt to use.
+@p darkhelp/server/settings/camera/name								| @p /dev/video0				| When a digital camera is used for input, this determines the device name OpenCV should attempt to use.
+@p darkhelp/server/settings/camera/width							| @p 640						| When a digital camera is used for input, this determines the image width OpenCV should attempt to use.
 
 So once the settings are saved to a JSON file, start %DarkHelp Server like this:
 

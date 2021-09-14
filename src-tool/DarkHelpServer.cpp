@@ -48,6 +48,7 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["server"]["settings"]["input_directory"							] = input_dir.string();
 	j["darkhelp"]["server"]["settings"]["output_directory"							] = output_dir.string();
 	j["darkhelp"]["server"]["settings"]["clear_output_directory_on_startup"			] = true;
+	j["darkhelp"]["server"]["settings"]["save_original_image"						] = false;
 	j["darkhelp"]["server"]["settings"]["save_annotated_image"						] = false;
 	j["darkhelp"]["server"]["settings"]["save_txt_annotations"						] = false;
 	j["darkhelp"]["server"]["settings"]["save_json_results"							] = true;
@@ -57,6 +58,13 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["server"]["settings"]["max_images_to_process_at_once"				] = 10;
 	j["darkhelp"]["server"]["settings"]["run_cmd_after_processing_images"			] = "";
 	j["darkhelp"]["server"]["settings"]["purge_files_after_cmd_completes"			] = true;
+	j["darkhelp"]["server"]["settings"]["use_camera_for_input"						] = false;
+
+	j["darkhelp"]["server"]["settings"]["camera"]["name"							] = "/dev/video0";
+	j["darkhelp"]["server"]["settings"]["camera"]["width"							] = 640;
+	j["darkhelp"]["server"]["settings"]["camera"]["height"							] = 480;
+	j["darkhelp"]["server"]["settings"]["camera"]["fps"								] = 30;
+	j["darkhelp"]["server"]["settings"]["camera"]["buffersize"						] = 2;
 
 	return j;
 }
@@ -140,6 +148,104 @@ nlohmann::json merge(const nlohmann::json & lhs, const nlohmann::json & rhs)
 }
 
 
+size_t total_number_of_images_processed	= 0;
+bool crop_and_save_detected_objects		= false;
+bool save_annotated_image				= false;
+bool save_txt_annotations				= false;
+bool save_json_results					= false;
+auto last_activity						= std::chrono::system_clock::now();
+
+
+void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
+{
+	if (mat.empty())
+	{
+		return;
+	}
+
+	const auto now = std::chrono::system_clock::now();
+
+	total_number_of_images_processed ++;
+	last_activity = now;
+
+	const auto results = dh.predict(mat);
+
+	if (save_annotated_image)
+	{
+		const auto fn = stem + "_annotated.jpg";
+		cv::imwrite(fn, dh.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
+	}
+
+	if (save_txt_annotations)
+	{
+		std::ofstream ofs(stem + ".txt");
+		ofs << std::fixed << std::setprecision(10);
+		for (const auto & prediction : results)
+		{
+			ofs	<< prediction.best_class			<< " "
+				<< prediction.original_point.x		<< " "
+				<< prediction.original_point.y		<< " "
+				<< prediction.original_size.width	<< " "
+				<< prediction.original_size.height	<< std::endl;
+		}
+	}
+
+	if (save_json_results)
+	{
+		nlohmann::json output;
+		output["index"				] = total_number_of_images_processed;
+		output["duration"			] = dh.duration_string();
+		output["tiles"]["horizontal"] = dh.horizontal_tiles;
+		output["tiles"]["vertical"	] = dh.vertical_tiles;
+		output["tiles"]["width"		] = dh.tile_size.width;
+		output["tiles"]["height"	] = dh.tile_size.height;
+
+		size_t count = 0;
+		for (const auto & pred : results)
+		{
+			auto & j = output["prediction"][count];
+
+			j["name"]						= pred.name;
+			j["best_class"]					= pred.best_class;
+			j["best_probability"]			= pred.best_probability;
+			j["original_size"]["width"]		= pred.original_size.width;
+			j["original_size"]["height"]	= pred.original_size.height;
+			j["original_point"]["x"]		= pred.original_point.x;
+			j["original_point"]["y"]		= pred.original_point.y;
+			j["rect"]["x"]					= pred.rect.x;
+			j["rect"]["y"]					= pred.rect.y;
+			j["rect"]["width"]				= pred.rect.width;
+			j["rect"]["height"]				= pred.rect.height;
+
+			size_t prop_count = 0;
+			for (const auto & prop : pred.all_probabilities)
+			{
+				j["all_probabilities"][prop_count]["class"			] = prop.first;
+				j["all_probabilities"][prop_count]["probability"	] = prop.second;
+				j["all_probabilities"][prop_count]["name"			] = dh.names[prop.first];
+				prop_count ++;
+			}
+			count ++;
+		}
+
+		std::ofstream ofs(stem + ".json");
+		ofs << output.dump(4) << std::endl;
+	}
+
+	if (crop_and_save_detected_objects)
+	{
+		for (size_t idx = 0; idx < results.size(); idx ++)
+		{
+			const auto & prediction = results[idx];
+			const auto fn = stem + "_idx_" + std::to_string(idx) + "_class_" + std::to_string(prediction.best_class) + ".jpg";
+			cv::imwrite(fn, mat(prediction.rect), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
+		}
+	}
+
+	return;
+}
+
+
 void server(DarkHelp & dh, const nlohmann::json & j)
 {
 	const auto & server_settings = j["darkhelp"]["server"]["settings"];
@@ -157,17 +263,61 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 
 	std::cout << "-> DarkHelp Server is now running..." << std::endl;
 
-	size_t total_number_of_images_processed = 0;
-	auto last_activity = std::chrono::system_clock::now();
 	const auto idle_timeout_in_seconds = std::chrono::seconds(server_settings["idle_time_in_seconds"]);
-	const bool exit_if_idle						= server_settings["exit_if_idle"					];
-	const bool crop_and_save_detected_objects	= server_settings["crop_and_save_detected_objects"	];
-	const bool save_annotated_image				= server_settings["save_annotated_image"			];
-	const bool save_txt_annotations				= server_settings["save_txt_annotations"			];
-	const bool save_json_results				= server_settings["save_json_results"				];
-	const int max_images_to_process_at_once		= server_settings["max_images_to_process_at_once"	];
-	const bool purge_files_after_cmd_completes	= server_settings["purge_files_after_cmd_completes"	];
-	const std::string run_cmd_after_processing_images = server_settings["run_cmd_after_processing_images"];
+	const bool exit_if_idle								= server_settings["exit_if_idle"					];
+	const int max_images_to_process_at_once				= server_settings["max_images_to_process_at_once"	];
+	const bool purge_files_after_cmd_completes			= server_settings["purge_files_after_cmd_completes"	];
+	const std::string run_cmd_after_processing_images	= server_settings["run_cmd_after_processing_images"	];
+	const bool use_camera_for_input						= server_settings["use_camera_for_input"			];
+	const bool save_original_image						= server_settings["save_original_image"				];
+	crop_and_save_detected_objects						= server_settings["crop_and_save_detected_objects"	];
+	save_annotated_image								= server_settings["save_annotated_image"			];
+	save_txt_annotations								= server_settings["save_txt_annotations"			];
+	save_json_results									= server_settings["save_json_results"				];
+
+	cv::VideoCapture cap;
+	if (use_camera_for_input)
+	{
+		const auto & camera = server_settings["camera"];
+
+		std::string name	= camera["name"			];
+		int bufferSize		= camera["buffersize"	];
+		int width			= camera["width"		];
+		int height			= camera["height"		];
+		int fps				= camera["fps"			];
+
+		std::cout << "-> configuring camera device " + name + " to use " << width << " x " << height << " @ " << fps << " FPS with a buffer size of " << bufferSize << std::endl;
+		cap.open(name);
+		if (cap.isOpened() == false)
+		{
+			throw std::invalid_argument("failed to open camera device " + name);
+		}
+		cap.set(cv::VideoCaptureProperties::CAP_PROP_BUFFERSIZE		, bufferSize	);
+		cap.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH	, width			);
+		cap.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT	, height		);
+		cap.set(cv::VideoCaptureProperties::CAP_PROP_FPS			, fps			);
+
+		cv::Mat mat;
+		cap >> mat;
+		if (mat.empty())
+		{
+			std::cout << "WARNING: reading from camera device " << name << " is returning empty frames" << std::endl;
+		}
+
+		bufferSize	= cap.get(cv::VideoCaptureProperties::CAP_PROP_BUFFERSIZE	);
+		width		= cap.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH	);
+		height		= cap.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT	);
+		fps			= cap.get(cv::VideoCaptureProperties::CAP_PROP_FPS			);
+		std::cout << "-> camera device " + name + " is reporting " << width << " x " << height << " @ " << fps << " with a buffer size of " << bufferSize << std::endl;
+		std::cout << "-> actual frame from camera device " + name + " measures " << mat.cols << " x " << mat.rows << std::endl;
+	}
+	else
+	{
+		std::cout << "-> reading images from " << input_dir.string() << std::endl;
+	}
+
+	int images_processed = 0;
+	std::filesystem::directory_iterator dir_iter;
 
 	while (true)
 	{
@@ -179,134 +329,84 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 			break;
 		}
 
-		size_t number_of_images_processed = 0;
+		cv::Mat mat;
+		std::string dst_stem;
 
-		std::filesystem::directory_iterator dir_iter(
-			input_dir														,
-			std::filesystem::directory_options::follow_directory_symlink	|
-			std::filesystem::directory_options::skip_permission_denied		);
-
-		for (const auto & entry : dir_iter)
+		if (use_camera_for_input)
 		{
-			total_number_of_images_processed ++;
-			number_of_images_processed ++;
-			last_activity = now;
+			cap >> mat;
+			dst_stem = (output_dir / ("frame_" + std::to_string(total_number_of_images_processed))).string();
 
-			auto src = entry.path();
-			auto dst = output_dir / src.filename();
-			std::cout << "-> [" << total_number_of_images_processed << "] " << src.string() << std::endl;
-
-			const auto results = dh.predict(entry.path().string());
-
-			if (save_annotated_image)
+			if (save_original_image and not mat.empty())
 			{
-				auto fn = output_dir / (dst.stem().string() + "_annotated.jpg");
-				cv::imwrite(fn.string(), dh.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
+				cv::imwrite(dst_stem + ".jpg", mat, {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
 			}
-
-			if (save_txt_annotations)
-			{
-				auto txt = dst;
-				txt.replace_extension(".txt");
-				std::ofstream ofs(txt.string());
-				ofs << std::fixed << std::setprecision(10);
-				for (const auto & prediction : results)
-				{
-					ofs	<< prediction.best_class			<< " "
-						<< prediction.original_point.x		<< " "
-						<< prediction.original_point.y		<< " "
-						<< prediction.original_size.width	<< " "
-						<< prediction.original_size.height	<< std::endl;
-				}
-			}
-
-			if (save_json_results)
-			{
-				auto txt = dst;
-				txt.replace_extension(".json");
-				std::ofstream ofs(txt.string());
-
-				nlohmann::json output;
-				output["index"				] = total_number_of_images_processed;
-				output["duration"			] = dh.duration_string();
-				output["tiles"]["horizontal"] = dh.horizontal_tiles;
-				output["tiles"]["vertical"	] = dh.vertical_tiles;
-				output["tiles"]["width"		] = dh.tile_size.width;
-				output["tiles"]["height"	] = dh.tile_size.height;
-
-				size_t count = 0;
-				for (const auto & pred : results)
-				{
-					auto & j = output["prediction"][count];
-
-					j["name"]						= pred.name;
-					j["best_class"]					= pred.best_class;
-					j["best_probability"]			= pred.best_probability;
-					j["original_size"]["width"]		= pred.original_size.width;
-					j["original_size"]["height"]	= pred.original_size.height;
-					j["original_point"]["x"]		= pred.original_point.x;
-					j["original_point"]["y"]		= pred.original_point.y;
-					j["rect"]["x"]					= pred.rect.x;
-					j["rect"]["y"]					= pred.rect.y;
-					j["rect"]["width"]				= pred.rect.width;
-					j["rect"]["height"]				= pred.rect.height;
-
-					size_t prop_count = 0;
-					for (const auto & prop : pred.all_probabilities)
-					{
-						j["all_probabilities"][prop_count]["class"			] = prop.first;
-						j["all_probabilities"][prop_count]["probability"	] = prop.second;
-						j["all_probabilities"][prop_count]["name"			] = dh.names[prop.first];
-						prop_count ++;
-					}
-					count ++;
-				}
-
-				ofs << output.dump(4) << std::endl;
-			}
-
-			if (crop_and_save_detected_objects)
-			{
-				for (size_t idx = 0; idx < results.size(); idx ++)
-				{
-					const auto & prediction = results[idx];
-					auto fn = output_dir / (dst.stem().string() + "_idx_" + std::to_string(idx) + "_class_" + std::to_string(prediction.best_class) + ".jpg");
-					cv::imwrite(fn.string(), dh.original_image(prediction.rect), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 75});
-				}
-			}
-
-			std::filesystem::rename(src, dst);
-
-			if (max_images_to_process_at_once > 0)
-			{
-				if (static_cast<int>(number_of_images_processed) >= max_images_to_process_at_once)
-				{
-					break;
-				}
-			}
-		}
-
-		if (number_of_images_processed == 0)
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 		else
 		{
+			if (dir_iter == std::filesystem::directory_iterator())
+			{
+				dir_iter = std::filesystem::directory_iterator(
+					input_dir														,
+					std::filesystem::directory_options::follow_directory_symlink	|
+					std::filesystem::directory_options::skip_permission_denied		);
+			}
+
+			if (dir_iter != std::filesystem::directory_iterator())
+			{
+				const auto & entry = *dir_iter;
+
+				auto src = entry.path();
+				std::cout << "-> [" << total_number_of_images_processed << "] " << src.string() << std::endl;
+				const auto dst = output_dir / src.filename();
+				dst_stem = (output_dir / src.stem()).string();
+				mat = cv::imread(src.string());
+
+				std::filesystem::rename(src, dst);
+				dir_iter ++;
+			}
+		}
+
+		if (mat.empty() == false)
+		{
+			process_image(dh, mat, dst_stem);
+			images_processed ++;
+		}
+
+		if ((mat.empty() and images_processed > 0) or
+			(max_images_to_process_at_once > 0 and images_processed >= max_images_to_process_at_once))
+		{
+			static auto previous_timestamp = now;
+			if (now > previous_timestamp)
+			{
+				const double nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(now - previous_timestamp).count();
+				const double fps = static_cast<double>(images_processed) / nanoseconds * 1000000000.0;
+				std::cout << "-> " << std::fixed << std::setprecision(1) << fps << " FPS" << std::endl;
+			}
+
 			if (run_cmd_after_processing_images.empty() == false)
 			{
-				std::cout << "-> calling script after processing new images: " << number_of_images_processed << std::endl;
+				std::cout << "-> calling script after processing new images: " << images_processed << std::endl;
 				const auto rc = system(run_cmd_after_processing_images.c_str());
 				if (rc)
 				{
 					std::cout << "-> WARNING: command returned rc=" << rc << std::endl;
 				}
 
-				if (purge_files_after_cmd_completes)
+				if (purge_files_after_cmd_completes and rc == 0)
 				{
 					std::filesystem::remove_all(output_dir);
 					std::filesystem::create_directories(output_dir);
 				}
 			}
+
+			previous_timestamp = now;
+			images_processed = 0;
+		}
+
+		if (mat.empty())
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 
