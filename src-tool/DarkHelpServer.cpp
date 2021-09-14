@@ -48,7 +48,6 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["server"]["settings"]["input_directory"							] = input_dir.string();
 	j["darkhelp"]["server"]["settings"]["output_directory"							] = output_dir.string();
 	j["darkhelp"]["server"]["settings"]["clear_output_directory_on_startup"			] = true;
-	j["darkhelp"]["server"]["settings"]["save_original_image"						] = false;
 	j["darkhelp"]["server"]["settings"]["save_annotated_image"						] = false;
 	j["darkhelp"]["server"]["settings"]["save_txt_annotations"						] = false;
 	j["darkhelp"]["server"]["settings"]["save_json_results"							] = true;
@@ -60,6 +59,7 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["server"]["settings"]["purge_files_after_cmd_completes"			] = true;
 	j["darkhelp"]["server"]["settings"]["use_camera_for_input"						] = false;
 
+	j["darkhelp"]["server"]["settings"]["camera"]["save_original_image"				] = true;
 	j["darkhelp"]["server"]["settings"]["camera"]["name"							] = "/dev/video0";
 	j["darkhelp"]["server"]["settings"]["camera"]["width"							] = 640;
 	j["darkhelp"]["server"]["settings"]["camera"]["height"							] = 480;
@@ -269,11 +269,11 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 	const bool purge_files_after_cmd_completes			= server_settings["purge_files_after_cmd_completes"	];
 	const std::string run_cmd_after_processing_images	= server_settings["run_cmd_after_processing_images"	];
 	const bool use_camera_for_input						= server_settings["use_camera_for_input"			];
-	const bool save_original_image						= server_settings["save_original_image"				];
 	crop_and_save_detected_objects						= server_settings["crop_and_save_detected_objects"	];
 	save_annotated_image								= server_settings["save_annotated_image"			];
 	save_txt_annotations								= server_settings["save_txt_annotations"			];
 	save_json_results									= server_settings["save_json_results"				];
+	const bool save_original_image						= server_settings["camera"]["save_original_image"	];
 
 	cv::VideoCapture cap;
 	if (use_camera_for_input)
@@ -313,7 +313,7 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 	}
 	else
 	{
-		std::cout << "-> reading images from " << input_dir.string() << std::endl;
+		std::cout << "-> reading images from directory " << input_dir.string() << std::endl;
 	}
 
 	int images_processed = 0;
