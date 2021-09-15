@@ -155,7 +155,7 @@ bool crop_and_save_detected_objects		= false;
 bool save_annotated_image				= false;
 bool save_txt_annotations				= false;
 bool save_json_results					= false;
-auto last_activity						= std::chrono::system_clock::now();
+auto last_activity						= std::chrono::high_resolution_clock::now();
 
 
 void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
@@ -165,22 +165,25 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 		return;
 	}
 
-	const auto now = std::chrono::system_clock::now();
+	const auto now = std::chrono::high_resolution_clock::now();
 
 	total_number_of_images_processed ++;
 	last_activity = now;
 
 	const auto results = dh.predict(mat);
 
+	std::string annotated_filename;
 	if (save_annotated_image)
 	{
-		const auto fn = stem + "_annotated.jpg";
-		cv::imwrite(fn, dh.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
+		annotated_filename = stem + "_annotated.jpg";
+		cv::imwrite(annotated_filename, dh.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
 	}
 
+	std::string txt_filename;
 	if (save_txt_annotations)
 	{
-		std::ofstream ofs(stem + ".txt");
+		txt_filename = stem + ".txt";
+		std::ofstream ofs(txt_filename);
 		ofs << std::fixed << std::setprecision(10);
 		for (const auto & prediction : results)
 		{
@@ -195,6 +198,18 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 	if (save_json_results)
 	{
 		nlohmann::json output;
+
+		const auto epoch		= now.time_since_epoch();
+		const auto nanoseconds	= std::chrono::duration_cast<std::chrono::nanoseconds>	(epoch).count();
+		const auto seconds		= std::chrono::duration_cast<std::chrono::seconds>		(epoch).count();
+		const auto lt			= std::localtime(&seconds);
+		char buffer[50];
+		std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z", lt);
+
+		output["timestamp"]["nanoseconds"	] = nanoseconds;
+		output["timestamp"]["epoch"			] = seconds;
+		output["timestamp"]["text"			] = buffer;
+
 		output["index"				] = total_number_of_images_processed;
 		output["duration"			] = dh.duration_string();
 		output["tiles"]["horizontal"] = dh.horizontal_tiles;
@@ -202,11 +217,28 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 		output["tiles"]["width"		] = dh.tile_size.width;
 		output["tiles"]["height"	] = dh.tile_size.height;
 
-		size_t count = 0;
-		for (const auto & pred : results)
+		if (annotated_filename.empty() == false)
 		{
-			auto & j = output["prediction"][count];
+			output["annotated_filename"] = annotated_filename;
+		}
 
+		if (txt_filename.empty() == false)
+		{
+			output["txt_filename"] = txt_filename;
+		}
+
+		for (size_t idx = 0; idx < results.size(); idx ++)
+		{
+			const auto & pred = results[idx];
+			auto & j = output["prediction"][idx];
+
+			if (crop_and_save_detected_objects)
+			{
+				const auto fn = stem + "_idx_" + std::to_string(idx) + "_class_" + std::to_string(pred.best_class) + ".jpg";
+				j["crop_filename"]			= fn;
+			}
+
+			j["prediction_index"]			= idx;
 			j["name"]						= pred.name;
 			j["best_class"]					= pred.best_class;
 			j["best_probability"]			= pred.best_probability;
@@ -227,7 +259,6 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 				j["all_probabilities"][prop_count]["name"			] = dh.names[prop.first];
 				prop_count ++;
 			}
-			count ++;
 		}
 
 		std::ofstream ofs(stem + ".json");
@@ -323,7 +354,7 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 
 	while (true)
 	{
-		const auto now = std::chrono::system_clock::now();
+		const auto now = std::chrono::high_resolution_clock::now();
 
 		if (exit_if_idle and now > last_activity + idle_timeout_in_seconds)
 		{

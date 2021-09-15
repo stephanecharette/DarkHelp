@@ -928,6 +928,18 @@ void process_image(Options & options)
 
 	if (options.use_json_output)
 	{
+		const auto now			= std::chrono::high_resolution_clock::now();
+		const auto epoch		= now.time_since_epoch();
+		const auto nanoseconds	= std::chrono::duration_cast<std::chrono::nanoseconds>	(epoch).count();
+		const auto seconds		= std::chrono::duration_cast<std::chrono::seconds>		(epoch).count();
+		const auto lt			= std::localtime(&seconds);
+		char buffer[50];
+		std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z", lt);
+
+		options.json["file"][options.file_index]["timestamp"]["nanoseconds"	] = nanoseconds;
+		options.json["file"][options.file_index]["timestamp"]["epoch"		] = seconds;
+		options.json["file"][options.file_index]["timestamp"]["text"		] = buffer;
+
 		options.json["file"][options.file_index]["count"				] = results.size();
 		options.json["file"][options.file_index]["duration"				] = options.dark_help.duration_string();
 		options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.dark_help.horizontal_tiles;
@@ -935,11 +947,13 @@ void process_image(Options & options)
 		options.json["file"][options.file_index]["tiles"]["width"		] = options.dark_help.tile_size.width;
 		options.json["file"][options.file_index]["tiles"]["height"		] = options.dark_help.tile_size.height;
 
-		size_t count = 0;
-		for (const auto & pred : results)
+		for (size_t idx = 0; idx < results.size(); idx ++)
 		{
-			auto & j = options.json["file"][options.file_index]["prediction"][count];
+			const auto & pred = results[idx];
 
+			auto & j = options.json["file"][options.file_index]["prediction"][idx];
+
+			j["prediction_index"]			= idx;
 			j["name"]						= pred.name;
 			j["best_class"]					= pred.best_class;
 			j["best_probability"]			= pred.best_probability;
@@ -960,8 +974,6 @@ void process_image(Options & options)
 				j["all_probabilities"][prop_count]["name"			] = options.dark_help.names[prop.first];
 				prop_count ++;
 			}
-
-			count ++;
 		}
 
 		// move to the next image
