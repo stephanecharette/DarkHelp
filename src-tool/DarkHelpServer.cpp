@@ -4,6 +4,8 @@
  */
 
 #include <DarkHelp.hpp>
+#include <fstream>
+#include <iomanip>
 #include <thread>
 
 #include "json.hpp"
@@ -250,8 +252,8 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 {
 	const auto & server_settings = j["darkhelp"]["server"]["settings"];
 
-	auto input_dir		= std::filesystem::path(server_settings["input_directory"]);
-	auto output_dir		= std::filesystem::path(server_settings["output_directory"]);
+	auto input_dir		= std::filesystem::path(server_settings["input_directory"].get<std::string>());
+	auto output_dir		= std::filesystem::path(server_settings["output_directory"].get<std::string>());
 
 	if (server_settings["clear_output_directory_on_startup"])
 	{
