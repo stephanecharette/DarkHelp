@@ -2,6 +2,10 @@
 
 The %DarkHelp Server is an application that runs in the backgroud and waits for images to run inference.
 
+@htmlonly[block]
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Ct8j7-X9tAY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+@endhtmlonly
+
 %DarkHelp Server is configured using a JSON file.  When you run %DarkHelp Server without any parameters, the default JSON file is shown.  It looks like this:
 
 ~~~~{.txt}
