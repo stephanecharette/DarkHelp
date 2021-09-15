@@ -14,7 +14,7 @@ Example annotated image after calling [`DarkHelp::predict()`](https://www.ccoder
 
 DarkHelp also has [a very simple command-line tool](https://www.ccoderun.ca/darkhelp/api/Tool.html) that uses the DarkHelp C++ API so some of the functionality can be accessed directly from the command-line.  This can be useful to run tests or for shell scripting.
 
-# What is DarkHelp Server?
+# What is the DarkHelp Server?
 
 DarkHelp Server is a command-line tool that loads a neural network once, and then keeps running in the background.  It repeatedly applies the network to images or video frames and saves the results.
 
