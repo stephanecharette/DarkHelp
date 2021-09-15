@@ -1,6 +1,6 @@
-# What is DarkHelp?
+# What is the DarkHelp C++ API?
 
-DarkHelp is a C++ wrapper to make it easier to use the Darknet neural network framework within a C++ application.  DarkHelp performs the following:
+The DarkHelp C++ API is a wrapper to make it easier to use the Darknet neural network framework within a C++ application.  DarkHelp performs the following:
 
 - load a [Darknet](https://github.com/AlexeyAB/darknet)-style neural network (.cfg, .names, .weights)
 - run inference on images -- either filenames or OpenCV `cv::Mat` images and video frames -- and return [a vector of results](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#abcd5ee07c8d804ec37963cdb606511a9)
@@ -10,13 +10,15 @@ Example annotated image after calling [`DarkHelp::predict()`](https://www.ccoder
 
 ![annotated image example](src-doc/shade_25pcnt.png)
 
+# What is the DarkHelp CLI?
+
 DarkHelp also has [a very simple command-line tool](https://www.ccoderun.ca/darkhelp/api/Tool.html) that uses the DarkHelp C++ API so some of the functionality can be accessed directly from the command-line.  This can be useful to run tests or for shell scripting.
 
 # What is DarkHelp Server?
 
-DarkHelp Server is a command-line tool that loads a neural network once, and then stays running in the background.  It repeatedly applies the network to images or video frames and saves the results.
+DarkHelp Server is a command-line tool that loads a neural network once, and then keeps running in the background.  It repeatedly applies the network to images or video frames and saves the results.
 
-Unlike the usual Darknet and DarkHelp CLI which have to re-load the neural network every time they're called, DarkHelp Server only does this once.  DarkHelp Server [can be configured](https://www.ccoderun.ca/darkhelp/api/Server.html) to save the results in `.txt` format, `.json` format, annotate images, and can also crop the objects and create individual image files from each of the objects detected by the neural network.
+Unlike Darknet and the DarkHelp CLI which have to re-load the neural network every time they're called, DarkHelp Server only does this once.  DarkHelp Server [can be configured](https://www.ccoderun.ca/darkhelp/api/Server.html) to save the results in `.txt` format, `.json` format, annotate images, and can also crop the objects and create individual image files from each of the objects detected by the neural network.
 
 # License
 
