@@ -83,6 +83,38 @@ class DarkHelp
 		/// Vector of colours to use by @ref annotate().  @see @ref annotation_colours  @see @ref get_default_annotation_colours()
 		typedef std::vector<cv::Scalar> VColours;
 
+		/// Vector of @p int used with OpenCV.
+		typedef std::vector<int> VInt;
+
+		/// Vector of @p float used with OpenCV.
+		typedef std::vector<float> VFloat;
+
+		/// Vector of OpenCV rectangles used with OpenCV.
+		typedef std::vector<cv::Rect> VRect;
+
+		/// Similar to @ref VRect, but the rectangle uses @p double instead of @p int.
+		typedef std::vector<cv::Rect2d> VRect2d;
+
+		/** %DarkHelp can utilise either @p libdarknet.so or OpenCV's DNN module to load the neural network and run inference.
+		 * OpenCV is much faster, but support for it is relatively new in %DarkHelp and support for newer models like YOLOv4
+		 * requires @em very recent versions of OpenCV.  The default for now is @p kDarknet.  Eventually, the default will
+		 * likely change to @p kOpenCV.
+		 *
+		 * Expect to see different results between Darknet and OpenCV.
+		 *
+		 * @see @ref init()
+		 *
+		 * @notice Setting the driver to any value other than @p kDarknet will result in the execution of experimental code.
+		 *
+		 * @since October 2021
+		 */
+		enum class EDriver
+		{
+			kInvalid,
+			kDarknet,	///< Use @p libdarknet.so.
+			kOpenCV		///< Use OpenCV's @p dnn module.
+		};
+
 		/** Map of a class ID to a probability that this object belongs to that class.
 		 * The key is the zero-based index of the class, while the value is the probability
 		 * that the object belongs to that class.  @see @ref PredictionResult::all_probabilities
@@ -216,7 +248,7 @@ class DarkHelp
 		 * determine which is the @p .cfg, @p .weights, and @p .names file, and swap the names around as necessary so Darknet
 		 * is given the correct filenames.
 		 */
-		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
+		DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
 
 		/// Get a version string for the %DarkHelp library.  E.g., could be `1.0.0-123`.
 		virtual std::string version() const;
@@ -225,7 +257,7 @@ class DarkHelp
 		 * then this method will also call the static method @ref verify_cfg_and_weights() to perform some last-minute
 		 * validation prior to darknet loading the neural network.
 		 */
-		virtual DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true);
+		virtual DarkHelp & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
 
 		/// The opposite of @ref init().  This is automatically called by the destructor.
 		virtual void reset();
@@ -436,13 +468,15 @@ class DarkHelp
 		 * @see @ref convert_opencv_mat_to_darknet_image()
 		 */
 		static cv::Mat convert_darknet_image_to_opencv_mat(const image img);
-
-		/// The Darknet network.  This is setup in the constructor.
-		network * net;
-#else
-		/// The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
-		void * net;
 #endif
+
+		/** The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
+		 * This will only be set when the driver is @ref EDriver::kDarknet in @ref init().
+		 */
+		void * darknet_net;
+
+		/// The OpenCV network, when the driver has been set to @ref EDriver::kOpenCV in @ref init().
+		cv::dnn::Net opencv_net;
 
 		/** A vector of names corresponding to the identified classes.  This is typically setup in the constructor,
 		 * but can be manually set afterwards.
@@ -824,10 +858,25 @@ class DarkHelp
 		 */
 		PredictionResults predict_internal(cv::Mat mat, const float new_threshold = -1.0f);
 
+		/// Called from @ref predict_internal().  @see @ref predict()
+		void predict_internal_darknet();
+
+		/// Called from @ref predict_internal().  @see @ref predict()
+		void predict_internal_opencv();
+
 		/** Give a consistent name to the given production result.  This gets called by both @ref predict_internal() and
 		 * @ref predict_tile() and is intended for internal use only.
 		 */
 		DarkHelp & name_prediction(PredictionResult & pred);
+
+		/// Called internally by @ref predict_internal().  @see @ref fix_out_of_bound_values
+		DarkHelp & fix_out_of_bound_normalized_rect(float & cx, float & cy, float & w, float & h);
+
+		/// This can only be set in the constructor, or when calling @ref init().
+		EDriver driver;
+
+		/// Size of the neural network, e.g., @p 416x416 or @p 608x608.  @see @ref network_size()
+		cv::Size network_dimensions;
 };
 
 

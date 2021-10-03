@@ -56,7 +56,7 @@ DarkHelp::~DarkHelp()
 
 
 DarkHelp::DarkHelp() :
-	net(nullptr)
+	darknet_net(nullptr)
 {
 	reset();
 
@@ -91,10 +91,10 @@ DarkHelp::DarkHelp() :
 }
 
 
-DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first) :
+DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first, const EDriver d) :
 	DarkHelp()
 {
-	init(cfg_filename, weights_filename, names_filename, verify_files_first);
+	init(cfg_filename, weights_filename, names_filename, verify_files_first, d);
 
 	return;
 }
@@ -106,7 +106,7 @@ std::string DarkHelp::version() const
 }
 
 
-DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first)
+DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first, const EDriver d)
 {
 	reset();
 
@@ -136,21 +136,33 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 //		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
 	}
 
-	// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
+	driver = d;
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
-	net = load_network_custom(const_cast<char*>(cfg_fn.c_str()), const_cast<char*>(weights_fn.c_str()), 1, 1);
-	if (net == nullptr)
+	if (driver == EDriver::kDarknet)
 	{
-		/// @throw std::runtime_error if the call to darknet's @p load_network_custom() has failed.
-		throw std::runtime_error("darknet failed to load the configuration, the weights, or both");
+		// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
+
+		darknet_net = load_network_custom(const_cast<char*>(cfg_fn.c_str()), const_cast<char*>(weights_fn.c_str()), 1, 1);
+		if (darknet_net == nullptr)
+		{
+			/// @throw std::runtime_error if the call to darknet's @p load_network_custom() has failed.
+			throw std::runtime_error("darknet failed to load the configuration, the weights, or both");
+		}
+
+		network * nw = reinterpret_cast<network*>(darknet_net);
+
+		// what does this call do?
+		calculate_binary_weights(*nw);
 	}
-
-	network * nw = reinterpret_cast<network*>(net);
-
-	// what does this call do?
-	calculate_binary_weights(*nw);
-
+	else
+	{
+		opencv_net = cv::dnn::readNetFromDarknet(cfg_fn, weights_fn);
+//		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
+//		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+	}
 	const auto t2 = std::chrono::high_resolution_clock::now();
 	duration = t2 - t1;
 
@@ -177,19 +189,49 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		}
 	}
 
+	// cache the network network_dimensions (read the "width" and "height" from the .cfg file)
+	const std::regex rx("^\\s*(width|height)\\s*=\\s*(\\d+)");
+	std::ifstream ifs(cfg_fn);
+	while (ifs.good() and network_dimensions.area() <= 0)
+	{
+		std::string line;
+		std::getline(ifs, line);
+		std::smatch sm;
+		if (std::regex_search(line, sm, rx))
+		{
+			const int value = std::stoi(sm.str(2));
+			if (sm.str(1) == "width")
+			{
+				network_dimensions.width = value;
+			}
+			else
+			{
+				network_dimensions.height = value;
+			}
+		}
+	}
+
+	if (network_dimensions.area() <= 0)
+	{
+		/// @throw std::invalid_argument if the network dimensions cannot be read from the .cfg file
+		throw std::invalid_argument("failed to read the network width or height from " + cfg_filename);
+	}
+
 	return *this;
 }
 
 
 void DarkHelp::reset()
 {
-	if (net)
+	if (darknet_net)
 	{
-		network * nw = reinterpret_cast<network*>(net);
+		network * nw = reinterpret_cast<network*>(darknet_net);
 		free_network(*nw);
-		free(net); // this was calloc()'d in load_network_custom()
-		net = nullptr;
+		free(darknet_net); // this was calloc()'d in load_network_custom()
+		darknet_net = nullptr;
 	}
+
+	opencv_net = cv::dnn::Net();
 
 	names								.clear();
 	prediction_results					.clear();
@@ -223,6 +265,8 @@ void DarkHelp::reset()
 	tile_rect_factor					= 1.20f;
 	modify_batch_and_subdivisions		= true;
 	annotation_suppress_classes			.clear();
+	driver								= EDriver::kInvalid;
+	network_dimensions					= {0, 0};
 
 	return;
 }
@@ -284,7 +328,6 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 		throw std::invalid_argument("cannot predict with an empty OpenCV image");
 	}
 
-	const cv::Size network_dimensions	= network_size();
 	const float horizontal_factor		= static_cast<float>(mat.cols) / static_cast<float>(network_dimensions.width);
 	const float vertical_factor			= static_cast<float>(mat.rows) / static_cast<float>(network_dimensions.height);
 	const float horizontal_tiles_count	= std::round(std::max(1.0f, horizontal_factor	));
@@ -725,15 +768,9 @@ std::string DarkHelp::duration_string()
 
 cv::Size DarkHelp::network_size()
 {
-	if (net == nullptr)
-	{
-		/// @throw std::logic_error if the neural network has not yet been initialized.
-		throw std::logic_error("cannot determine the size of uninitialized neural network");
-	}
-
-	network * nw = reinterpret_cast<network*>(net);
-
-	return cv::Size(nw->w, nw->h);
+	// This used to be more complicated, but now we get and cache
+	// the network dimensions when the DarkHelp object is initialized.
+	return network_dimensions;
 }
 
 
@@ -1132,7 +1169,13 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 	vertical_tiles		= 1;
 	tile_size			= cv::Size(0, 0);
 
-	if (net == nullptr)
+	if (driver == EDriver::kInvalid)
+	{
+		/// @throw std::logic_error if the %DarkHelp object has not been initialized.
+		throw std::logic_error("cannot predict with an uninitialized object");
+	}
+
+	if (driver == EDriver::kDarknet and darknet_net == nullptr)
 	{
 		/// @throw std::logic_error if the network is invalid.
 		throw std::logic_error("cannot predict with an empty network");
@@ -1162,19 +1205,51 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 		threshold = 1.0;
 	}
 
-	network * nw = reinterpret_cast<network*>(net);
+	const auto t1 = std::chrono::high_resolution_clock::now();
+
+	if (driver == EDriver::kDarknet)
+	{
+		predict_internal_darknet();
+	}
+	else
+	{
+		predict_internal_opencv();
+	}
+
+	if (sort_predictions == ESort::kAscending)
+	{
+		std::sort(prediction_results.begin(), prediction_results.end(),
+				  [](const PredictionResult & lhs, const PredictionResult & rhs)
+				  {
+					  return lhs.best_probability < rhs.best_probability;
+				  } );
+	}
+	else if (sort_predictions == ESort::kDescending)
+	{
+		std::sort(prediction_results.begin(), prediction_results.end(),
+				  [](const PredictionResult & lhs, const PredictionResult & rhs)
+				  {
+					  return rhs.best_probability < lhs.best_probability;
+				  } );
+	}
+
+	const auto t2 = std::chrono::high_resolution_clock::now();
+	duration = t2 - t1;
+
+	return prediction_results;
+}
+
+
+void DarkHelp::predict_internal_darknet()
+{
+	network * nw = reinterpret_cast<network*>(darknet_net);
 
 	cv::Mat resized_image;
 	cv::resize(original_image, resized_image, cv::Size(nw->w, nw->h));
 	tile_size = cv::Size(resized_image.cols, resized_image.rows);
 	image img = convert_opencv_mat_to_darknet_image(resized_image);
 
-	float * X = img.data;
-
-	const auto t1 = std::chrono::high_resolution_clock::now();
-	network_predict(*nw, X);
-	const auto t2 = std::chrono::high_resolution_clock::now();
-	duration = t2 - t1;
+	network_predict(*nw, img.data);
 
 	int nboxes = 0;
 	const int use_letterbox = 0;
@@ -1230,31 +1305,7 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 		{
 			// at least 1 class is beyond the threshold, so remember this object
 
-			if (fix_out_of_bound_values)
-			{
-				if (det.bbox.x - det.bbox.w/2.0f < 0.0f ||	// too far left
-					det.bbox.x + det.bbox.w/2.0f > 1.0f)	// too far right
-				{
-					// calculate a new X and width to use for this prediction
-					const float new_x1 = std::max(0.0f, det.bbox.x - det.bbox.w/2.0f);
-					const float new_x2 = std::min(1.0f, det.bbox.x + det.bbox.w/2.0f);
-					const float new_w = new_x2 - new_x1;
-					const float new_x = (new_x1 + new_x2) / 2.0f;
-					det.bbox.x = new_x;
-					det.bbox.w = new_w;
-				}
-				if (det.bbox.y - det.bbox.h/2.0f < 0.0f ||	// too far above
-					det.bbox.y + det.bbox.h/2.0f > 1.0f)	// too far below
-				{
-					// calculate a new Y and height to use for this prediction
-					const float new_y1 = std::max(0.0f, det.bbox.y - det.bbox.h/2.0f);
-					const float new_y2 = std::min(1.0f, det.bbox.y + det.bbox.h/2.0f);
-					const float new_h = new_y2 - new_y1;
-					const float new_y = (new_y1 + new_y2) / 2.0f;
-					det.bbox.y = new_y;
-					det.bbox.h = new_h;
-				}
-			}
+			fix_out_of_bound_normalized_rect(det.bbox.x, det.bbox.y, det.bbox.w, det.bbox.h);
 
 			const int w = std::round(det.bbox.w * original_image.cols);
 			const int h = std::round(det.bbox.h * original_image.rows);
@@ -1272,27 +1323,189 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 		}
 	}
 
-	if (sort_predictions == ESort::kAscending)
-	{
-		std::sort(prediction_results.begin(), prediction_results.end(),
-				  [](const PredictionResult & lhs, const PredictionResult & rhs)
-				  {
-					  return lhs.best_probability < rhs.best_probability;
-				  } );
-	}
-	else if (sort_predictions == ESort::kDescending)
-	{
-		std::sort(prediction_results.begin(), prediction_results.end(),
-				  [](const PredictionResult & lhs, const PredictionResult & rhs)
-				  {
-					  return rhs.best_probability < lhs.best_probability;
-				  } );
-	}
-
 	free_detections(darknet_results, nboxes);
 	free_image(img);
 
-	return prediction_results;
+	return;
+}
+
+
+void DarkHelp::predict_internal_opencv()
+{
+	auto blob = cv::dnn::blobFromImage(original_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/true, /* crop=*/false);
+	opencv_net.setInput(blob);
+
+	/* The output mat is float and will have thousands of rows.  The fields are:
+	 *
+	 *		center x (0-1)
+	 *		center y (0-1)
+	 *		width (0-1)
+	 *		hight (0-1)
+	 *		??? something related to probability, but not sure what it represents
+	 *
+	 * Then for every class, another field with the probability for that class.
+	 */
+	cv::Mat output = opencv_net.forward();
+
+	const size_t number_of_classes = names.size();
+
+	/* To get the final output to behave/look as similar as we can to the original
+	 * darknet results, we'll need to refer back to the OpenCV results as we build
+	 * up the results vector.  For this reason, we need to know where in the matrix
+	 * to look up the individual results, so we'll use a map.
+	 *
+	 * KEY = the vector index
+	 * VAL = the zero-based row number in the output matrix
+	 */
+	typedef std::map<int, int> MatMap;
+
+	std::vector<VRect2d>	boxes	(number_of_classes);
+	std::vector<VFloat>		scores	(number_of_classes);
+	std::vector<MatMap>		mat_map	(number_of_classes);
+
+	for (int i = 0; i < output.rows; i++)
+	{
+		// get a pointer to the 1st float for this row, which we easily increment to get all the floats
+		const float * const ptr = output.ptr<float>(i);
+
+		if (ptr[4] >= threshold)
+		{
+			float * ptr = output.ptr<float>(i);
+
+			if (enable_debug)
+			{
+				std::cout << "i=" << std::setw(4) << i;
+				for (size_t offset = 0; offset < number_of_classes + 5; offset ++)
+				{
+					std::cout
+						<< " "
+						<< (offset==0 ? "cx" :
+							offset==1 ? "cy" :
+							offset==2 ? "w" :
+							offset==3 ? "h" :
+							offset==4 ? "?" :
+							names.at(offset-5).substr(0, 3))
+						<< "=";
+					if (ptr[offset] >= 0.0000001f)
+					{
+						std::cout << std::fixed << std::setprecision(6) << ptr[offset];
+					}
+					else
+					{
+						std::cout << "0.0     ";
+					}
+				}
+				std::cout << std::endl;
+			}
+
+			const float & cx	= ptr[0];
+			const float & cy	= ptr[1];
+			const float & w		= ptr[2];
+			const float & h		= ptr[3];
+
+			const cv::Rect2d r(
+				cx - w / 2.0f	,
+				cy - h / 2.0f	,
+				w				,
+				h				);
+
+			for (size_t c = 0; c < number_of_classes; c++)
+			{
+				const auto & confidence = ptr[5 + c];
+				if (confidence >= threshold)
+				{
+					mat_map[c][boxes[c].size()] = i;
+					boxes[c].push_back(r);
+					scores[c].push_back(confidence);
+				}
+			}
+		}
+	}
+
+	// This is where we run non maximal suppression, which tells us which indices we need to keep.
+	// We'll take the output of NMS and keep track of all the mat rows which need to be in the results.
+	std::set<int> rows_of_interest;
+	for (size_t c = 0; c < number_of_classes; c++)
+	{
+		VInt indices;
+		cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, non_maximal_suppression_threshold, indices);
+
+		for (const auto & i : indices)
+		{
+			rows_of_interest.insert(mat_map[c][i]);
+		}
+
+		if (enable_debug)
+		{
+			if (boxes[c].size() > 0 or indices.size() > 0)
+			{
+				std::cout << "-> class #" << c << " (" << names.at(c) << ") contains " << boxes[c].size() << " entries";
+				if (indices.size() != boxes[c].size())
+				{
+					std::cout << " but NMS returned " << indices.size() << " indices";
+				}
+				std::cout << ":";
+				for (const auto & i : indices)
+				{
+					std::cout << " " << i << "=" << mat_map[c][i];
+				}
+				std::cout << std::endl;
+			}
+		}
+	}
+
+	// now iterate through just those rows and build the DarkHelp-style results
+	for (const auto & i : rows_of_interest)
+	{
+		float * ptr	= output.ptr<float>(i);
+
+		PredictionResult pr;
+		pr.tile				= 0;
+		pr.best_class		= 0;
+		pr.best_probability	= 0.0f;
+
+		// loop through all of the classes this could be and see if we can find something we can use
+		for (size_t c = 0; c < number_of_classes; c++)
+		{
+			const float & probability = ptr[5 + c];
+
+			if (probability >= threshold)
+			{
+				if (probability > pr.best_probability)
+				{
+					pr.best_class = c;
+					pr.best_probability = probability;
+				}
+
+				pr.all_probabilities[c] = probability;
+			}
+		}
+
+		if (pr.best_probability > 0.0f)
+		{
+			float & cx	= ptr[0];
+			float & cy	= ptr[1];
+			float & w	= ptr[2];
+			float & h	= ptr[3];
+
+			fix_out_of_bound_normalized_rect(cx, cy, w, h);
+
+			const int new_w = std::round(original_image.cols * w				);
+			const int new_h = std::round(original_image.rows * h				);
+			const int new_x = std::round(original_image.cols * (cx - w / 2.0f)	);
+			const int new_y = std::round(original_image.rows * (cy - h / 2.0f)	);
+
+			pr.rect				= cv::Rect(cv::Point(new_x, new_y), cv::Size(new_w, new_h));
+			pr.original_point	= cv::Point2f(cx, cy);
+			pr.original_size	= cv::Size2f(w, h);
+
+			name_prediction(pr);
+
+			prediction_results.push_back(pr);
+		}
+	}
+
+	return;
 }
 
 
@@ -1335,6 +1548,41 @@ DarkHelp & DarkHelp::name_prediction(PredictionResult & pred)
 					pred.name += " " + std::to_string(percentage) + "%";
 				}
 			}
+		}
+	}
+
+	return *this;
+}
+
+
+DarkHelp & DarkHelp::fix_out_of_bound_normalized_rect(float & cx, float & cy, float & w, float & h)
+{
+	// coordinates are all normalized!
+
+	if (fix_out_of_bound_values)
+	{
+		if (cx - w / 2.0f < 0.0f ||	// too far left
+			cx + w / 2.0f > 1.0f)	// too far right
+		{
+			// calculate a new X and width to use for this prediction
+			const float new_x1 = std::max(0.0f, cx - w / 2.0f);
+			const float new_x2 = std::min(1.0f, cx + w / 2.0f);
+			const float new_w = new_x2 - new_x1;
+			const float new_x = (new_x1 + new_x2) / 2.0f;
+			cx = new_x;
+			w = new_w;
+		}
+
+		if (cy - h / 2.0f < 0.0f ||	// too far above
+			cy + h / 2.0f > 1.0f)	// too far below
+		{
+			// calculate a new Y and height to use for this prediction
+			const float new_y1 = std::max(0.0f, cy - h / 2.0f);
+			const float new_y2 = std::min(1.0f, cy + h / 2.0f);
+			const float new_h = new_y2 - new_y1;
+			const float new_y = (new_y1 + new_y2) / 2.0f;
+			cy = new_y;
+			h = new_h;
 		}
 	}
 

@@ -402,6 +402,19 @@ class WxHConstraint : public TCLAP::Constraint<std::string>
 };
 
 
+class DriverConstraint : public TCLAP::Constraint<std::string>
+{
+	public:
+
+		virtual std::string description() const	{ return "darknet|opencv"; }
+		virtual std::string shortID() const		{ return "darknet|opencv"; }
+		virtual bool check(const std::string & value) const
+		{
+			return value == "darknet" or value == "opencv";
+		}
+};
+
+
 void init(Options & options, int argc, char *argv[])
 {
 	std::srand(std::time(nullptr)); // seed random number generator
@@ -415,10 +428,13 @@ void init(Options & options, int argc, char *argv[])
 	auto dir_exist_constraint = DirExistConstraint();
 	auto file_exist_constraint = FileExistConstraint();
 	auto image_type_constraint = OutputImageConstraint();
+	auto driver_constraint = DriverConstraint();
 
 	TCLAP::ValueArg<std::string> resize2			("a", "resize2"		, "Resize the output image (\"after\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint		, cli);
 	TCLAP::ValueArg<std::string> resize1			("b", "resize1"		, "Resize the input image (\"before\") to \"WxH\"."															, false, "640x480"	, &WxH_constraint		, cli);
 	TCLAP::ValueArg<std::string> duration			("d", "duration"	, "Determines if the duration is added to annotations."														, false, "true"		, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> driver				("D", "driver"		, "Determines if Darknet or OpenCV DNN is used. Default is \"darknet\"."									, false, "darknet"	, &driver_constraint	, cli);
+	TCLAP::ValueArg<std::string> debug				("", "debug"		, "Enable debug output. Default is \"false\"."																, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::ValueArg<std::string> shade				("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles. Default is 0.25."							, false, "0.25"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> fontscale			("f", "fontscale"	, "Determines how the font is scaled for annotations. Default is 0.5."										, false, "0.5"		, &float_constraint		, cli);
 	TCLAP::SwitchArg greyscale						("g", "greyscale"	, "Force the images to be loaded in greyscale."																											, cli, false );
@@ -469,7 +485,7 @@ void init(Options & options, int argc, char *argv[])
 	options.cfg_fn		= cfg		.getValue();
 	options.weights_fn	= weights	.getValue();
 	options.names_fn	= names		.getValue();
-	DarkHelp::verify_cfg_and_weights(options.cfg_fn, options.weights_fn, options.names_fn);
+	const auto debug_messages = DarkHelp::verify_cfg_and_weights(options.cfg_fn, options.weights_fn, options.names_fn);
 
 	options.image_type				= image_type	.getValue();
 	options.out_dir					= out_dir		.getValue();
@@ -484,8 +500,35 @@ void init(Options & options, int argc, char *argv[])
 			<< "-> weights file: " << options.weights_fn	<< std::endl
 			<< "-> names file:   " << options.names_fn		<< std::endl;
 
+	DarkHelp::EDriver darkhelp_driver = DarkHelp::EDriver::kDarknet;
+	if (driver.isSet())
+	{
+		darkhelp_driver = (driver.getValue() == "darknet" ? DarkHelp::EDriver::kDarknet : DarkHelp::EDriver::kOpenCV);
+	}
+	std::cout << "-> driver:       " << (darkhelp_driver == DarkHelp::EDriver::kDarknet ? "Darknetd" : "OpenCV DNN  ***EXPERIMENTAL***") << std::endl;
+
 	// we already verified the files several lines up, so no need to do it again
-	options.dark_help.init(options.cfg_fn, options.weights_fn, options.names_fn, false);
+	//
+	// WARNING:
+	// Don't bother trying to set any darkhelp options *prior* to this line,
+	// because calling init() causes reset() to be called!
+	options.dark_help.init(options.cfg_fn, options.weights_fn, options.names_fn, false, darkhelp_driver);
+
+	if (get_bool(debug))
+	{
+		options.dark_help.enable_debug = true;
+		std::cout << "-> debug output: enabled" << std::endl;
+
+		for (const auto & [key, val] : debug_messages)
+		{
+			std::cout << "-> debug msg:    " << key << ": " << val << std::endl;
+		}
+
+		for (size_t i = 0; i < options.dark_help.names.size(); i++)
+		{
+			std::cout << "-> class #" << i << ": " << options.dark_help.names[i] << std::endl;
+		}
+	}
 
 	options.json["network"]["loading"]				=  options.dark_help.duration_string();
 	std::cout	<< "-> loading network took "		<< options.dark_help.duration_string() << std::endl
