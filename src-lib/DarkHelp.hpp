@@ -475,8 +475,10 @@ class DarkHelp
 		 */
 		void * darknet_net;
 
+#if CV_VERSION_MAJOR >= 4
 		/// The OpenCV network, when the driver has been set to @ref EDriver::kOpenCV in @ref init().
 		cv::dnn::Net opencv_net;
+#endif
 
 		/** A vector of names corresponding to the identified classes.  This is typically setup in the constructor,
 		 * but can be manually set afterwards.

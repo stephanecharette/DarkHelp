@@ -136,7 +136,12 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 //		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
 	}
 
+#if CV_VERSION_MAJOR < 4
+	// with old versions of OpenCV, we don't have a DNN module
+	driver = DarkHelp::EDriver::kDarknet;
+#else
 	driver = d;
+#endif
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
 	if (driver == EDriver::kDarknet)
@@ -155,6 +160,7 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		// what does this call do?
 		calculate_binary_weights(*nw);
 	}
+#if CV_VERSION_MAJOR >= 4
 	else
 	{
 		opencv_net = cv::dnn::readNetFromDarknet(cfg_fn, weights_fn);
@@ -163,6 +169,7 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 	}
+#endif
 	const auto t2 = std::chrono::high_resolution_clock::now();
 	duration = t2 - t1;
 
@@ -231,7 +238,9 @@ void DarkHelp::reset()
 		darknet_net = nullptr;
 	}
 
+#if CV_VERSION_MAJOR >= 4
 	opencv_net = cv::dnn::Net();
+#endif
 
 	names								.clear();
 	prediction_results					.clear();
@@ -1332,6 +1341,10 @@ void DarkHelp::predict_internal_darknet()
 
 void DarkHelp::predict_internal_opencv()
 {
+	#if CV_VERSION_MAJOR < 4
+	throw std::runtime_error("OpenCV DNN driver is not supported with this version of OpenCV");
+	#else
+
 	auto blob = cv::dnn::blobFromImage(original_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/true, /* crop=*/false);
 	opencv_net.setInput(blob);
 
@@ -1504,6 +1517,8 @@ void DarkHelp::predict_internal_opencv()
 			prediction_results.push_back(pr);
 		}
 	}
+
+	#endif
 
 	return;
 }
