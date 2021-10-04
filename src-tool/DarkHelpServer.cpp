@@ -339,8 +339,16 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 		int height			= camera["height"		];
 		int fps				= camera["fps"			];
 
-		std::cout << "-> configuring camera device " + name + " to use " << width << " x " << height << " @ " << fps << " FPS with a buffer size of " << bufferSize << std::endl;
-		cap.open(name);
+		std::cout << "-> configuring camera device \"" << name << "\" to use " << width << " x " << height << " @ " << fps << " FPS with a buffer size of " << bufferSize << std::endl;
+		if (name.empty() == false and name[0] >= '0' and name[0] <= '9')
+		{
+			int index = std::stoi(name);
+			cap.open(index);
+		}
+		else
+		{
+			cap.open(name);
+		}
 		if (cap.isOpened() == false)
 		{
 			throw std::invalid_argument("failed to open camera device " + name);

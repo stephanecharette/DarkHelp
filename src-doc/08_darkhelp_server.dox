@@ -55,7 +55,7 @@ JSON																| Example						| Description
 @p darkhelp/server/settings/camera/buffersize						| @p 3							| When a digital camera is used for input, this determines the number of image buffers OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/fps								| @p 30							| When a digital camera is used for input, this determines the FPS OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/height							| @p 480						| When a digital camera is used for input, this determines the image height OpenCV should attempt to use.
-@p darkhelp/server/settings/camera/name								| @p /dev/video0				| When a digital camera is used for input, this determines the device name OpenCV should attempt to use.
+@p darkhelp/server/settings/camera/name								| @p /dev/video0 <br/> @p 3		| When a digital camera is used for input, this determines the device name OpenCV should attempt to use.  If the name is a digit, then it is converted to @p int and the camera with that index is opened.
 @p darkhelp/server/settings/camera/save_original_image				| @p true						| When a digital camera is used for input, this determines if the original video frame will be saved in the output directory.
 @p darkhelp/server/settings/camera/width							| @p 640						| When a digital camera is used for input, this determines the image width OpenCV should attempt to use.
 @p darkhelp/server/settings/clear_output_directory_on_startup		| @p true						| If old images might remain in the input directory, this can be set to @p true to force all those images to be deleted.  If set to @p false then those old images will be processed as soon as the %DarkHelp Server starts.
