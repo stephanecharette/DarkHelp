@@ -32,12 +32,6 @@ JSON																| Example						| Description
 @p darkhelp/lib/network/cfg											| @p example.cfg				| @ref DarkHelp::init()
 @p darkhelp/lib/network/names										| @p example.names				| @ref DarkHelp::init()
 @p darkhelp/lib/network/weights										| @p example_best.weights		| @ref DarkHelp::init()
-@p darkhelp/lib/settings/general/threshold							| @p 0.5						| @ref DarkHelp::threshold
-@p darkhelp/lib/settings/general/non_maximal_suppression_threshold	| @p 0.45						| @ref DarkHelp::non_maximal_suppression_threshold
-@p darkhelp/lib/settings/general/modify_batch_and_subdivisions		| @p true						| @ref DarkHelp::modify_batch_and_subdivisions
-@p darkhelp/lib/settings/general/names_include_percentage			| @p true						| @ref DarkHelp::names_include_percentage
-@p darkhelp/lib/settings/general/fix_out_of_bound_values			| @p true						| @ref DarkHelp::fix_out_of_bound_values
-@p darkhelp/lib/settings/general/sort_predictions					| @p 0							| @ref DarkHelp::sort_predictions
 @p darkhelp/lib/settings/annotation/auto_hide_labels				| @p true						| @ref DarkHelp::annotation_auto_hide_labels
 @p darkhelp/lib/settings/annotation/shade_predictions				| @p 0.25						| @ref DarkHelp::annotation_shade_predictions
 @p darkhelp/lib/settings/annotation/include_all_names				| @p true						| @ref DarkHelp::include_all_names
@@ -45,30 +39,38 @@ JSON																| Example						| Description
 @p darkhelp/lib/settings/annotation/font_thickness					| @p 1							| @ref DarkHelp::annotation_font_thickness
 @p darkhelp/lib/settings/annotation/include_duration				| @p true						| @ref DarkHelp::annotation_include_duration
 @p darkhelp/lib/settings/annotation/include_timestamp				| @p false						| @ref DarkHelp::annotation_include_timestamp
-@p darkhelp/lib/settings/tiling/enable_tiles						| @p false						| @ref DarkHelp::enable_tiles
+@p darkhelp/lib/settings/general/debug								| @p false						| @ref DarkHelp::enable_debug
+@p darkhelp/lib/settings/general/driver								| @p opencv						| @ref DarkHelp::driver
+@p darkhelp/lib/settings/general/fix_out_of_bound_values			| @p true						| @ref DarkHelp::fix_out_of_bound_values
+@p darkhelp/lib/settings/general/modify_batch_and_subdivisions		| @p true						| @ref DarkHelp::modify_batch_and_subdivisions
+@p darkhelp/lib/settings/general/names_include_percentage			| @p true						| @ref DarkHelp::names_include_percentage
+@p darkhelp/lib/settings/general/non_maximal_suppression_threshold	| @p 0.45						| @ref DarkHelp::non_maximal_suppression_threshold
+@p darkhelp/lib/settings/general/sort_predictions					| @p 0							| @ref DarkHelp::sort_predictions
+@p darkhelp/lib/settings/general/threshold							| @p 0.5						| @ref DarkHelp::threshold
 @p darkhelp/lib/settings/tiling/combine_tile_predictions			| @p true						| @ref DarkHelp::combine_tile_predictions
+@p darkhelp/lib/settings/tiling/enable_tiles						| @p false						| @ref DarkHelp::enable_tiles
 @p darkhelp/lib/settings/tiling/only_combine_similar_predictions	| @p true						| @ref DarkHelp::only_combine_similar_predictions
 @p darkhelp/lib/settings/tiling/tile_edge_factor					| @p 0.25						| @ref DarkHelp::tile_edge_factor
 @p darkhelp/lib/settings/tiling/tile_rect_factor					| @p 1.2						| @ref DarkHelp::tile_rect_factor
-@p darkhelp/server/settings/input_directory							| @p /tmp/darkhelpserver/input	| This is the directory %DarkHelp Server uses to find new images.  Once an image is moved into this folder, the Server will pick it up and run inference on it, storing the results as configured.
-@p darkhelp/server/settings/output_directory						| @p /tmp/darkhelpserver/output	| This is the directory %DarkHelp Server uses to store results and annotations.
-@p darkhelp/server/settings/clear_output_directory_on_startup		| @p true						| If old images might remain in the input directory, this can be set to @p true to force all those images to be deleted.  If set to @p false then those old images will be processed as soon as the %DarkHelp Server starts.
-@p darkhelp/server/settings/save_annotated_image					| @p false						| When set to @p true, images will be annotated using %DarkHelp and saved in the output directory.
-@p darkhelp/server/settings/save_txt_annotations					| @p false						| When set to @p true, the annotations in Darknet format will be saved in the output directory.
-@p darkhelp/server/settings/save_json_results						| @p true						| When set to @p true, the results of inference in JSON format will be saved in the output directory.
-@p darkhelp/server/settings/crop_and_save_detected_objects			| @p false						| When set to @p true, all the objects detected during inference will be cropped and saved in the output directory.
-@p darkhelp/server/settings/exit_if_idle							| @p false						| When set to @p true, %DarkHelp Server will exit once there are no images left to process.  Also see @p idle_time_in_seconds.
-@p darkhelp/server/settings/idle_time_in_seconds					| @p 60							| When @p exit_if_idle is set to @p true, this value determines how long %DarkHelp Server waits before exiting.
-@p darkhelp/server/settings/max_images_to_process_at_once			| @p 10							| The maximum number of images from the input directory that are processed before @p run_cmd_after_processing_images is called.
-@p darkhelp/server/settings/run_cmd_after_processing_images			| &nbsp;						| The name of an external application or script which is called every once in a while after images have been processed.
-@p darkhelp/server/settings/purge_files_after_cmd_completes			| @p true						| When set to @p true, all the files in @p output_directory will be deleted
-@p darkhelp/server/settings/use_camera_for_input					| @p false						| When set to @p false, this means images will be loaded from @p output_directory.  When set to @p true, this means images will be loaded from the digital camera.
-@p darkhelp/server/settings/camera/save_original_image				| @p true						| When a digital camera is used for input, this determines if the original video frame will be saved in the output directory.
 @p darkhelp/server/settings/camera/buffersize						| @p 3							| When a digital camera is used for input, this determines the number of image buffers OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/fps								| @p 30							| When a digital camera is used for input, this determines the FPS OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/height							| @p 480						| When a digital camera is used for input, this determines the image height OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/name								| @p /dev/video0				| When a digital camera is used for input, this determines the device name OpenCV should attempt to use.
+@p darkhelp/server/settings/camera/save_original_image				| @p true						| When a digital camera is used for input, this determines if the original video frame will be saved in the output directory.
 @p darkhelp/server/settings/camera/width							| @p 640						| When a digital camera is used for input, this determines the image width OpenCV should attempt to use.
+@p darkhelp/server/settings/clear_output_directory_on_startup		| @p true						| If old images might remain in the input directory, this can be set to @p true to force all those images to be deleted.  If set to @p false then those old images will be processed as soon as the %DarkHelp Server starts.
+@p darkhelp/server/settings/crop_and_save_detected_objects			| @p false						| When set to @p true, all the objects detected during inference will be cropped and saved in the output directory.
+@p darkhelp/server/settings/exit_if_idle							| @p false						| When set to @p true, %DarkHelp Server will exit once there are no images left to process.  Also see @p idle_time_in_seconds.
+@p darkhelp/server/settings/idle_time_in_seconds					| @p 60							| When @p exit_if_idle is set to @p true, this value determines how long %DarkHelp Server waits before exiting.
+@p darkhelp/server/settings/input_directory							| @p /tmp/darkhelpserver/input	| This is the directory %DarkHelp Server uses to find new images.  Once an image is moved into this folder, the Server will pick it up and run inference on it, storing the results as configured.
+@p darkhelp/server/settings/max_images_to_process_at_once			| @p 10							| The maximum number of images from the input directory that are processed before @p run_cmd_after_processing_images is called.
+@p darkhelp/server/settings/output_directory						| @p /tmp/darkhelpserver/output	| This is the directory %DarkHelp Server uses to store results and annotations.
+@p darkhelp/server/settings/purge_files_after_cmd_completes			| @p true						| When set to @p true, all the files in @p output_directory will be deleted
+@p darkhelp/server/settings/run_cmd_after_processing_images			| &nbsp;						| The name of an external application or script which is called every once in a while after images have been processed.
+@p darkhelp/server/settings/save_annotated_image					| @p false						| When set to @p true, images will be annotated using %DarkHelp and saved in the output directory.
+@p darkhelp/server/settings/save_json_results						| @p true						| When set to @p true, the results of inference in JSON format will be saved in the output directory.
+@p darkhelp/server/settings/save_txt_annotations					| @p false						| When set to @p true, the annotations in Darknet format will be saved in the output directory.
+@p darkhelp/server/settings/use_camera_for_input					| @p false						| When set to @p false, this means images will be loaded from @p output_directory.  When set to @p true, this means images will be loaded from the digital camera.
 
 So once the settings are saved to a JSON file, start %DarkHelp Server like this:
 

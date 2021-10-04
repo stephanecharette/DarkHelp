@@ -104,7 +104,7 @@ class DarkHelp
 		 *
 		 * @see @ref init()
 		 *
-		 * @notice Setting the driver to any value other than @p kDarknet will result in the execution of experimental code.
+		 * @note Setting the driver to any value other than @p kDarknet will result in the execution of experimental code.
 		 *
 		 * @since October 2021
 		 */

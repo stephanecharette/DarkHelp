@@ -22,6 +22,8 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["lib"]["network"]["names"											] = "example.names";
 	j["darkhelp"]["lib"]["network"]["weights"										] = "example_best.weights";
 
+	j["darkhelp"]["lib"]["settings"]["general"]["debug"								] = false;
+	j["darkhelp"]["lib"]["settings"]["general"]["driver"							] = "darknet";
 	j["darkhelp"]["lib"]["settings"]["general"]["threshold"							] = 0.5;
 	j["darkhelp"]["lib"]["settings"]["general"]["non_maximal_suppression_threshold"	] = 0.45,
 	j["darkhelp"]["lib"]["settings"]["general"]["modify_batch_and_subdivisions"		] = true;
@@ -77,10 +79,28 @@ void configure(DarkHelp & dh, const nlohmann::json & j)
 	// this one needs to be set prior to loading the network
 	dh.modify_batch_and_subdivisions = j["darkhelp"]["lib"]["settings"]["general"]["modify_batch_and_subdivisions"];
 
+	DarkHelp::EDriver driver = DarkHelp::EDriver::kDarknet;
+	const std::string driver_name = j["darkhelp"]["lib"]["settings"]["general"]["driver"];
+	if (driver_name == "opencv")
+	{
+		driver = DarkHelp::EDriver::kOpenCV;
+	}
+	else if (driver_name != "darknet")
+	{
+		throw std::invalid_argument("driver name \"" + driver_name + "\" is invalid");
+	}
+
 	dh.init(
 		j["darkhelp"]["lib"]["network"]["cfg"		],
 		j["darkhelp"]["lib"]["network"]["weights"	],
-		j["darkhelp"]["lib"]["network"]["names"		]);
+		j["darkhelp"]["lib"]["network"]["names"		],
+		true,
+		driver);
+
+	if (j["darkhelp"]["lib"]["settings"]["general"]["debug"])
+	{
+		dh.enable_debug = true;
+	}
 
 	std::cout
 		<< "-> using DarkHelp v"		<< dh.version()			<< std::endl
