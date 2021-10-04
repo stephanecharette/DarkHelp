@@ -46,8 +46,8 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["lib"]["settings"]["tiling"]["tile_rect_factor"					] = 1.2;
 
 	auto tmp = std::filesystem::temp_directory_path();
-	auto input_dir		= tmp / "darkhelpserver" / "input";
-	auto output_dir		= tmp / "darkhelpserver" / "output";
+	auto input_dir	= tmp / "darkhelpserver" / "input";
+	auto output_dir	= tmp / "darkhelpserver" / "output";
 
 	j["darkhelp"]["server"]["settings"]["input_directory"							] = input_dir.string();
 	j["darkhelp"]["server"]["settings"]["output_directory"							] = output_dir.string();
@@ -58,7 +58,7 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["server"]["settings"]["crop_and_save_detected_objects"			] = false;
 	j["darkhelp"]["server"]["settings"]["exit_if_idle"								] = false;
 	j["darkhelp"]["server"]["settings"]["idle_time_in_seconds"						] = 60;
-	j["darkhelp"]["server"]["settings"]["max_images_to_process_at_once"				] = 10;
+	j["darkhelp"]["server"]["settings"]["max_images_to_process_at_once"				] = 1;
 	j["darkhelp"]["server"]["settings"]["run_cmd_after_processing_images"			] = "";
 	j["darkhelp"]["server"]["settings"]["purge_files_after_cmd_completes"			] = true;
 	j["darkhelp"]["server"]["settings"]["use_camera_for_input"						] = false;
