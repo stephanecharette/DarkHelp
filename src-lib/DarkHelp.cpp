@@ -1383,8 +1383,6 @@ void DarkHelp::predict_internal_opencv()
 
 		if (ptr[4] >= threshold)
 		{
-			float * ptr = output.ptr<float>(i);
-
 			if (enable_debug)
 			{
 				std::cout << "i=" << std::setw(4) << i;

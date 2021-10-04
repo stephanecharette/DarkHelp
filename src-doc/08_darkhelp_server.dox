@@ -40,12 +40,12 @@ JSON																| Example						| Description
 @p darkhelp/lib/settings/annotation/include_duration				| @p true						| @ref DarkHelp::annotation_include_duration
 @p darkhelp/lib/settings/annotation/include_timestamp				| @p false						| @ref DarkHelp::annotation_include_timestamp
 @p darkhelp/lib/settings/general/debug								| @p false						| @ref DarkHelp::enable_debug
-@p darkhelp/lib/settings/general/driver								| @p opencv						| @ref DarkHelp::driver
+@p darkhelp/lib/settings/general/driver								| @p darknet <br/> @p opencv	| @ref DarkHelp::EDriver
 @p darkhelp/lib/settings/general/fix_out_of_bound_values			| @p true						| @ref DarkHelp::fix_out_of_bound_values
 @p darkhelp/lib/settings/general/modify_batch_and_subdivisions		| @p true						| @ref DarkHelp::modify_batch_and_subdivisions
 @p darkhelp/lib/settings/general/names_include_percentage			| @p true						| @ref DarkHelp::names_include_percentage
 @p darkhelp/lib/settings/general/non_maximal_suppression_threshold	| @p 0.45						| @ref DarkHelp::non_maximal_suppression_threshold
-@p darkhelp/lib/settings/general/sort_predictions					| @p 0							| @ref DarkHelp::sort_predictions
+@p darkhelp/lib/settings/general/sort_predictions					| @p 0							| @ref DarkHelp::sort_predictions (@p 0 = unsorted, @p 1 = ascending, @p 2 = descending)
 @p darkhelp/lib/settings/general/threshold							| @p 0.5						| @ref DarkHelp::threshold
 @p darkhelp/lib/settings/tiling/combine_tile_predictions			| @p true						| @ref DarkHelp::combine_tile_predictions
 @p darkhelp/lib/settings/tiling/enable_tiles						| @p false						| @ref DarkHelp::enable_tiles
