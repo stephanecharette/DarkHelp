@@ -462,6 +462,23 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::UnlabeledMultiArg<std::string> files		("files"			, "The name of images or videos to process with the given neural network. "
 																		"May be unspecified if the --list parameter is used instead."												, false				, "files..."			, cli);
 
+	std::string cmd;
+	for (int i = 0; i < argc; i++)
+	{
+		if (cmd.empty() == false)
+		{
+			cmd += " ";
+		}
+		cmd += argv[i];
+
+		if (cmd.size() > 1000)
+		{
+			cmd += " ...";
+			break;
+		}
+	}
+	options.json["argv"] = cmd;
+
 	cli.parse(argc, argv);
 
 	if (names.getValue() == "none")
@@ -548,6 +565,7 @@ void init(Options & options, int argc, char *argv[])
 	options.dark_help.tile_rect_factor					= std::stof(tile_rect.getValue());
 
 	options.force_greyscale								= greyscale.getValue();
+	options.json["settings"]["driver"]					= driver.getValue();
 	options.json["settings"]["threshold"]				= options.dark_help.threshold;
 	options.json["settings"]["hierarchy"]				= options.dark_help.hierarchy_threshold;
 	options.json["settings"]["nms"]						= options.dark_help.non_maximal_suppression_threshold;
