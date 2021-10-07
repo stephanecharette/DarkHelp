@@ -97,14 +97,21 @@ class DarkHelp
 
 		/** %DarkHelp can utilise either @p libdarknet.so or OpenCV's DNN module to load the neural network and run inference.
 		 * OpenCV is much faster, but support for it is relatively new in %DarkHelp and support for newer models like YOLOv4
-		 * requires @em very recent versions of OpenCV.  The default for now is @p kDarknet.  Eventually, the default will
-		 * likely change to @p kOpenCV.
+		 * requires @em very recent versions of OpenCV.  The default is @p kDarknet.
 		 *
 		 * Expect to see different results between Darknet and OpenCV.
 		 *
 		 * @see @ref init()
 		 *
 		 * @note Setting the driver to any value other than @p kDarknet will result in the execution of experimental code.
+		 *
+		 * If using @p kOpenCV and you have access to CUDA, then you may want to manually set these in your code:
+		 * ~~~~
+		 * DarkHelp dh(...);
+		 * dh.opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+		 * dh.opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		 * ~~~~
+		 * Otherwise the default will be to use the CPU version.
 		 *
 		 * @since October 2021
 		 */

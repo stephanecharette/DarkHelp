@@ -164,10 +164,10 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 	else
 	{
 		opencv_net = cv::dnn::readNetFromDarknet(cfg_fn, weights_fn);
-//		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
-//		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
-		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
+		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+//		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+//		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 	}
 #endif
 	const auto t2 = std::chrono::high_resolution_clock::now();
