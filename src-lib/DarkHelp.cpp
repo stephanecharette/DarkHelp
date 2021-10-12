@@ -182,8 +182,6 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 #endif
 	}
 #endif
-	const auto t2 = std::chrono::high_resolution_clock::now();
-	duration = t2 - t1;
 
 	if (not names_fn.empty())
 	{
@@ -235,6 +233,20 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		/// @throw std::invalid_argument if the network dimensions cannot be read from the .cfg file
 		throw std::invalid_argument("failed to read the network width or height from " + cfg_filename);
 	}
+
+	// OpenCV's construction uses lazy initialization, and doesn't actually happen until we call into it.
+	// This can have a huge impact on FPS calculations when the initial image pauses for a "long" time as
+	// the network is loaded.  So pass a "dummy" image through the network to force everything to load.
+	if (driver != DarkHelp::EDriver::kDarknet)
+	{
+		cv::Mat mat(network_dimensions, CV_8UC3, cv::Scalar(0, 0, 0));
+		predict_internal(mat);
+		prediction_results.clear();
+		original_image = cv::Mat();
+	}
+
+	const auto t2 = std::chrono::high_resolution_clock::now();
+	duration = t2 - t1;
 
 	return *this;
 }
