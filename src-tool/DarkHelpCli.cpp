@@ -406,11 +406,11 @@ class DriverConstraint : public TCLAP::Constraint<std::string>
 {
 	public:
 
-		virtual std::string description() const	{ return "darknet|opencv"; }
-		virtual std::string shortID() const		{ return "darknet|opencv"; }
+		virtual std::string description() const	{ return "darknet|opencv|opencvcpu"; }
+		virtual std::string shortID() const		{ return "darknet|opencv|opencvcpu"; }
 		virtual bool check(const std::string & value) const
 		{
-			return value == "darknet" or value == "opencv";
+			return value == "darknet" or value == "opencv" or value == "opencvcpu";
 		}
 };
 
@@ -520,9 +520,26 @@ void init(Options & options, int argc, char *argv[])
 	DarkHelp::EDriver darkhelp_driver = DarkHelp::EDriver::kDarknet;
 	if (driver.isSet())
 	{
-		darkhelp_driver = (driver.getValue() == "darknet" ? DarkHelp::EDriver::kDarknet : DarkHelp::EDriver::kOpenCV);
+		if (driver.getValue() == "darknet")
+		{
+			darkhelp_driver = DarkHelp::EDriver::kDarknet;
+		}
+		else if (driver.getValue() == "opencv")
+		{
+			darkhelp_driver = DarkHelp::EDriver::kOpenCV;
+		}
+		else if (driver.getValue() == "opencvcpu")
+		{
+			darkhelp_driver = DarkHelp::EDriver::kOpenCVCPU;
+		}
 	}
-	std::cout << "-> driver:       " << (darkhelp_driver == DarkHelp::EDriver::kDarknet ? "Darknetd" : "OpenCV DNN  ***EXPERIMENTAL***") << std::endl;
+	std::cout
+		<< "-> driver:       "
+		<< (darkhelp_driver == DarkHelp::EDriver::kDarknet ? "Darknetd" :
+			darkhelp_driver == DarkHelp::EDriver::kOpenCV ? "OpenCV DNN  ***EXPERIMENTAL***" :
+			darkhelp_driver == DarkHelp::EDriver::kOpenCVCPU ? "OpenCV DNN (CPU only)  ***EXPERIMENTAL***" :
+			"UNKNOWN")
+		<< std::endl;
 
 	// we already verified the files several lines up, so no need to do it again
 	//

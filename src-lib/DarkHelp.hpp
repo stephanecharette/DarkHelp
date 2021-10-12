@@ -99,19 +99,20 @@ class DarkHelp
 		 * OpenCV is much faster, but support for it is relatively new in %DarkHelp and support for newer models like YOLOv4
 		 * requires @em very recent versions of OpenCV.  The default is @p kDarknet.
 		 *
-		 * Expect to see different results between Darknet and OpenCV.
+		 * Expect the results to be slightly different between Darknet and OpenCV.  For example, see
+		 * <a target="_blank" href="https://github.com/AlexeyAB/darknet/issues/8146">issue #8146</a>.
 		 *
 		 * @see @ref init()
 		 *
 		 * @note Setting the driver to any value other than @p kDarknet will result in the execution of experimental code.
 		 *
-		 * If using @p kOpenCV and you have access to CUDA, then you may want to manually set these in your code:
+		 * If using @p kOpenCV or @p kOpenCVCPU you can customize the backend and target after DarkHelp::init() is called.  For example:
 		 * ~~~~
-		 * DarkHelp dh(...);
+		 * DarkHelp dh;
+		 * dh.init("rocks.cfg", "rocks.weights", "rocks.names", true, DarkHelp::EDriver::kOpenCV);
 		 * dh.opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-		 * dh.opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		 * dh.opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
 		 * ~~~~
-		 * Otherwise the default will be to use the CPU version.
 		 *
 		 * @since October 2021
 		 */
@@ -119,7 +120,8 @@ class DarkHelp
 		{
 			kInvalid,
 			kDarknet,	///< Use @p libdarknet.so.
-			kOpenCV		///< Use OpenCV's @p dnn module.
+			kOpenCV,	///< Use OpenCV's @p dnn module.  Attempts to use CUDA, and will automatically revert to CPU if CUDA is not available.
+			kOpenCVCPU	///< Use OpenCV's @p dnn module, but skip CUDA and only use the CPU
 		};
 
 		/** Map of a class ID to a probability that this object belongs to that class.

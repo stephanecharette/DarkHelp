@@ -85,6 +85,10 @@ void configure(DarkHelp & dh, const nlohmann::json & j)
 	{
 		driver = DarkHelp::EDriver::kOpenCV;
 	}
+	else if (driver_name != "opencvcpu")
+	{
+		driver = DarkHelp::EDriver::kOpenCVCPU;
+	}
 	else if (driver_name != "darknet")
 	{
 		throw std::invalid_argument("driver name \"" + driver_name + "\" is invalid");

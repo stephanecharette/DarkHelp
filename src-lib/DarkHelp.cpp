@@ -166,8 +166,16 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		opencv_net = cv::dnn::readNetFromDarknet(cfg_fn, weights_fn);
 
 #if CV_VERSION_MAJOR > 4 || (CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR >= 2)
-		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		if (driver == EDriver::kOpenCVCPU)
+		{
+			opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
+			opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+		}
+		else
+		{
+			opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+			opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		}
 #else
 		opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
 		opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
