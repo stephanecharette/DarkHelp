@@ -7,10 +7,12 @@
 #include <random>
 #include <chrono>
 #include <fstream>
+#include <atomic>
 #include <map>
 #include <vector>
 #include <string>
 #include <ctime>
+#include <csignal>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
 #include "filesystem.hpp"
@@ -124,6 +126,19 @@ const int KEY_PAGE_UP	= 0x0010ff55;
 const int KEY_PAGE_DOWN = 0x0010ff56;
 const int KEY_END		= 0x0010ff57;
 #endif
+
+
+std::atomic<bool> signal_raised = false;
+extern "C"
+{
+	void cli_signal_handler(int sig)
+	{
+		std::cout << std::endl << "-> WARNING: handler called for signal #" << sig << std::endl;
+		signal_raised = true;
+
+		return;
+	}
+}
 
 
 struct Options
@@ -635,6 +650,11 @@ void init(Options & options, int argc, char *argv[])
 
 	for (const auto & fn : files.getValue())
 	{
+		if (signal_raised)
+		{
+			break;
+		}
+
 		std::filesystem::path name(fn);
 		if (std::filesystem::exists(name) == false)
 		{
@@ -652,6 +672,11 @@ void init(Options & options, int argc, char *argv[])
 
 		for (const auto & entry : std::filesystem::recursive_directory_iterator(name,  std::filesystem::directory_options::follow_directory_symlink))
 		{
+			if (signal_raised)
+			{
+				break;
+			}
+
 			const std::string filename = entry.path().string();
 //			if (entry.is_directory() == false) -- experimental fs does not have this call
 			if (std::filesystem::is_directory(entry.path()) == false)
@@ -791,10 +816,11 @@ void process_video(Options & options)
 	// reset to the start of the video and process every frame
 	input_video.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0.0);
 
-	const auto start_time = std::chrono::high_resolution_clock::now();
-	const size_t rounded_fps = std::round(input_fps);
+	double previous_fps = 0.0;
 	size_t number_of_frames = 0;
-	while (true)
+	const size_t rounded_fps = std::round(input_fps);
+	const auto start_time = std::chrono::high_resolution_clock::now();
+	while (signal_raised == false)
 	{
 		cv::Mat frame;
 		input_video >> frame;
@@ -845,7 +871,7 @@ void process_video(Options & options)
 		number_of_frames ++;
 		output_video.write(frame);
 
-		if (number_of_frames == input_frames or (number_of_frames % rounded_fps) == 0)
+		if (previous_fps <= (input_fps / 10.0) or number_of_frames == input_frames or (number_of_frames % rounded_fps) == 0)
 		{
 			const double percentage_done		= static_cast<double>(number_of_frames) / input_frames;
 			const double percentage_remaining	= 1.0 - percentage_done;
@@ -853,6 +879,7 @@ void process_video(Options & options)
 			const double milliseconds_remaining	= milliseconds_elapsed * percentage_remaining / percentage_done;
 			const double seconds_remaining		= milliseconds_remaining / 1000.0;
 			const double fps					= static_cast<double>(number_of_frames) / (milliseconds_elapsed / 1000.0);
+			previous_fps						= fps;
 
 			std::stringstream ss1;
 			ss1 << " @ " << std::fixed << std::setprecision(1) << fps << " FPS";
@@ -1240,13 +1267,37 @@ int main(int argc, char *argv[])
 {
 	try
 	{
+		// especially if we're in process of processing a .mp4 file,
+		// it is nice to have some basic signal handling so the output
+		// we do have gets written out correctly
+		for (const int sig :
+			{
+				SIGINT	, // 2: CTRL+C
+				SIGILL	, // 4: illegal instruction
+				SIGABRT	, // 6: abort()
+				SIGFPE	, // 8: floating point exception
+				SIGSEGV	, // 11: segfault
+				SIGTERM	, // 15: terminate
+				#ifdef WIN32
+				SIGBREAK, // Break is different than CTRL+C on Windows
+				#else
+				SIGHUP	, // 1: hangup
+				SIGQUIT	, // 3: quit
+				SIGUSR1	, // 10: user-defined
+				SIGUSR2	, // 12: user-defined
+				#endif
+			})
+		{
+			std::signal(sig, cli_signal_handler);
+		}
+
 		Options options;
 
 		init(options, argc, argv);
 
 		set_msg(options, "press 'h' for help");
 		options.file_index = 0;
-		while (options.file_index < options.all_files.size() && not options.done)
+		while (options.file_index < options.all_files.size() and not options.done and not signal_raised)
 		{
 			options.filename = options.all_files.at(options.file_index);
 
