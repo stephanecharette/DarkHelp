@@ -939,3 +939,13 @@ std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults &
  * which maintains the original 1.333 aspect ratio.
  */
 cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size);
+
+/** Resize the given image as quickly as possible to the given dimensions.  This will sacrifice quality for speed.
+ * If OpenCV has been compiled with support for CUDA, then this will utilise the GPU to do the resizing.
+ *
+ * @note Timing tests on Jetson devices as well as full NVIDIA GPUs show this is not significantly different than the
+ * usual call to @p cv::resize().  Probably would be of bigger impact if the image resizing was done on a different
+ * thread, and then fed to DarkHelp for inference so the image resize and inference can happen in parallel.
+ */
+cv::Mat fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size);
+

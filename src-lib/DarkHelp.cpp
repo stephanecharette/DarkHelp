@@ -10,6 +10,10 @@
 #include <ctime>
 #include <sys/stat.h>
 
+#ifdef HAVE_OPENCV_CUDAWARPING
+#include <opencv2/cudawarping.hpp>
+#endif
+
 
 /* If you are using a recent version of Darknet there is no problem, and you can skip the rest of this comment.
  *
@@ -1277,9 +1281,8 @@ void DarkHelp::predict_internal_darknet()
 {
 	network * nw = reinterpret_cast<network*>(darknet_net);
 
-	cv::Mat resized_image;
-	cv::resize(original_image, resized_image, cv::Size(nw->w, nw->h));
-	tile_size = cv::Size(resized_image.cols, resized_image.rows);
+	cv::Mat resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	tile_size = network_dimensions;
 	image img = convert_opencv_mat_to_darknet_image(resized_image);
 
 	network_predict(*nw, img.data);
@@ -1369,7 +1372,10 @@ void DarkHelp::predict_internal_opencv()
 	throw std::runtime_error("OpenCV DNN driver is not supported with this version of OpenCV");
 	#else
 
-	auto blob = cv::dnn::blobFromImage(original_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/true, /* crop=*/false);
+	cv::Mat resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	tile_size = network_dimensions;
+
+	auto blob = cv::dnn::blobFromImage(resized_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/false, /* crop=*/false);
 	opencv_net.setInput(blob);
 
 	/* The output mat is float and will have thousands of rows.  The fields are:
@@ -1710,4 +1716,41 @@ cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
 	cv::resize(mat, dst, new_size, 0, 0, interpolation);
 
 	return dst;
+}
+
+
+cv::Mat fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size)
+{
+	if (mat.size() == desired_size or mat.empty())
+	{
+		return mat;
+	}
+
+	cv::Mat resized_image;
+
+	// INTER_NEAREST is the fastest resize method at a cost of quality, but since we're making the image match the
+	// network dimensions (416x416, etc) we're aiming for speed, not quality.  Truth is when saving the file out to
+	// disk as a .png file during testing I noticed the output is *exactly* the same.  MD5 sum of the image files
+	// was exactly the same regardless of the method used.  So we may as well use the fastest method available.
+
+	#ifdef HAVE_OPENCV_CUDAWARPING
+
+		// if we get here, we'll use the GPU to do the resizing
+
+		static thread_local cv::cuda::GpuMat gpu_original_image;
+		static thread_local cv::cuda::GpuMat gpu_resized_image;
+
+		gpu_original_image.upload(mat);
+		cv::cuda::resize(gpu_original_image, gpu_resized_image, desired_size, 0.0, 0.0, cv::INTER_NEAREST);
+		gpu_resized_image.download(resized_image);
+
+	#else
+
+		// otherwise we don't have a GPU to use so call the "normal" CPU version of cv::resize()
+
+		cv::resize(mat, resized_image, desired_size, cv::INTER_NEAREST);
+
+	#endif
+
+	return resized_image;
 }
