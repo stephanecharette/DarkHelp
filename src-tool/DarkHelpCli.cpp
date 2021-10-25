@@ -133,7 +133,7 @@ extern "C"
 {
 	void cli_signal_handler(int sig)
 	{
-		std::cout << std::endl << "-> WARNING: handler called for signal #" << sig << std::endl;
+		std::cout << std::endl << "-> WARNING: signal handler called for signal #" << sig << std::endl;
 		signal_raised = true;
 
 		return;
@@ -263,13 +263,13 @@ void display_current_msg(Options & options, cv::Mat output_image, int & delay_in
 			options.message_time = now + 2;
 		}
 
-		const cv::Size text_size = cv::getTextSize(options.message_text, options.dark_help.annotation_font_face, options.dark_help.annotation_font_scale, options.dark_help.annotation_font_thickness, nullptr);
+		const cv::Size text_size = cv::getTextSize(options.message_text, options.dark_help.config.annotation_font_face, options.dark_help.config.annotation_font_scale, options.dark_help.config.annotation_font_thickness, nullptr);
 
 		cv::Point p(30, 50);
 		cv::Rect r(cv::Point(p.x - 5, p.y - text_size.height - 3), cv::Size(text_size.width + 10, text_size.height + 10));
 		cv::rectangle(output_image, r, cv::Scalar(0,255,255), cv::FILLED);
 		cv::rectangle(output_image, r, cv::Scalar(0,0,0), 1);
-		cv::putText(output_image, options.message_text, p, options.dark_help.annotation_font_face, options.dark_help.annotation_font_scale, cv::Scalar(0,0,0), options.dark_help.annotation_font_thickness, cv::LINE_AA);
+		cv::putText(output_image, options.message_text, p, options.dark_help.config.annotation_font_face, options.dark_help.config.annotation_font_scale, cv::Scalar(0,0,0), options.dark_help.config.annotation_font_thickness, cv::LINE_AA);
 
 		const int milliseconds_remaining = 1000 * (options.message_time - now);
 		if (delay_in_milliseconds == 0 or milliseconds_remaining < delay_in_milliseconds)
@@ -565,7 +565,7 @@ void init(Options & options, int argc, char *argv[])
 
 	if (get_bool(debug))
 	{
-		options.dark_help.enable_debug = true;
+		options.dark_help.config.enable_debug = true;
 		std::cout << "-> debug output: enabled" << std::endl;
 
 		for (const auto & [key, val] : debug_messages)
@@ -583,28 +583,28 @@ void init(Options & options, int argc, char *argv[])
 	std::cout	<< "-> loading network took "		<< options.dark_help.duration_string() << std::endl
 				<< "-> neural network dimensions: "	<< options.dark_help.network_size().width << "x" << options.dark_help.network_size().height << std::endl;
 
-	options.dark_help.threshold							= std::stof(threshold.getValue());
-	options.dark_help.hierarchy_threshold				= std::stof(hierarchy.getValue());
-	options.dark_help.non_maximal_suppression_threshold	= std::stof(nms.getValue());
-	options.dark_help.names_include_percentage			= get_bool(percentage);
-	options.dark_help.annotation_font_scale				= std::stod(fontscale.getValue());
-	options.dark_help.annotation_include_duration		= get_bool(duration);
-	options.dark_help.annotation_include_timestamp		= get_bool(timestamp);
-	options.dark_help.annotation_shade_predictions		= std::stof(shade.getValue());
-	options.dark_help.annotation_auto_hide_labels		= get_bool(autohide);
-	options.dark_help.enable_tiles						= get_bool(use_tiles);
-	options.dark_help.tile_edge_factor					= std::stof(tile_edge.getValue());
-	options.dark_help.tile_rect_factor					= std::stof(tile_rect.getValue());
+	options.dark_help.config.threshold							= std::stof(threshold.getValue());
+	options.dark_help.config.hierarchy_threshold				= std::stof(hierarchy.getValue());
+	options.dark_help.config.non_maximal_suppression_threshold	= std::stof(nms.getValue());
+	options.dark_help.config.names_include_percentage			= get_bool(percentage);
+	options.dark_help.config.annotation_font_scale				= std::stod(fontscale.getValue());
+	options.dark_help.config.annotation_include_duration		= get_bool(duration);
+	options.dark_help.config.annotation_include_timestamp		= get_bool(timestamp);
+	options.dark_help.config.annotation_shade_predictions		= std::stof(shade.getValue());
+	options.dark_help.config.annotation_auto_hide_labels		= get_bool(autohide);
+	options.dark_help.config.enable_tiles						= get_bool(use_tiles);
+	options.dark_help.config.tile_edge_factor					= std::stof(tile_edge.getValue());
+	options.dark_help.config.tile_rect_factor					= std::stof(tile_rect.getValue());
 
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["driver"]					= driver.getValue();
-	options.json["settings"]["threshold"]				= options.dark_help.threshold;
-	options.json["settings"]["hierarchy"]				= options.dark_help.hierarchy_threshold;
-	options.json["settings"]["nms"]						= options.dark_help.non_maximal_suppression_threshold;
-	options.json["settings"]["include_percentage"]		= options.dark_help.names_include_percentage;
+	options.json["settings"]["threshold"]				= options.dark_help.config.threshold;
+	options.json["settings"]["hierarchy"]				= options.dark_help.config.hierarchy_threshold;
+	options.json["settings"]["nms"]						= options.dark_help.config.non_maximal_suppression_threshold;
+	options.json["settings"]["include_percentage"]		= options.dark_help.config.names_include_percentage;
 	options.json["settings"]["force_greyscale"]			= options.force_greyscale;
 	options.json["settings"]["keep_annotations"]		= options.keep_annotated_images;
-	options.json["settings"]["enable_tiles"]			= options.dark_help.enable_tiles;
+	options.json["settings"]["enable_tiles"]			= options.dark_help.config.enable_tiles;
 
 	if (resize1.isSet())
 	{
@@ -760,11 +760,11 @@ void process_video(Options & options)
 
 	if (options.size1_is_set)
 	{
-		mat = resize_keeping_aspect_ratio(mat, options.size1);
+		mat = DarkHelp::resize_keeping_aspect_ratio(mat, options.size1);
 	}
 	if (options.size2_is_set)
 	{
-		mat = resize_keeping_aspect_ratio(mat, options.size2);
+		mat = DarkHelp::resize_keeping_aspect_ratio(mat, options.size2);
 	}
 	const int output_width	= mat.cols;
 	const int output_height	= mat.rows;
@@ -839,13 +839,13 @@ void process_video(Options & options)
 
 		if (options.size1_is_set)
 		{
-			frame = resize_keeping_aspect_ratio(frame, options.size1);
+			frame = DarkHelp::resize_keeping_aspect_ratio(frame, options.size1);
 		}
 
 		options.dark_help.predict(frame);
 
 		// no need to figure out the average duration if the display of the duration field is turned off in annotate()
-		if (options.dark_help.annotation_include_duration)
+		if (options.dark_help.config.annotation_include_duration)
 		{
 			duration_deque.push_front(options.dark_help.duration);
 			if (duration_deque.size() > 3 * rounded_fps)
@@ -865,7 +865,7 @@ void process_video(Options & options)
 
 		if (options.size2_is_set)
 		{
-			frame = resize_keeping_aspect_ratio(frame, options.size2);
+			frame = DarkHelp::resize_keeping_aspect_ratio(frame, options.size2);
 		}
 
 		number_of_frames ++;
@@ -969,7 +969,7 @@ void process_image(Options & options)
 
 			options.json["file"][options.file_index]["msg"] = msg;
 			std::cout << "-> " << msg << std::endl;
-			input_image = resize_keeping_aspect_ratio(input_image, options.size1);
+			input_image = DarkHelp::resize_keeping_aspect_ratio(input_image, options.size1);
 		}
 	}
 
@@ -995,7 +995,7 @@ void process_image(Options & options)
 		if (options.size2_is_set)
 		{
 			std::cout << "-> resizing output image from " << output_image.cols << "x" << output_image.rows << " to " << options.size2.width << "x" << options.size2.height << std::endl;
-			output_image = resize_keeping_aspect_ratio(output_image, options.size2);
+			output_image = DarkHelp::resize_keeping_aspect_ratio(output_image, options.size2);
 		}
 
 		if (options.keep_annotated_images)
@@ -1128,8 +1128,8 @@ void process_image(Options & options)
 		}
 		case KEY_c:
 		{
-			options.dark_help.combine_tile_predictions = ! options.dark_help.combine_tile_predictions;
-			set_msg(options, "combining tile predictions has been turned " + std::string(options.dark_help.combine_tile_predictions ? "on" : "off"));
+			options.dark_help.config.combine_tile_predictions = ! options.dark_help.config.combine_tile_predictions;
+			set_msg(options, "combining tile predictions has been turned " + std::string(options.dark_help.config.combine_tile_predictions ? "on" : "off"));
 			break;
 		}
 		case KEY_g:
@@ -1139,13 +1139,13 @@ void process_image(Options & options)
 		}
 		case KEY_l:
 		{
-			options.dark_help.annotation_auto_hide_labels = ! options.dark_help.annotation_auto_hide_labels;
-			set_msg(options, "auto-labels has been turned " + std::string(options.dark_help.annotation_auto_hide_labels ? "on" : "off"));
+			options.dark_help.config.annotation_auto_hide_labels = ! options.dark_help.config.annotation_auto_hide_labels;
+			set_msg(options, "auto-labels has been turned " + std::string(options.dark_help.config.annotation_auto_hide_labels ? "on" : "off"));
 			break;
 		}
 		case KEY_s:
 		{
-			auto & shade = options.dark_help.annotation_shade_predictions;
+			auto & shade = options.dark_help.config.annotation_shade_predictions;
 			if		(shade < 0.25)	shade = 0.25;
 			else if	(shade < 0.50)	shade = 0.50;
 			else if	(shade < 0.75)	shade = 0.75;
@@ -1156,8 +1156,8 @@ void process_image(Options & options)
 		}
 		case KEY_t:
 		{
-			options.dark_help.enable_tiles = not options.dark_help.enable_tiles;
-			set_msg(options, "image tiling has been turned " + std::string(options.dark_help.enable_tiles ? "on" : "off"));
+			options.dark_help.config.enable_tiles = not options.dark_help.config.enable_tiles;
+			set_msg(options, "image tiling has been turned " + std::string(options.dark_help.config.enable_tiles ? "on" : "off"));
 			break;
 		}
 		case KEY_w:
@@ -1228,22 +1228,22 @@ void process_image(Options & options)
 		}
 		case KEY_PAGE_UP:
 		{
-			options.dark_help.threshold += 0.1;
-			if (options.dark_help.threshold > 1.0)
+			options.dark_help.config.threshold += 0.1;
+			if (options.dark_help.config.threshold > 1.0)
 			{
-				options.dark_help.threshold = 1.0;
+				options.dark_help.config.threshold = 1.0;
 			}
-			set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.dark_help.threshold * 100.0)) + "%");
+			set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.dark_help.config.threshold * 100.0)) + "%");
 			break;
 		}
 		case KEY_PAGE_DOWN:
 		{
-			options.dark_help.threshold -= 0.1;
-			if (options.dark_help.threshold < 0.01)
+			options.dark_help.config.threshold -= 0.1;
+			if (options.dark_help.config.threshold < 0.01)
 			{
-				options.dark_help.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
+				options.dark_help.config.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
 			}
-			set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.dark_help.threshold * 100.0)) + "%");
+			set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.dark_help.config.threshold * 100.0)) + "%");
 			break;
 		}
 		case KEY_p:

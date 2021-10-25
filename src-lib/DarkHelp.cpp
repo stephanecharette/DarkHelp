@@ -51,6 +51,80 @@
 #endif
 
 
+DarkHelp::Config::~Config()
+{
+	return;
+}
+
+
+DarkHelp::Config::Config()
+{
+	reset();
+
+	return;
+}
+
+
+DarkHelp::Config::Config(const std::string & cfg_fn, const std::string & weights_fn, const std::string & names_fn, const bool verify_files_first, const EDriver d) :
+	Config()
+{
+	cfg_filename		= cfg_fn;
+	weights_filename	= weights_fn;
+	names_filename		= names_fn;
+
+	if (verify_files_first)
+	{
+		DarkHelp::verify_cfg_and_weights(cfg_filename, weights_filename, names_filename);
+	}
+
+	#ifndef HAVE_OPENCV_DNN_OBJDETECT
+		// with old versions of OpenCV, we don't have a DNN module
+		driver = DarkHelp::EDriver::kDarknet;
+	#else
+		driver = d;
+	#endif
+
+	return;
+}
+
+
+DarkHelp::Config & DarkHelp::Config::reset()
+{
+	// pick some reasonable default values
+
+	cfg_filename						.clear();
+	weights_filename					.clear();
+	names_filename						.clear();
+	threshold							= 0.5f;
+	hierarchy_threshold					= 0.5f;
+	non_maximal_suppression_threshold	= 0.45f;
+	annotation_font_face				= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
+	annotation_font_scale				= 0.5;
+	annotation_font_thickness			= 1;
+	annotation_line_thickness			= 2;
+	annotation_include_duration			= true;
+	annotation_include_timestamp		= false;
+	names_include_percentage			= true;
+	include_all_names					= true;
+	fix_out_of_bound_values				= true;
+	annotation_colours					= DarkHelp::get_default_annotation_colours();
+	sort_predictions					= ESort::kAscending;
+	annotation_auto_hide_labels			= true;
+	annotation_shade_predictions		= 0.25;
+	enable_debug						= false;
+	enable_tiles						= false;
+	combine_tile_predictions			= true;
+	only_combine_similar_predictions	= true;
+	tile_edge_factor					= 0.25f;
+	tile_rect_factor					= 1.20f;
+	modify_batch_and_subdivisions		= true;
+	driver								= EDriver::kInvalid;
+	annotation_suppress_classes			.clear();
+
+	return *this;
+}
+
+
 DarkHelp::~DarkHelp()
 {
 	reset();
@@ -95,6 +169,17 @@ DarkHelp::DarkHelp() :
 }
 
 
+DarkHelp::DarkHelp(const DarkHelp::Config & cfg) :
+	DarkHelp()
+{
+	config = cfg;
+
+	init();
+
+	return;
+}
+
+
 DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first, const EDriver d) :
 	DarkHelp()
 {
@@ -104,7 +189,7 @@ DarkHelp::DarkHelp(const std::string & cfg_filename, const std::string & weights
 }
 
 
-std::string DarkHelp::version() const
+std::string DarkHelp::version()
 {
 	return DH_VERSION;
 }
@@ -112,47 +197,65 @@ std::string DarkHelp::version() const
 
 DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first, const EDriver d)
 {
-	reset();
+	config.cfg_filename		= cfg_filename;
+	config.weights_filename	= weights_filename;
+	config.names_filename	= names_filename;
 
 	// darknet behaves very badly if the .cfg and the .weights files are accidentally swapped.  I've seen it segfault when
 	// it attempts to parse the weights as a text flle.  So do a bit of simple verification and swap them if necessary.
-	std::string cfg_fn		= cfg_filename;
-	std::string weights_fn	= weights_filename;
-	std::string names_fn	= names_filename;
 	if (verify_files_first)
 	{
-		verify_cfg_and_weights(cfg_fn, weights_fn, names_fn);
+		verify_cfg_and_weights(config.cfg_filename, config.weights_filename, config.names_filename);
 	}
 
-	if (modify_batch_and_subdivisions)
+	#ifndef HAVE_OPENCV_DNN_OBJDETECT
+		// with old versions of OpenCV, we don't have a DNN module
+		config.driver = DarkHelp::EDriver::kDarknet;
+	#else
+		config.driver = d;
+	#endif
+
+	return init();
+}
+
+
+DarkHelp & DarkHelp::init()
+{
+	if (config.cfg_filename.empty() or
+		config.weights_filename.empty())
+	{
+		/// @throw std::invalid_argument if the .cfg or .weights filenames have not been set.
+		throw std::invalid_argument("cannot initialize the network without a .cfg or .weights file");
+	}
+
+	if (config.modify_batch_and_subdivisions)
 	{
 		const MStr m =
 		{
 			{"batch"		, "1"},
 			{"subdivisions"	, "1"}
 		};
-		edit_cfg_file(cfg_fn, m);
+		edit_cfg_file(config.cfg_filename, m);
 
 		// do not combine this settings with the previous two since there is code that
 		// needs to behave differently when only the batch+subdivisions are modified
 		//
 		// 2021-04-08:  It looks like use_cuda_graph _may_ be causing problems.  Don't explicitely set it in DarkHelp.
-//		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
+		//		edit_cfg_file(cfg_fn, {{"use_cuda_graph", "1"}});
 	}
 
-#if CV_VERSION_MAJOR < 4
-	// with old versions of OpenCV, we don't have a DNN module
-	driver = DarkHelp::EDriver::kDarknet;
-#else
-	driver = d;
-#endif
+	if (config.driver < EDriver::kMin or
+		config.driver > EDriver::kMax)
+	{
+		config.driver = EDriver::kDarknet;
+	}
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
-	if (driver == EDriver::kDarknet)
+	if (config.driver == EDriver::kDarknet)
 	{
 		// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
 
-		darknet_net = load_network_custom(const_cast<char*>(cfg_fn.c_str()), const_cast<char*>(weights_fn.c_str()), 1, 1);
+		darknet_net = load_network_custom(const_cast<char*>(config.cfg_filename.c_str()), const_cast<char*>(config.weights_filename.c_str()), 1, 1);
 		if (darknet_net == nullptr)
 		{
 			/// @throw std::runtime_error if the call to darknet's @p load_network_custom() has failed.
@@ -164,13 +267,13 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 		// what does this call do?
 		calculate_binary_weights(*nw);
 	}
-#if CV_VERSION_MAJOR >= 4
+#if CV_VERSION_MAJOR >= 4 && defined(HAVE_OPENCV_DNN_OBJDETECT)
 	else
 	{
-		opencv_net = cv::dnn::readNetFromDarknet(cfg_fn, weights_fn);
+		opencv_net = cv::dnn::readNetFromDarknet(config.cfg_filename, config.weights_filename);
 
 #if CV_VERSION_MAJOR > 4 || (CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR >= 2)
-		if (driver == EDriver::kOpenCVCPU)
+		if (config.driver == EDriver::kOpenCVCPU)
 		{
 			opencv_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
 			opencv_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
@@ -187,9 +290,9 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 	}
 #endif
 
-	if (not names_fn.empty())
+	if (not config.names_filename.empty())
 	{
-		std::ifstream ifs(names_fn);
+		std::ifstream ifs(config.names_filename);
 		std::string line;
 		while (std::getline(ifs, line))
 		{
@@ -206,13 +309,13 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 	{
 		if (names.at(i).find("dont_show") == 0)
 		{
-			annotation_suppress_classes.insert(i);
+			config.annotation_suppress_classes.insert(i);
 		}
 	}
 
 	// cache the network network_dimensions (read the "width" and "height" from the .cfg file)
 	const std::regex rx("^\\s*(width|height)\\s*=\\s*(\\d+)");
-	std::ifstream ifs(cfg_fn);
+	std::ifstream ifs(config.cfg_filename);
 	while (ifs.good() and network_dimensions.area() <= 0)
 	{
 		std::string line;
@@ -235,13 +338,13 @@ DarkHelp & DarkHelp::init(const std::string & cfg_filename, const std::string & 
 	if (network_dimensions.area() <= 0)
 	{
 		/// @throw std::invalid_argument if the network dimensions cannot be read from the .cfg file
-		throw std::invalid_argument("failed to read the network width or height from " + cfg_filename);
+		throw std::invalid_argument("failed to read the network width or height from " + config.cfg_filename);
 	}
 
 	// OpenCV's construction uses lazy initialization, and doesn't actually happen until we call into it.
 	// This can have a huge impact on FPS calculations when the initial image pauses for a "long" time as
 	// the network is loaded.  So pass a "dummy" image through the network to force everything to load.
-	if (driver != DarkHelp::EDriver::kDarknet)
+	if (config.driver != DarkHelp::EDriver::kDarknet)
 	{
 		cv::Mat mat(network_dimensions, CV_8UC3, cv::Scalar(0, 0, 0));
 		predict_internal(mat);
@@ -266,44 +369,19 @@ void DarkHelp::reset()
 		darknet_net = nullptr;
 	}
 
-#if CV_VERSION_MAJOR >= 4
-	opencv_net = cv::dnn::Net();
-#endif
+	#ifdef HAVE_OPENCV_DNN_OBJDETECT
+		opencv_net = cv::dnn::Net();
+	#endif
 
-	names								.clear();
-	prediction_results					.clear();
-	original_image						= cv::Mat();
-	annotated_image						= cv::Mat();
+	names				.clear();
+	prediction_results	.clear();
+	original_image		= cv::Mat();
+	annotated_image		= cv::Mat();
+	horizontal_tiles	= 1;
+	vertical_tiles		= 1;
+	network_dimensions	= {0, 0};
 
-	// pick some reasonable default values
-	threshold							= 0.5f;
-	hierarchy_threshold					= 0.5f;
-	non_maximal_suppression_threshold	= 0.45f;
-	annotation_font_face				= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
-	annotation_font_scale				= 0.5;
-	annotation_font_thickness			= 1;
-	annotation_line_thickness			= 2;
-	annotation_include_duration			= true;
-	annotation_include_timestamp		= false;
-	names_include_percentage			= true;
-	include_all_names					= true;
-	fix_out_of_bound_values				= true;
-	annotation_colours					= get_default_annotation_colours();
-	sort_predictions					= ESort::kAscending;
-	annotation_auto_hide_labels			= true;
-	annotation_shade_predictions		= 0.25;
-	enable_debug						= false;
-	enable_tiles						= false;
-	horizontal_tiles					= 1;
-	vertical_tiles						= 1;
-	combine_tile_predictions			= true;
-	only_combine_similar_predictions	= true;
-	tile_edge_factor					= 0.25f;
-	tile_rect_factor					= 1.20f;
-	modify_batch_and_subdivisions		= true;
-	annotation_suppress_classes			.clear();
-	driver								= EDriver::kInvalid;
-	network_dimensions					= {0, 0};
+	config.reset();
 
 	return;
 }
@@ -330,7 +408,7 @@ DarkHelp::PredictionResults DarkHelp::predict(cv::Mat mat, const float new_thres
 		throw std::invalid_argument("cannot predict with an empty OpenCV image");
 	}
 
-	if (enable_tiles)
+	if (config.enable_tiles)
 	{
 		return predict_tile(mat, new_threshold);
 	}
@@ -417,10 +495,10 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 			for (auto & prediction : prediction_results)
 			{
 				// track which predictions are near the edges, because we may need to re-examine them and join them after we finish with all the tiles
-				if (combine_tile_predictions)
+				if (config.combine_tile_predictions)
 				{
-					const int minimum_horizontal_distance	= tile_edge_factor * prediction.rect.width;
-					const int minimum_vertical_distance		= tile_edge_factor * prediction.rect.height;
+					const int minimum_horizontal_distance	= config.tile_edge_factor * prediction.rect.width;
+					const int minimum_vertical_distance		= config.tile_edge_factor * prediction.rect.height;
 					if (prediction.rect.x <= minimum_horizontal_distance					or
 						prediction.rect.y <= minimum_vertical_distance						or
 						roi.cols - prediction.rect.br().x <= minimum_horizontal_distance	or
@@ -436,7 +514,7 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 				prediction.rect.y += y_offset;
 				prediction.tile = tile_count;
 
-				if (enable_debug)
+				if (config.enable_debug)
 				{
 					// draw a black-on-white debug label on the top side of the annotation
 
@@ -508,7 +586,7 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 					continue;
 				}
 
-				if (only_combine_similar_predictions)
+				if (config.only_combine_similar_predictions)
 				{
 					// check the probabilities to see if there is any similarity:
 					//
@@ -529,7 +607,7 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 				// if this is a good match, then the area of the combined rect will be similar to the area of lhs+rhs
 				const int lhs_area		= lhs_rect		.area();
 				const int rhs_area		= rhs_rect		.area();
-				const int lhs_plus_rhs	= (lhs_area + rhs_area) * tile_rect_factor;
+				const int lhs_plus_rhs	= (lhs_area + rhs_area) * config.tile_rect_factor;
 				const int combined_area	= combined_rect	.area();
 
 				if (combined_area <= lhs_plus_rhs)
@@ -581,7 +659,7 @@ DarkHelp::PredictionResults DarkHelp::predict_tile(cv::Mat mat, const float new_
 		}
 	}
 
-	if (enable_debug)
+	if (config.enable_debug)
 	{
 		// draw vertical lines to show the tiles
 		for (float x=1.0; x < horizontal_tiles_count; x++)
@@ -619,39 +697,39 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 
 	if (new_threshold >= 0.0)
 	{
-		threshold = new_threshold;
+		config.threshold = new_threshold;
 	}
 
 	annotated_image = original_image.clone();
 
 	// make sure we always have colours we can use
-	if (annotation_colours.empty())
+	if (config.annotation_colours.empty())
 	{
-		annotation_colours = get_default_annotation_colours();
+		config.annotation_colours = get_default_annotation_colours();
 	}
 
 	for (const auto & pred : prediction_results)
 	{
-		if (annotation_suppress_classes.count(pred.best_class) != 0)
+		if (config.annotation_suppress_classes.count(pred.best_class) != 0)
 		{
 			continue;
 		}
 
-		if (annotation_line_thickness > 0 and pred.best_probability >= threshold)
+		if (config.annotation_line_thickness > 0 and pred.best_probability >= config.threshold)
 		{
-			const auto colour = annotation_colours[pred.best_class % annotation_colours.size()];
+			const auto colour = config.annotation_colours[pred.best_class % config.annotation_colours.size()];
 
-			int line_thickness_or_fill = annotation_line_thickness;
-			if (annotation_shade_predictions >= 1.0)
+			int line_thickness_or_fill = config.annotation_line_thickness;
+			if (config.annotation_shade_predictions >= 1.0)
 			{
 				line_thickness_or_fill = CV_FILLED;
 			}
-			else if (annotation_shade_predictions > 0.0)
+			else if (config.annotation_shade_predictions > 0.0)
 			{
 				cv::Mat roi = annotated_image(pred.rect);
 				cv::Mat coloured_rect(roi.size(), roi.type(), colour);
 
-				const double alpha = annotation_shade_predictions;
+				const double alpha = config.annotation_shade_predictions;
 				const double beta = 1.0 - alpha;
 				cv::addWeighted(coloured_rect, alpha, roi, beta, 0.0, roi);
 			}
@@ -660,9 +738,9 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 			cv::rectangle(annotated_image, pred.rect, colour, line_thickness_or_fill);
 
 			int baseline = 0;
-			const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, &baseline);
+			const cv::Size text_size = cv::getTextSize(pred.name, config.annotation_font_face, config.annotation_font_scale, config.annotation_font_thickness, &baseline);
 
-			if (annotation_auto_hide_labels)
+			if (config.annotation_auto_hide_labels)
 			{
 				if (text_size.width >= pred.rect.width or
 					text_size.height >= pred.rect.height)
@@ -672,7 +750,7 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 				}
 			}
 
-			cv::Rect r(cv::Point(pred.rect.x - annotation_line_thickness/2, pred.rect.y - text_size.height - baseline + annotation_line_thickness), cv::Size(text_size.width + annotation_line_thickness, text_size.height + baseline));
+			cv::Rect r(cv::Point(pred.rect.x - config.annotation_line_thickness/2, pred.rect.y - text_size.height - baseline + config.annotation_line_thickness), cv::Size(text_size.width + config.annotation_line_thickness, text_size.height + baseline));
 			if (r.x < 0) r.x = 0;																			// shift the label to the very left edge of the screen, otherwise it would be off-screen
 			if (r.x + r.width >= annotated_image.cols) r.x = pred.rect.x + pred.rect.width - r.width + 1;	// first attempt at pushing the label to the left
 			if (r.x + r.width >= annotated_image.cols) r.x = annotated_image.cols - r.width;				// more drastic attempt at pushing the label to the left
@@ -682,31 +760,31 @@ cv::Mat DarkHelp::annotate(const float new_threshold)
 			if (r.y < 0) r.y = 0; // shift the label to the top of the image if it is off-screen
 
 			cv::rectangle(annotated_image, r, colour, CV_FILLED);
-			cv::putText(annotated_image, pred.name, cv::Point(r.x + annotation_line_thickness/2, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+			cv::putText(annotated_image, pred.name, cv::Point(r.x + config.annotation_line_thickness/2, r.y + text_size.height), config.annotation_font_face, config.annotation_font_scale, cv::Scalar(0,0,0), config.annotation_font_thickness, CV_AA);
 		}
 	}
 
-	if (annotation_include_duration)
+	if (config.annotation_include_duration)
 	{
 		const std::string str		= duration_string();
-		const cv::Size text_size	= cv::getTextSize(str, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+		const cv::Size text_size	= cv::getTextSize(str, config.annotation_font_face, config.annotation_font_scale, config.annotation_font_thickness, nullptr);
 
 		cv::Rect r(cv::Point(2, 2), cv::Size(text_size.width + 2, text_size.height + 2));
 		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
-		cv::putText(annotated_image, str, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::putText(annotated_image, str, cv::Point(r.x + 1, r.y + text_size.height), config.annotation_font_face, config.annotation_font_scale, cv::Scalar(0,0,0), config.annotation_font_thickness, CV_AA);
 	}
 
-	if (annotation_include_timestamp)
+	if (config.annotation_include_timestamp)
 	{
 		const std::time_t tt = std::time(nullptr);
 		char timestamp[100];
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", std::localtime(&tt));
 
-		const cv::Size text_size = cv::getTextSize(timestamp, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
+		const cv::Size text_size = cv::getTextSize(timestamp, config.annotation_font_face, config.annotation_font_scale, config.annotation_font_thickness, nullptr);
 
 		cv::Rect r(cv::Point(2, annotated_image.rows - text_size.height - 4), cv::Size(text_size.width + 2, text_size.height + 2));
 		cv::rectangle(annotated_image, r, cv::Scalar(255,255,255), CV_FILLED);
-		cv::putText(annotated_image, timestamp, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::putText(annotated_image, timestamp, cv::Point(r.x + 1, r.y + text_size.height), config.annotation_font_face, config.annotation_font_scale, cv::Scalar(0,0,0), config.annotation_font_thickness, CV_AA);
 	}
 
 	return annotated_image;
@@ -1206,13 +1284,13 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 	vertical_tiles		= 1;
 	tile_size			= cv::Size(0, 0);
 
-	if (driver == EDriver::kInvalid)
+	if (config.driver == EDriver::kInvalid)
 	{
 		/// @throw std::logic_error if the %DarkHelp object has not been initialized.
 		throw std::logic_error("cannot predict with an uninitialized object");
 	}
 
-	if (driver == EDriver::kDarknet and darknet_net == nullptr)
+	if (config.driver == EDriver::kDarknet and darknet_net == nullptr)
 	{
 		/// @throw std::logic_error if the network is invalid.
 		throw std::logic_error("cannot predict with an empty network");
@@ -1226,25 +1304,25 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 
 	if (new_threshold >= 0.0)
 	{
-		threshold = new_threshold;
+		config.threshold = new_threshold;
 	}
-	if (threshold > 1.0)
+	if (config.threshold > 1.0)
 	{
 		// user has probably specified percentages, so bring it back down to a range between 0.0 and 1.0
-		threshold /= 100.0;
+		config.threshold /= 100.0;
 	}
-	if (threshold < 0.0)
+	if (config.threshold < 0.0)
 	{
-		threshold = 0.1;
+		config.threshold = 0.1;
 	}
-	if (threshold > 1.0)
+	if (config.threshold > 1.0)
 	{
-		threshold = 1.0;
+		config.threshold = 1.0;
 	}
 
 	const auto t1 = std::chrono::high_resolution_clock::now();
 
-	if (driver == EDriver::kDarknet)
+	if (config.driver == EDriver::kDarknet)
 	{
 		predict_internal_darknet();
 	}
@@ -1253,7 +1331,7 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 		predict_internal_opencv();
 	}
 
-	if (sort_predictions == ESort::kAscending)
+	if (config.sort_predictions == ESort::kAscending)
 	{
 		std::sort(prediction_results.begin(), prediction_results.end(),
 				  [](const PredictionResult & lhs, const PredictionResult & rhs)
@@ -1261,7 +1339,7 @@ DarkHelp::PredictionResults DarkHelp::predict_internal(cv::Mat mat, const float 
 					  return lhs.best_probability < rhs.best_probability;
 				  } );
 	}
-	else if (sort_predictions == ESort::kDescending)
+	else if (config.sort_predictions == ESort::kDescending)
 	{
 		std::sort(prediction_results.begin(), prediction_results.end(),
 				  [](const PredictionResult & lhs, const PredictionResult & rhs)
@@ -1289,12 +1367,12 @@ void DarkHelp::predict_internal_darknet()
 
 	int nboxes = 0;
 	const int use_letterbox = 0;
-	auto darknet_results = get_network_boxes(nw, original_image.cols, original_image.rows, threshold, hierarchy_threshold, 0, 1, &nboxes, use_letterbox);
+	auto darknet_results = get_network_boxes(nw, original_image.cols, original_image.rows, config.threshold, config.hierarchy_threshold, 0, 1, &nboxes, use_letterbox);
 
-	if (non_maximal_suppression_threshold)
+	if (config.non_maximal_suppression_threshold)
 	{
 		auto nw_layer = nw->layers[nw->n - 1];
-		do_nms_sort(darknet_results, nboxes, nw_layer.classes, non_maximal_suppression_threshold);
+		do_nms_sort(darknet_results, nboxes, nw_layer.classes, config.non_maximal_suppression_threshold);
 	}
 
 	for (int detection_idx = 0; detection_idx < nboxes; detection_idx ++)
@@ -1323,7 +1401,7 @@ void DarkHelp::predict_internal_darknet()
 
 		for (int class_idx = 0; class_idx < det.classes; class_idx ++)
 		{
-			if (det.prob[class_idx] >= threshold)
+			if (det.prob[class_idx] >= config.threshold)
 			{
 				// remember this probability since it is higher than the threshold
 				pr.all_probabilities[class_idx] = det.prob[class_idx];
@@ -1337,7 +1415,7 @@ void DarkHelp::predict_internal_darknet()
 			}
 		}
 
-		if (pr.best_probability >= threshold)
+		if (pr.best_probability >= config.threshold)
 		{
 			// at least 1 class is beyond the threshold, so remember this object
 
@@ -1368,7 +1446,7 @@ void DarkHelp::predict_internal_darknet()
 
 void DarkHelp::predict_internal_opencv()
 {
-	#if CV_VERSION_MAJOR < 4
+	#ifndef HAVE_OPENCV_DNN_OBJDETECT
 	throw std::runtime_error("OpenCV DNN driver is not supported with this version of OpenCV");
 	#else
 
@@ -1411,9 +1489,9 @@ void DarkHelp::predict_internal_opencv()
 		// get a pointer to the 1st float for this row, which we easily increment to get all the floats
 		const float * const ptr = output.ptr<float>(i);
 
-		if (ptr[4] >= threshold)
+		if (ptr[4] >= config.threshold)
 		{
-			if (enable_debug)
+			if (config.enable_debug)
 			{
 				std::cout << "i=" << std::setw(4) << i;
 				for (size_t offset = 0; offset < number_of_classes + 5; offset ++)
@@ -1453,7 +1531,7 @@ void DarkHelp::predict_internal_opencv()
 			for (size_t c = 0; c < number_of_classes; c++)
 			{
 				const auto & confidence = ptr[5 + c];
-				if (confidence >= threshold)
+				if (confidence >= config.threshold)
 				{
 					mat_map[c][boxes[c].size()] = i;
 					boxes[c].push_back(r);
@@ -1469,14 +1547,14 @@ void DarkHelp::predict_internal_opencv()
 	for (size_t c = 0; c < number_of_classes; c++)
 	{
 		VInt indices;
-		cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, non_maximal_suppression_threshold, indices);
+		cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, config.non_maximal_suppression_threshold, indices);
 
 		for (const auto & i : indices)
 		{
 			rows_of_interest.insert(mat_map[c][i]);
 		}
 
-		if (enable_debug)
+		if (config.enable_debug)
 		{
 			if (boxes[c].size() > 0 or indices.size() > 0)
 			{
@@ -1510,7 +1588,7 @@ void DarkHelp::predict_internal_opencv()
 		{
 			const float & probability = ptr[5 + c];
 
-			if (probability >= threshold)
+			if (probability >= config.threshold)
 			{
 				if (probability > pr.best_probability)
 				{
@@ -1570,13 +1648,13 @@ DarkHelp & DarkHelp::name_prediction(PredictionResult & pred)
 	}
 
 	pred.name = names.at(pred.best_class);
-	if (names_include_percentage)
+	if (config.names_include_percentage)
 	{
 		const int percentage = std::round(100.0 * pred.best_probability);
 		pred.name += " " + std::to_string(percentage) + "%";
 	}
 
-	if (include_all_names and pred.all_probabilities.size() > 1)
+	if (config.include_all_names and pred.all_probabilities.size() > 1)
 	{
 		// we have multiple probabilities!
 		for (auto iter : pred.all_probabilities)
@@ -1585,7 +1663,7 @@ DarkHelp & DarkHelp::name_prediction(PredictionResult & pred)
 			if (key != pred.best_class)
 			{
 				pred.name += ", " + names.at(key);
-				if (names_include_percentage)
+				if (config.names_include_percentage)
 				{
 					const int percentage = std::round(100.0 * iter.second);
 					pred.name += " " + std::to_string(percentage) + "%";
@@ -1602,7 +1680,7 @@ DarkHelp & DarkHelp::fix_out_of_bound_normalized_rect(float & cx, float & cy, fl
 {
 	// coordinates are all normalized!
 
-	if (fix_out_of_bound_values)
+	if (config.fix_out_of_bound_values)
 	{
 		if (cx - w / 2.0f < 0.0f ||	// too far left
 			cx + w / 2.0f > 1.0f)	// too far right
@@ -1677,7 +1755,7 @@ std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults &
 }
 
 
-cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
+cv::Mat DarkHelp::resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
 {
 	if (mat.empty())
 	{
@@ -1719,7 +1797,7 @@ cv::Mat resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desired_size)
 }
 
 
-cv::Mat fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size)
+cv::Mat DarkHelp::fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size)
 {
 	if (mat.size() == desired_size or mat.empty())
 	{

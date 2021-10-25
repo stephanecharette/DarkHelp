@@ -77,7 +77,7 @@ nlohmann::json create_darkhelp_defaults()
 void configure(DarkHelp & dh, const nlohmann::json & j)
 {
 	// this one needs to be set prior to loading the network
-	dh.modify_batch_and_subdivisions = j["darkhelp"]["lib"]["settings"]["general"]["modify_batch_and_subdivisions"];
+	dh.config.modify_batch_and_subdivisions = j["darkhelp"]["lib"]["settings"]["general"]["modify_batch_and_subdivisions"];
 
 	DarkHelp::EDriver driver = DarkHelp::EDriver::kDarknet;
 	const std::string driver_name = j["darkhelp"]["lib"]["settings"]["general"]["driver"];
@@ -103,7 +103,7 @@ void configure(DarkHelp & dh, const nlohmann::json & j)
 
 	if (j["darkhelp"]["lib"]["settings"]["general"]["debug"])
 	{
-		dh.enable_debug = true;
+		dh.config.enable_debug = true;
 	}
 
 	std::cout
@@ -117,23 +117,23 @@ void configure(DarkHelp & dh, const nlohmann::json & j)
 		std::cout << "   " << idx << " = " << dh.names.at(idx) << std::endl;
 	}
 
-	dh.threshold							= j["darkhelp"]["lib"]["settings"]["general"]["threshold"];
-	dh.non_maximal_suppression_threshold	= j["darkhelp"]["lib"]["settings"]["general"]["non_maximal_suppression_threshold"	];
-	dh.names_include_percentage				= j["darkhelp"]["lib"]["settings"]["general"]["names_include_percentage"			];
-	dh.fix_out_of_bound_values				= j["darkhelp"]["lib"]["settings"]["general"]["fix_out_of_bound_values"				];
-	dh.sort_predictions						= j["darkhelp"]["lib"]["settings"]["general"]["sort_predictions"					];
-	dh.annotation_auto_hide_labels			= j["darkhelp"]["lib"]["settings"]["annotation"]["auto_hide_labels"					];
-	dh.annotation_shade_predictions			= j["darkhelp"]["lib"]["settings"]["annotation"]["shade_predictions"				];
-	dh.include_all_names					= j["darkhelp"]["lib"]["settings"]["annotation"]["include_all_names"				];
-	dh.annotation_font_face					= j["darkhelp"]["lib"]["settings"]["annotation"]["font_scale"						];
-	dh.annotation_font_thickness			= j["darkhelp"]["lib"]["settings"]["annotation"]["font_thickness"					];
-	dh.annotation_include_duration			= j["darkhelp"]["lib"]["settings"]["annotation"]["include_duration"					];
-	dh.annotation_include_timestamp			= j["darkhelp"]["lib"]["settings"]["annotation"]["include_timestamp"				];
-	dh.enable_tiles							= j["darkhelp"]["lib"]["settings"]["tiling"]["enable_tiles"							];
-	dh.combine_tile_predictions				= j["darkhelp"]["lib"]["settings"]["tiling"]["combine_tile_predictions"				];
-	dh.only_combine_similar_predictions		= j["darkhelp"]["lib"]["settings"]["tiling"]["only_combine_similar_predictions"		];
-	dh.tile_edge_factor						= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_edge_factor"						];
-	dh.tile_rect_factor						= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_rect_factor"						];
+	dh.config.threshold							= j["darkhelp"]["lib"]["settings"]["general"]["threshold"];
+	dh.config.non_maximal_suppression_threshold	= j["darkhelp"]["lib"]["settings"]["general"]["non_maximal_suppression_threshold"	];
+	dh.config.names_include_percentage			= j["darkhelp"]["lib"]["settings"]["general"]["names_include_percentage"			];
+	dh.config.fix_out_of_bound_values			= j["darkhelp"]["lib"]["settings"]["general"]["fix_out_of_bound_values"				];
+	dh.config.sort_predictions					= j["darkhelp"]["lib"]["settings"]["general"]["sort_predictions"					];
+	dh.config.annotation_auto_hide_labels		= j["darkhelp"]["lib"]["settings"]["annotation"]["auto_hide_labels"					];
+	dh.config.annotation_shade_predictions		= j["darkhelp"]["lib"]["settings"]["annotation"]["shade_predictions"				];
+	dh.config.include_all_names					= j["darkhelp"]["lib"]["settings"]["annotation"]["include_all_names"				];
+	dh.config.annotation_font_face				= j["darkhelp"]["lib"]["settings"]["annotation"]["font_scale"						];
+	dh.config.annotation_font_thickness			= j["darkhelp"]["lib"]["settings"]["annotation"]["font_thickness"					];
+	dh.config.annotation_include_duration		= j["darkhelp"]["lib"]["settings"]["annotation"]["include_duration"					];
+	dh.config.annotation_include_timestamp		= j["darkhelp"]["lib"]["settings"]["annotation"]["include_timestamp"				];
+	dh.config.enable_tiles						= j["darkhelp"]["lib"]["settings"]["tiling"]["enable_tiles"							];
+	dh.config.combine_tile_predictions			= j["darkhelp"]["lib"]["settings"]["tiling"]["combine_tile_predictions"				];
+	dh.config.only_combine_similar_predictions	= j["darkhelp"]["lib"]["settings"]["tiling"]["only_combine_similar_predictions"		];
+	dh.config.tile_edge_factor					= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_edge_factor"						];
+	dh.config.tile_rect_factor					= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_rect_factor"						];
 
 	return;
 }

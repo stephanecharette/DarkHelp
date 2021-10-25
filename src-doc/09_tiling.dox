@@ -26,16 +26,16 @@ That means an image measuring @p 1024x768 will be resized by Darknet to measure 
 
 The neural network in this example detects the numbers and the locks on the mailboxes.  The problem is once Darknet has scaled the image down, it fails to detect anything.  The individual objects in the image are now too small to detect due to the new image size.
 
-Instead of resizing the @p 1024x768 image down to @p 416x320, the image can be broken up into smaller "tiles".  When the option has been enabled (via @ref DarkHelp::enable_tiles) %DarkHelp then automatically feeds each individual tile through Darknet, and the results are combined as if a single image had been processed.
+Instead of resizing the @p 1024x768 image down to @p 416x320, the image can be broken up into smaller "tiles".  When the option has been enabled (via @ref DarkHelp::Config::enable_tiles) %DarkHelp then automatically feeds each individual tile through Darknet, and the results are combined as if a single image had been processed.
 
 @htmlonly[block]
 <iframe width="560" height="315" src="https://www.youtube.com/embed/Dp303GuxjFs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 @endhtmlonly
-@see @ref DarkHelp::enable_tiles
-@see @ref DarkHelp::combine_tile_predictions
-@see @ref DarkHelp::only_combine_similar_predictions
-@see @ref DarkHelp::tile_edge_factor
-@see @ref DarkHelp::tile_rect_factor
+@see @ref DarkHelp::Config::enable_tiles
+@see @ref DarkHelp::Config::combine_tile_predictions
+@see @ref DarkHelp::Config::only_combine_similar_predictions
+@see @ref DarkHelp::Config::tile_edge_factor
+@see @ref DarkHelp::Config::tile_rect_factor
 
 The size of the tiles is determined automatically by %DarkHelp according to the network dimensions.  In this example with a @p 1024x768 image and a neural network measuring @p 416x320 results in 2 horizontal tiles and 2 vertical tiles, like this:
 
@@ -67,7 +67,7 @@ The final result vector contains all the objects detected across all tiles for t
 
 Running the @p 1024x768 sample image through the @p 416x320 network without the use of tiles resulted in zero objects found.
 
-Using the same image but with @ref DarkHelp::enable_tiles "tiling enabled" provides much better results:
+Using the same image but with @ref DarkHelp::Config::enable_tiles "tiling enabled" provides much better results:
 
 @image html mailboxes_detection.png
 

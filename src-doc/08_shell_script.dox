@@ -119,11 +119,11 @@ Name								| Example								| Meaning
 ["network"]["names"]				| "names": "driving.names"				| The filename that contains a text string for each class in the neural network.
 ["network"]["weights"]				| "weights": "driving_best.weights" 	| The filename that contains the neural network's binary data.
 ["settings"]["force_greyscale"]		| "force_greyscale": false				| Whether images are forced to greyscale prior to calling darknet.
-["settings"]["hierarchy"]			| "hierarchy": 0.5						| Hierarchy threshold to use.  See @ref DarkHelp::hierarchy_threshold.
-["settings"]["include_percentage"]	| "include_percentage": true			| Whether the name given to each prediction includes the percentage.  See @ref DarkHelp::names_include_percentage.
-["settings"]["nms"]					| "nms": 0.44999998807907104			| Non-maximal suppression threshold.  See @ref DarkHelp::non_maximal_suppression_threshold.
-["settings"]["resize"]				| "resize": "640x480"					| Images are resized to this prior to calling @ref DarkHelp::predict().  See @ref resize_keeping_aspect_ratio().
-["settings"]["threshold"]			| "threshold": 0.5						| Prediction threshold.  See @ref DarkHelp::threshold.
+["settings"]["hierarchy"]			| "hierarchy": 0.5						| Hierarchy threshold to use.  See @ref DarkHelp::Config::hierarchy_threshold.
+["settings"]["include_percentage"]	| "include_percentage": true			| Whether the name given to each prediction includes the percentage.  See @ref DarkHelp::Config::names_include_percentage.
+["settings"]["nms"]					| "nms": 0.44999998807907104			| Non-maximal suppression threshold.  See @ref DarkHelp::Config::non_maximal_suppression_threshold.
+["settings"]["resize"]				| "resize": "640x480"					| Images are resized to this prior to calling @ref DarkHelp::predict().  See @ref DarkHelp::resize_keeping_aspect_ratio().
+["settings"]["threshold"]			| "threshold": 0.5						| Prediction threshold.  See @ref DarkHelp::Config::threshold.
 
 @note This example does @em not show every field.  Run %DarkHelp with @p -j to see the JSON output for details.
 

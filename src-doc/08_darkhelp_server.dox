@@ -29,29 +29,29 @@ The fields in the JSON configuration file are:
 
 JSON																| Example						| Description
 --------------------------------------------------------------------|-------------------------------|------------
-@p darkhelp/lib/network/cfg											| @p example.cfg				| @ref DarkHelp::init()
-@p darkhelp/lib/network/names										| @p example.names				| @ref DarkHelp::init()
-@p darkhelp/lib/network/weights										| @p example_best.weights		| @ref DarkHelp::init()
-@p darkhelp/lib/settings/annotation/auto_hide_labels				| @p true						| @ref DarkHelp::annotation_auto_hide_labels
-@p darkhelp/lib/settings/annotation/shade_predictions				| @p 0.25						| @ref DarkHelp::annotation_shade_predictions
-@p darkhelp/lib/settings/annotation/include_all_names				| @p true						| @ref DarkHelp::include_all_names
-@p darkhelp/lib/settings/annotation/font_scale						| @p 0.5						| @ref DarkHelp::annotation_font_scale
-@p darkhelp/lib/settings/annotation/font_thickness					| @p 1							| @ref DarkHelp::annotation_font_thickness
-@p darkhelp/lib/settings/annotation/include_duration				| @p true						| @ref DarkHelp::annotation_include_duration
-@p darkhelp/lib/settings/annotation/include_timestamp				| @p false						| @ref DarkHelp::annotation_include_timestamp
-@p darkhelp/lib/settings/general/debug								| @p false						| @ref DarkHelp::enable_debug
+@p darkhelp/lib/network/cfg											| @p example.cfg				| @ref DarkHelp::Config::cfg_filename
+@p darkhelp/lib/network/names										| @p example.names				| @ref DarkHelp::Config::names_filename
+@p darkhelp/lib/network/weights										| @p example_best.weights		| @ref DarkHelp::Config::weights_filename
+@p darkhelp/lib/settings/annotation/auto_hide_labels				| @p true						| @ref DarkHelp::Config::annotation_auto_hide_labels
+@p darkhelp/lib/settings/annotation/shade_predictions				| @p 0.25						| @ref DarkHelp::Config::annotation_shade_predictions
+@p darkhelp/lib/settings/annotation/include_all_names				| @p true						| @ref DarkHelp::Config::include_all_names
+@p darkhelp/lib/settings/annotation/font_scale						| @p 0.5						| @ref DarkHelp::Config::annotation_font_scale
+@p darkhelp/lib/settings/annotation/font_thickness					| @p 1							| @ref DarkHelp::Config::annotation_font_thickness
+@p darkhelp/lib/settings/annotation/include_duration				| @p true						| @ref DarkHelp::Config::annotation_include_duration
+@p darkhelp/lib/settings/annotation/include_timestamp				| @p false						| @ref DarkHelp::Config::annotation_include_timestamp
+@p darkhelp/lib/settings/general/debug								| @p false						| @ref DarkHelp::Config::enable_debug
 @p darkhelp/lib/settings/general/driver								| @p darknet <br/> @p opencv <br/> @p opencvcpu | @ref DarkHelp::EDriver
-@p darkhelp/lib/settings/general/fix_out_of_bound_values			| @p true						| @ref DarkHelp::fix_out_of_bound_values
-@p darkhelp/lib/settings/general/modify_batch_and_subdivisions		| @p true						| @ref DarkHelp::modify_batch_and_subdivisions
-@p darkhelp/lib/settings/general/names_include_percentage			| @p true						| @ref DarkHelp::names_include_percentage
-@p darkhelp/lib/settings/general/non_maximal_suppression_threshold	| @p 0.45						| @ref DarkHelp::non_maximal_suppression_threshold
-@p darkhelp/lib/settings/general/sort_predictions					| @p 0							| @ref DarkHelp::sort_predictions (@p 0 = unsorted, @p 1 = ascending, @p 2 = descending)
-@p darkhelp/lib/settings/general/threshold							| @p 0.5						| @ref DarkHelp::threshold
-@p darkhelp/lib/settings/tiling/combine_tile_predictions			| @p true						| @ref DarkHelp::combine_tile_predictions
-@p darkhelp/lib/settings/tiling/enable_tiles						| @p false						| @ref DarkHelp::enable_tiles
-@p darkhelp/lib/settings/tiling/only_combine_similar_predictions	| @p true						| @ref DarkHelp::only_combine_similar_predictions
-@p darkhelp/lib/settings/tiling/tile_edge_factor					| @p 0.25						| @ref DarkHelp::tile_edge_factor
-@p darkhelp/lib/settings/tiling/tile_rect_factor					| @p 1.2						| @ref DarkHelp::tile_rect_factor
+@p darkhelp/lib/settings/general/fix_out_of_bound_values			| @p true						| @ref DarkHelp::Config::fix_out_of_bound_values
+@p darkhelp/lib/settings/general/modify_batch_and_subdivisions		| @p true						| @ref DarkHelp::Config::modify_batch_and_subdivisions
+@p darkhelp/lib/settings/general/names_include_percentage			| @p true						| @ref DarkHelp::Config::names_include_percentage
+@p darkhelp/lib/settings/general/non_maximal_suppression_threshold	| @p 0.45						| @ref DarkHelp::Config::non_maximal_suppression_threshold
+@p darkhelp/lib/settings/general/sort_predictions					| @p 0							| @ref DarkHelp::Config::sort_predictions (@p 0 = unsorted, @p 1 = ascending, @p 2 = descending)
+@p darkhelp/lib/settings/general/threshold							| @p 0.5						| @ref DarkHelp::Config::threshold
+@p darkhelp/lib/settings/tiling/combine_tile_predictions			| @p true						| @ref DarkHelp::Config::combine_tile_predictions
+@p darkhelp/lib/settings/tiling/enable_tiles						| @p false						| @ref DarkHelp::Config::enable_tiles
+@p darkhelp/lib/settings/tiling/only_combine_similar_predictions	| @p true						| @ref DarkHelp::Config::only_combine_similar_predictions
+@p darkhelp/lib/settings/tiling/tile_edge_factor					| @p 0.25						| @ref DarkHelp::Config::tile_edge_factor
+@p darkhelp/lib/settings/tiling/tile_rect_factor					| @p 1.2						| @ref DarkHelp::Config::tile_rect_factor
 @p darkhelp/server/settings/camera/buffersize						| @p 3							| When a digital camera is used for input, this determines the number of image buffers OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/fps								| @p 30							| When a digital camera is used for input, this determines the FPS OpenCV should attempt to use.
 @p darkhelp/server/settings/camera/height							| @p 480						| When a digital camera is used for input, this determines the image height OpenCV should attempt to use.
