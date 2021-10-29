@@ -52,32 +52,32 @@ This allows the %DarkHelp configuration to be passed around if necessary, or hav
 
 @section Inference Inference
 
-The only thing left is to loop through every image and call @ref DarkHelp::predict().  If you want %DarkHelp to annotate the image with the results, you must also call @ref DarkHelp::annotate():
+The only thing left is to loop through every image and call @ref DarkHelp::NN::predict().  If you want %DarkHelp to annotate the image with the results, you must also call @ref DarkHelp::NN::annotate():
 
 ~~~~{.cpp}
-DarkHelp darkhelp(...);
+DarkHelp::NN nn(...);
 
 for (const auto & filename : get_all_image_names())
 {
 	// analyze the image and return a vector of structures with all sorts of information
-	const auto result = darkhelp.predict(filename);
+	const auto result = nn.predict(filename);
 
 	// get DarkHelp to annotate the image with the most recent results
-	cv::Mat output = darkhelp.annotate();
+	cv::Mat output = nn.annotate();
 
 	// fictional function to process the results and the annotated image
 	handle_image(output, result);
 }
 ~~~~
 
-Calling any of the @ref DarkHelp::predict() overloads gives back a @p std::vector of @ref DarkHelp::PredictionResult objects, which should be extremely simple to manage.
+Calling any of the @ref DarkHelp::NN::predict() overloads gives back a @p std::vector of @ref DarkHelp::PredictionResult objects, which should be extremely simple to manage.
 
 @section Video Video
 
 While the previous example used image filenames, you can also use @p cv::Mat objects.  Here is an example with @p cv::Mat images obtained from video frames:
 
 ~~~~{.cpp}
-DarkHelp darkhelp(...);
+DarkHelp::NN nn(...);
 cv::VideoCapture cap("sample.mp4");
 while (true)
 {
@@ -88,7 +88,7 @@ while (true)
 		break;
 	}
 
-	const auto result = darkhelp.predict(frame);
+	const auto result = nn.predict(frame);
 
 	// display the results as a block of text (not an annotated image)
 	std::cout << result << std::endl;

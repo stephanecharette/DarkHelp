@@ -74,10 +74,10 @@ nlohmann::json create_darkhelp_defaults()
 }
 
 
-void configure(DarkHelp & dh, const nlohmann::json & j)
+void configure(DarkHelp::NN & nn, const nlohmann::json & j)
 {
 	// this one needs to be set prior to loading the network
-	dh.config.modify_batch_and_subdivisions = j["darkhelp"]["lib"]["settings"]["general"]["modify_batch_and_subdivisions"];
+	nn.config.modify_batch_and_subdivisions = j["darkhelp"]["lib"]["settings"]["general"]["modify_batch_and_subdivisions"];
 
 	DarkHelp::EDriver driver = DarkHelp::EDriver::kDarknet;
 	const std::string driver_name = j["darkhelp"]["lib"]["settings"]["general"]["driver"];
@@ -94,7 +94,7 @@ void configure(DarkHelp & dh, const nlohmann::json & j)
 		throw std::invalid_argument("driver name \"" + driver_name + "\" is invalid");
 	}
 
-	dh.init(
+	nn.init(
 		j["darkhelp"]["lib"]["network"]["cfg"		],
 		j["darkhelp"]["lib"]["network"]["weights"	],
 		j["darkhelp"]["lib"]["network"]["names"		],
@@ -103,37 +103,37 @@ void configure(DarkHelp & dh, const nlohmann::json & j)
 
 	if (j["darkhelp"]["lib"]["settings"]["general"]["debug"])
 	{
-		dh.config.enable_debug = true;
+		nn.config.enable_debug = true;
 	}
 
 	std::cout
-		<< "-> using DarkHelp v"		<< dh.version()			<< std::endl
-		<< "-> network loaded in "		<< dh.duration_string()	<< std::endl
-		<< "-> network dimensions: "	<< dh.network_size()	<< std::endl
-		<< "-> number of classes: "		<< dh.names.size()		<< std::endl;
+		<< "-> using DarkHelp v"		<< DarkHelp::version()	<< std::endl
+		<< "-> network loaded in "		<< nn.duration_string()	<< std::endl
+		<< "-> network dimensions: "	<< nn.network_size()	<< std::endl
+		<< "-> number of classes: "		<< nn.names.size()		<< std::endl;
 
-	for (size_t idx = 0; idx < dh.names.size(); idx ++)
+	for (size_t idx = 0; idx < nn.names.size(); idx ++)
 	{
-		std::cout << "   " << idx << " = " << dh.names.at(idx) << std::endl;
+		std::cout << "   " << idx << " = " << nn.names.at(idx) << std::endl;
 	}
 
-	dh.config.threshold							= j["darkhelp"]["lib"]["settings"]["general"]["threshold"];
-	dh.config.non_maximal_suppression_threshold	= j["darkhelp"]["lib"]["settings"]["general"]["non_maximal_suppression_threshold"	];
-	dh.config.names_include_percentage			= j["darkhelp"]["lib"]["settings"]["general"]["names_include_percentage"			];
-	dh.config.fix_out_of_bound_values			= j["darkhelp"]["lib"]["settings"]["general"]["fix_out_of_bound_values"				];
-	dh.config.sort_predictions					= j["darkhelp"]["lib"]["settings"]["general"]["sort_predictions"					];
-	dh.config.annotation_auto_hide_labels		= j["darkhelp"]["lib"]["settings"]["annotation"]["auto_hide_labels"					];
-	dh.config.annotation_shade_predictions		= j["darkhelp"]["lib"]["settings"]["annotation"]["shade_predictions"				];
-	dh.config.include_all_names					= j["darkhelp"]["lib"]["settings"]["annotation"]["include_all_names"				];
-	dh.config.annotation_font_face				= j["darkhelp"]["lib"]["settings"]["annotation"]["font_scale"						];
-	dh.config.annotation_font_thickness			= j["darkhelp"]["lib"]["settings"]["annotation"]["font_thickness"					];
-	dh.config.annotation_include_duration		= j["darkhelp"]["lib"]["settings"]["annotation"]["include_duration"					];
-	dh.config.annotation_include_timestamp		= j["darkhelp"]["lib"]["settings"]["annotation"]["include_timestamp"				];
-	dh.config.enable_tiles						= j["darkhelp"]["lib"]["settings"]["tiling"]["enable_tiles"							];
-	dh.config.combine_tile_predictions			= j["darkhelp"]["lib"]["settings"]["tiling"]["combine_tile_predictions"				];
-	dh.config.only_combine_similar_predictions	= j["darkhelp"]["lib"]["settings"]["tiling"]["only_combine_similar_predictions"		];
-	dh.config.tile_edge_factor					= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_edge_factor"						];
-	dh.config.tile_rect_factor					= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_rect_factor"						];
+	nn.config.threshold							= j["darkhelp"]["lib"]["settings"]["general"]["threshold"];
+	nn.config.non_maximal_suppression_threshold	= j["darkhelp"]["lib"]["settings"]["general"]["non_maximal_suppression_threshold"	];
+	nn.config.names_include_percentage			= j["darkhelp"]["lib"]["settings"]["general"]["names_include_percentage"			];
+	nn.config.fix_out_of_bound_values			= j["darkhelp"]["lib"]["settings"]["general"]["fix_out_of_bound_values"				];
+	nn.config.sort_predictions					= j["darkhelp"]["lib"]["settings"]["general"]["sort_predictions"					];
+	nn.config.annotation_auto_hide_labels		= j["darkhelp"]["lib"]["settings"]["annotation"]["auto_hide_labels"					];
+	nn.config.annotation_shade_predictions		= j["darkhelp"]["lib"]["settings"]["annotation"]["shade_predictions"				];
+	nn.config.include_all_names					= j["darkhelp"]["lib"]["settings"]["annotation"]["include_all_names"				];
+	nn.config.annotation_font_face				= j["darkhelp"]["lib"]["settings"]["annotation"]["font_scale"						];
+	nn.config.annotation_font_thickness			= j["darkhelp"]["lib"]["settings"]["annotation"]["font_thickness"					];
+	nn.config.annotation_include_duration		= j["darkhelp"]["lib"]["settings"]["annotation"]["include_duration"					];
+	nn.config.annotation_include_timestamp		= j["darkhelp"]["lib"]["settings"]["annotation"]["include_timestamp"				];
+	nn.config.enable_tiles						= j["darkhelp"]["lib"]["settings"]["tiling"]["enable_tiles"							];
+	nn.config.combine_tile_predictions			= j["darkhelp"]["lib"]["settings"]["tiling"]["combine_tile_predictions"				];
+	nn.config.only_combine_similar_predictions	= j["darkhelp"]["lib"]["settings"]["tiling"]["only_combine_similar_predictions"		];
+	nn.config.tile_edge_factor					= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_edge_factor"						];
+	nn.config.tile_rect_factor					= j["darkhelp"]["lib"]["settings"]["tiling"]["tile_rect_factor"						];
 
 	return;
 }
@@ -182,7 +182,7 @@ bool save_json_results					= false;
 auto last_activity						= std::chrono::high_resolution_clock::now();
 
 
-void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
+void process_image(DarkHelp::NN & nn, cv::Mat & mat, const std::string & stem)
 {
 	if (mat.empty())
 	{
@@ -194,13 +194,13 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 	total_number_of_images_processed ++;
 	last_activity = now;
 
-	const auto results = dh.predict(mat);
+	const auto results = nn.predict(mat);
 
 	std::string annotated_filename;
 	if (save_annotated_image)
 	{
 		annotated_filename = stem + "_annotated.jpg";
-		cv::imwrite(annotated_filename, dh.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
+		cv::imwrite(annotated_filename, nn.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
 	}
 
 	std::string txt_filename;
@@ -235,11 +235,11 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 		output["timestamp"]["text"			] = buffer;
 
 		output["index"				] = total_number_of_images_processed;
-		output["duration"			] = dh.duration_string();
-		output["tiles"]["horizontal"] = dh.horizontal_tiles;
-		output["tiles"]["vertical"	] = dh.vertical_tiles;
-		output["tiles"]["width"		] = dh.tile_size.width;
-		output["tiles"]["height"	] = dh.tile_size.height;
+		output["duration"			] = nn.duration_string();
+		output["tiles"]["horizontal"] = nn.horizontal_tiles;
+		output["tiles"]["vertical"	] = nn.vertical_tiles;
+		output["tiles"]["width"		] = nn.tile_size.width;
+		output["tiles"]["height"	] = nn.tile_size.height;
 
 		if (annotated_filename.empty() == false)
 		{
@@ -280,7 +280,7 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 			{
 				j["all_probabilities"][prop_count]["class"			] = prop.first;
 				j["all_probabilities"][prop_count]["probability"	] = prop.second;
-				j["all_probabilities"][prop_count]["name"			] = dh.names[prop.first];
+				j["all_probabilities"][prop_count]["name"			] = nn.names[prop.first];
 				prop_count ++;
 			}
 		}
@@ -303,7 +303,7 @@ void process_image(DarkHelp & dh, cv::Mat & mat, const std::string & stem)
 }
 
 
-void server(DarkHelp & dh, const nlohmann::json & j)
+void server(DarkHelp::NN & nn, const nlohmann::json & j)
 {
 	const auto & server_settings = j["darkhelp"]["server"]["settings"];
 
@@ -434,7 +434,7 @@ void server(DarkHelp & dh, const nlohmann::json & j)
 
 		if (mat.empty() == false)
 		{
-			process_image(dh, mat, dst_stem);
+			process_image(nn, mat, dst_stem);
 			images_processed ++;
 		}
 
@@ -524,9 +524,9 @@ int main(int argc, char *argv[])
 				throw std::invalid_argument(messages[0]);
 			}
 
-			DarkHelp dh;
-			configure(dh, settings);
-			server(dh, settings);
+			DarkHelp::NN nn;
+			configure(nn, settings);
+			server(nn, settings);
 
 			rc = 0;
 		}

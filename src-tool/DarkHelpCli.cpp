@@ -152,7 +152,7 @@ struct Options
 	bool			keep_annotated_images;
 	bool			use_json_output;
 	nlohmann::json	json;
-	DarkHelp		dark_help;
+	DarkHelp::NN	nn;
 	bool			force_greyscale;
 	bool			done;
 	bool			size1_is_set;
@@ -263,13 +263,13 @@ void display_current_msg(Options & options, cv::Mat output_image, int & delay_in
 			options.message_time = now + 2;
 		}
 
-		const cv::Size text_size = cv::getTextSize(options.message_text, options.dark_help.config.annotation_font_face, options.dark_help.config.annotation_font_scale, options.dark_help.config.annotation_font_thickness, nullptr);
+		const cv::Size text_size = cv::getTextSize(options.message_text, options.nn.config.annotation_font_face, options.nn.config.annotation_font_scale, options.nn.config.annotation_font_thickness, nullptr);
 
 		cv::Point p(30, 50);
 		cv::Rect r(cv::Point(p.x - 5, p.y - text_size.height - 3), cv::Size(text_size.width + 10, text_size.height + 10));
 		cv::rectangle(output_image, r, cv::Scalar(0,255,255), cv::FILLED);
 		cv::rectangle(output_image, r, cv::Scalar(0,0,0), 1);
-		cv::putText(output_image, options.message_text, p, options.dark_help.config.annotation_font_face, options.dark_help.config.annotation_font_scale, cv::Scalar(0,0,0), options.dark_help.config.annotation_font_thickness, cv::LINE_AA);
+		cv::putText(output_image, options.message_text, p, options.nn.config.annotation_font_face, options.nn.config.annotation_font_scale, cv::Scalar(0,0,0), options.nn.config.annotation_font_thickness, cv::LINE_AA);
 
 		const int milliseconds_remaining = 1000 * (options.message_time - now);
 		if (delay_in_milliseconds == 0 or milliseconds_remaining < delay_in_milliseconds)
@@ -561,11 +561,11 @@ void init(Options & options, int argc, char *argv[])
 	// WARNING:
 	// Don't bother trying to set any darkhelp options *prior* to this line,
 	// because calling init() causes reset() to be called!
-	options.dark_help.init(options.cfg_fn, options.weights_fn, options.names_fn, false, darkhelp_driver);
+	options.nn.init(options.cfg_fn, options.weights_fn, options.names_fn, false, darkhelp_driver);
 
 	if (get_bool(debug))
 	{
-		options.dark_help.config.enable_debug = true;
+		options.nn.config.enable_debug = true;
 		std::cout << "-> debug output: enabled" << std::endl;
 
 		for (const auto & [key, val] : debug_messages)
@@ -573,38 +573,38 @@ void init(Options & options, int argc, char *argv[])
 			std::cout << "-> debug msg:    " << key << ": " << val << std::endl;
 		}
 
-		for (size_t i = 0; i < options.dark_help.names.size(); i++)
+		for (size_t i = 0; i < options.nn.names.size(); i++)
 		{
-			std::cout << "-> class #" << i << ": " << options.dark_help.names[i] << std::endl;
+			std::cout << "-> class #" << i << ": " << options.nn.names[i] << std::endl;
 		}
 	}
 
-	options.json["network"]["loading"]				=  options.dark_help.duration_string();
-	std::cout	<< "-> loading network took "		<< options.dark_help.duration_string() << std::endl
-				<< "-> neural network dimensions: "	<< options.dark_help.network_size().width << "x" << options.dark_help.network_size().height << std::endl;
+	options.json["network"]["loading"]				=  options.nn.duration_string();
+	std::cout	<< "-> loading network took "		<< options.nn.duration_string() << std::endl
+				<< "-> neural network dimensions: "	<< options.nn.network_size().width << "x" << options.nn.network_size().height << std::endl;
 
-	options.dark_help.config.threshold							= std::stof(threshold.getValue());
-	options.dark_help.config.hierarchy_threshold				= std::stof(hierarchy.getValue());
-	options.dark_help.config.non_maximal_suppression_threshold	= std::stof(nms.getValue());
-	options.dark_help.config.names_include_percentage			= get_bool(percentage);
-	options.dark_help.config.annotation_font_scale				= std::stod(fontscale.getValue());
-	options.dark_help.config.annotation_include_duration		= get_bool(duration);
-	options.dark_help.config.annotation_include_timestamp		= get_bool(timestamp);
-	options.dark_help.config.annotation_shade_predictions		= std::stof(shade.getValue());
-	options.dark_help.config.annotation_auto_hide_labels		= get_bool(autohide);
-	options.dark_help.config.enable_tiles						= get_bool(use_tiles);
-	options.dark_help.config.tile_edge_factor					= std::stof(tile_edge.getValue());
-	options.dark_help.config.tile_rect_factor					= std::stof(tile_rect.getValue());
+	options.nn.config.threshold							= std::stof(threshold.getValue());
+	options.nn.config.hierarchy_threshold				= std::stof(hierarchy.getValue());
+	options.nn.config.non_maximal_suppression_threshold	= std::stof(nms.getValue());
+	options.nn.config.names_include_percentage			= get_bool(percentage);
+	options.nn.config.annotation_font_scale				= std::stod(fontscale.getValue());
+	options.nn.config.annotation_include_duration		= get_bool(duration);
+	options.nn.config.annotation_include_timestamp		= get_bool(timestamp);
+	options.nn.config.annotation_shade_predictions		= std::stof(shade.getValue());
+	options.nn.config.annotation_auto_hide_labels		= get_bool(autohide);
+	options.nn.config.enable_tiles						= get_bool(use_tiles);
+	options.nn.config.tile_edge_factor					= std::stof(tile_edge.getValue());
+	options.nn.config.tile_rect_factor					= std::stof(tile_rect.getValue());
 
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["driver"]					= driver.getValue();
-	options.json["settings"]["threshold"]				= options.dark_help.config.threshold;
-	options.json["settings"]["hierarchy"]				= options.dark_help.config.hierarchy_threshold;
-	options.json["settings"]["nms"]						= options.dark_help.config.non_maximal_suppression_threshold;
-	options.json["settings"]["include_percentage"]		= options.dark_help.config.names_include_percentage;
+	options.json["settings"]["threshold"]				= options.nn.config.threshold;
+	options.json["settings"]["hierarchy"]				= options.nn.config.hierarchy_threshold;
+	options.json["settings"]["nms"]						= options.nn.config.non_maximal_suppression_threshold;
+	options.json["settings"]["include_percentage"]		= options.nn.config.names_include_percentage;
 	options.json["settings"]["force_greyscale"]			= options.force_greyscale;
 	options.json["settings"]["keep_annotations"]		= options.keep_annotated_images;
-	options.json["settings"]["enable_tiles"]			= options.dark_help.config.enable_tiles;
+	options.json["settings"]["enable_tiles"]			= options.nn.config.enable_tiles;
 
 	if (resize1.isSet())
 	{
@@ -842,12 +842,12 @@ void process_video(Options & options)
 			frame = DarkHelp::resize_keeping_aspect_ratio(frame, options.size1);
 		}
 
-		options.dark_help.predict(frame);
+		options.nn.predict(frame);
 
 		// no need to figure out the average duration if the display of the duration field is turned off in annotate()
-		if (options.dark_help.config.annotation_include_duration)
+		if (options.nn.config.annotation_include_duration)
 		{
-			duration_deque.push_front(options.dark_help.duration);
+			duration_deque.push_front(options.nn.duration);
 			if (duration_deque.size() > 3 * rounded_fps)
 			{
 				duration_deque.resize(3 * rounded_fps);
@@ -858,10 +858,10 @@ void process_video(Options & options)
 				average += duration;
 			}
 			average /= duration_deque.size();
-			options.dark_help.duration = average;
+			options.nn.duration = average;
 		}
 
-		frame = options.dark_help.annotate();
+		frame = options.nn.annotate();
 
 		if (options.size2_is_set)
 		{
@@ -918,10 +918,10 @@ void process_video(Options & options)
 	options.json["file"][options.file_index]["frames"				] = number_of_frames;
 	options.json["file"][options.file_index]["milliseconds_elapsed"	] = milliseconds_elapsed;
 	options.json["file"][options.file_index]["average_fps"			] = number_of_frames / (milliseconds_elapsed / 1000.0);
-	options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.dark_help.horizontal_tiles;
-	options.json["file"][options.file_index]["tiles"]["vertical"	] = options.dark_help.vertical_tiles;
-	options.json["file"][options.file_index]["tiles"]["width"		] = options.dark_help.tile_size.width;
-	options.json["file"][options.file_index]["tiles"]["height"		] = options.dark_help.tile_size.height;
+	options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.nn.horizontal_tiles;
+	options.json["file"][options.file_index]["tiles"]["vertical"	] = options.nn.vertical_tiles;
+	options.json["file"][options.file_index]["tiles"]["width"		] = options.nn.tile_size.width;
+	options.json["file"][options.file_index]["tiles"]["height"		] = options.nn.tile_size.height;
 	options.file_index ++;
 
 	return;
@@ -976,14 +976,14 @@ void process_image(Options & options)
 	options.json["file"][options.file_index]["resized_width"	] = input_image.cols;
 	options.json["file"][options.file_index]["resized_height"	] = input_image.rows;
 
-	const auto results = options.dark_help.predict(input_image);
+	const auto results = options.nn.predict(input_image);
 
-	std::cout	<< "-> prediction took " << options.dark_help.duration_string();
-	if (options.dark_help.horizontal_tiles > 1 or options.dark_help.vertical_tiles > 1)
+	std::cout	<< "-> prediction took " << options.nn.duration_string();
+	if (options.nn.horizontal_tiles > 1 or options.nn.vertical_tiles > 1)
 	{
-		std::cout	<< " across " << (options.dark_help.horizontal_tiles * options.dark_help.vertical_tiles) << " tiles "
-					<< "(" << options.dark_help.horizontal_tiles << "x" << options.dark_help.vertical_tiles << ")"
-					<< " each measuring " << options.dark_help.tile_size.width << "x" << options.dark_help.tile_size.height;
+		std::cout	<< " across " << (options.nn.horizontal_tiles * options.nn.vertical_tiles) << " tiles "
+					<< "(" << options.nn.horizontal_tiles << "x" << options.nn.vertical_tiles << ")"
+					<< " each measuring " << options.nn.tile_size.width << "x" << options.nn.tile_size.height;
 	}
 	std::cout	<< std::endl
 				<< "-> " << results << std::endl;
@@ -991,7 +991,7 @@ void process_image(Options & options)
 	cv::Mat output_image;
 	if (options.keep_annotated_images or options.use_json_output == false)
 	{
-		output_image = options.dark_help.annotate();
+		output_image = options.nn.annotate();
 		if (options.size2_is_set)
 		{
 			std::cout << "-> resizing output image from " << output_image.cols << "x" << output_image.rows << " to " << options.size2.width << "x" << options.size2.height << std::endl;
@@ -1046,11 +1046,11 @@ void process_image(Options & options)
 		options.json["file"][options.file_index]["timestamp"]["text"		] = buffer;
 
 		options.json["file"][options.file_index]["count"				] = results.size();
-		options.json["file"][options.file_index]["duration"				] = options.dark_help.duration_string();
-		options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.dark_help.horizontal_tiles;
-		options.json["file"][options.file_index]["tiles"]["vertical"	] = options.dark_help.vertical_tiles;
-		options.json["file"][options.file_index]["tiles"]["width"		] = options.dark_help.tile_size.width;
-		options.json["file"][options.file_index]["tiles"]["height"		] = options.dark_help.tile_size.height;
+		options.json["file"][options.file_index]["duration"				] = options.nn.duration_string();
+		options.json["file"][options.file_index]["tiles"]["horizontal"	] = options.nn.horizontal_tiles;
+		options.json["file"][options.file_index]["tiles"]["vertical"	] = options.nn.vertical_tiles;
+		options.json["file"][options.file_index]["tiles"]["width"		] = options.nn.tile_size.width;
+		options.json["file"][options.file_index]["tiles"]["height"		] = options.nn.tile_size.height;
 
 		for (size_t idx = 0; idx < results.size(); idx ++)
 		{
@@ -1076,7 +1076,7 @@ void process_image(Options & options)
 			{
 				j["all_probabilities"][prop_count]["class"			] = prop.first;
 				j["all_probabilities"][prop_count]["probability"	] = prop.second;
-				j["all_probabilities"][prop_count]["name"			] = options.dark_help.names[prop.first];
+				j["all_probabilities"][prop_count]["name"			] = options.nn.names[prop.first];
 				prop_count ++;
 			}
 		}
@@ -1128,8 +1128,8 @@ void process_image(Options & options)
 		}
 		case KEY_c:
 		{
-			options.dark_help.config.combine_tile_predictions = ! options.dark_help.config.combine_tile_predictions;
-			set_msg(options, "combining tile predictions has been turned " + std::string(options.dark_help.config.combine_tile_predictions ? "on" : "off"));
+			options.nn.config.combine_tile_predictions = ! options.nn.config.combine_tile_predictions;
+			set_msg(options, "combining tile predictions has been turned " + std::string(options.nn.config.combine_tile_predictions ? "on" : "off"));
 			break;
 		}
 		case KEY_g:
@@ -1139,13 +1139,13 @@ void process_image(Options & options)
 		}
 		case KEY_l:
 		{
-			options.dark_help.config.annotation_auto_hide_labels = ! options.dark_help.config.annotation_auto_hide_labels;
-			set_msg(options, "auto-labels has been turned " + std::string(options.dark_help.config.annotation_auto_hide_labels ? "on" : "off"));
+			options.nn.config.annotation_auto_hide_labels = ! options.nn.config.annotation_auto_hide_labels;
+			set_msg(options, "auto-labels has been turned " + std::string(options.nn.config.annotation_auto_hide_labels ? "on" : "off"));
 			break;
 		}
 		case KEY_s:
 		{
-			auto & shade = options.dark_help.config.annotation_shade_predictions;
+			auto & shade = options.nn.config.annotation_shade_predictions;
 			if		(shade < 0.25)	shade = 0.25;
 			else if	(shade < 0.50)	shade = 0.50;
 			else if	(shade < 0.75)	shade = 0.75;
@@ -1156,8 +1156,8 @@ void process_image(Options & options)
 		}
 		case KEY_t:
 		{
-			options.dark_help.config.enable_tiles = not options.dark_help.config.enable_tiles;
-			set_msg(options, "image tiling has been turned " + std::string(options.dark_help.config.enable_tiles ? "on" : "off"));
+			options.nn.config.enable_tiles = not options.nn.config.enable_tiles;
+			set_msg(options, "image tiling has been turned " + std::string(options.nn.config.enable_tiles ? "on" : "off"));
 			break;
 		}
 		case KEY_w:
@@ -1228,22 +1228,22 @@ void process_image(Options & options)
 		}
 		case KEY_PAGE_UP:
 		{
-			options.dark_help.config.threshold += 0.1;
-			if (options.dark_help.config.threshold > 1.0)
+			options.nn.config.threshold += 0.1;
+			if (options.nn.config.threshold > 1.0)
 			{
-				options.dark_help.config.threshold = 1.0;
+				options.nn.config.threshold = 1.0;
 			}
-			set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.dark_help.config.threshold * 100.0)) + "%");
+			set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.nn.config.threshold * 100.0)) + "%");
 			break;
 		}
 		case KEY_PAGE_DOWN:
 		{
-			options.dark_help.config.threshold -= 0.1;
-			if (options.dark_help.config.threshold < 0.01)
+			options.nn.config.threshold -= 0.1;
+			if (options.nn.config.threshold < 0.01)
 			{
-				options.dark_help.config.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
+				options.nn.config.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
 			}
-			set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.dark_help.config.threshold * 100.0)) + "%");
+			set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.nn.config.threshold * 100.0)) + "%");
 			break;
 		}
 		case KEY_p:

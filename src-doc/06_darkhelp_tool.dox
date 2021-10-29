@@ -6,7 +6,7 @@ The %DarkHelp library also comes with a command-line tool that uses the @ref API
 
 @note The CLI tool can also be used in a non-interactive mode, where it returns results as a JSON structure.  This can be useful in bash scripts, and is explained in @ref ShellScripting.
 
-You can load a neural network and browse through a large set of images as you examine the results of calling @ref DarkHelp::predict() and @ref DarkHelp::annotate() on each image.  Images can be resized, apply different thresholds to the predictions, and get details on the predicted results.
+You can load a neural network and browse through a large set of images as you examine the results of calling @ref DarkHelp::NN::predict() and @ref DarkHelp::NN::annotate() on each image.  Images can be resized, apply different thresholds to the predictions, and get details on the predicted results.
 
 Here is an example of how to use it:
 

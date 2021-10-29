@@ -23,7 +23,7 @@ Any video file or image type that can be opened using OpenCV is valid.
 Short Name							| Long Name			| Description
 ------------------------------------|-------------------|------------
 -a &lt;WxH&gt;						| --resize2 ...		| After the image has been annotated, resize it as specified.  For example, @p "--resize2 800x600" or @p "-a 640x480".
--b &lt;WxH&gt;						| --resize1 ...		| Before calling @ref DarkHelp::predict(), resize the image.  For example, @p "-b 1024x768".
+-b &lt;WxH&gt;						| --resize1 ...		| Before calling @ref DarkHelp::NN::predict(), resize the image.  For example, @p "-b 1024x768".
 -D &lt;darknet,opencv,opencvcpu&gt;	| --driver ...		| Select if Darknet or OpenCV will be used.  See @ref DarkHelp::EDriver for details.
 -d &lt;true,false,on,off,1,0&gt;	| --duration ...	| Determines if the duration is added to top left of the annotated image.  See @ref DarkHelp::Config::annotation_include_duration for dtails.
 -f &lt;float&gt;					| --fontscale ...	| Determines how the font in OpenCV2 is scaled when drawing the annotated image.  See @ref DarkHelp::Config::annotation_font_scale for details.
