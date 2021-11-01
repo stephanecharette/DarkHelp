@@ -17,20 +17,20 @@ const std::string config_file	= argv[1];
 const std::string weights_file	= argv[2];
 const std::string names_file	= argv[3];
 
-DarkHelp darkhelp(config_file, weights_file, names_file);
+DarkHelp::NN nn(config_file, weights_file, names_file);
 ~~~~
 
 At this point, the neural network has been fully loaded and is ready to use.  But just prior to using it, if you have certain settings you'd like to tweak, now is the time.  Several examples:
 
 ~~~~{.cpp}
-DarkHelp darkhelp(argv[1], argv[2], argv[3]);
+DarkHelp::NN nn(argv[1], argv[2], argv[3]);
 
-darkhelp.config.threshold						= 0.35;
-darkhelp.config.include_all_names				= false;
-darkhelp.config.names_include_percentage		= true;
-darkhelp.config.annotation_include_duration		= true;
-darkhelp.config.annotation_include_timestamp	= false;
-darkhelp.config.sort_predictions				= DarkHelp::ESort::kAscending;
+nn.config.threshold						= 0.35;
+nn.config.include_all_names				= false;
+nn.config.names_include_percentage		= true;
+nn.config.annotation_include_duration	= true;
+nn.config.annotation_include_timestamp	= false;
+nn.config.sort_predictions				= DarkHelp::ESort::kAscending;
 ~~~~
 
 @section API2 Method #2 (Config then DarkHelp)
@@ -45,7 +45,7 @@ cfg.names_include_percentage		= true;
 cfg.annotation_include_duration		= true;
 cfg.annotation_include_timestamp	= false;
 cfg.sort_predictions				= DarkHelp::ESort::kAscending;
-DarkHelp dh(cfg);
+DarkHelp::NN nn(cfg);
 ~~~~
 
 This allows the %DarkHelp configuration to be passed around if necessary, or have multiple configurations and swapping between them as needed.

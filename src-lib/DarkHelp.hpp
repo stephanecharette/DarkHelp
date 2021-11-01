@@ -30,15 +30,15 @@
 
 
 /** The %DarkHelp namespace contains (almost) everything in the %DarkHelp library.  Prior to version 1.4, @p %DarkHelp
- * was the name of a class.  But in October 2021, a large code re-organization took place, and the previous class
- * definition was split into multiple classes across several files.  This makes things easier to manage and was
+ * was the name of a class.  But in October/November 2021, a large code re-organization took place, and the previous
+ * class definition was split into multiple classes across several files.  This makes things easier to manage and was
  * needed to support other projects like DarkHelpFPS.
  *
  * Appologies to everyone who has code that relied on the previous @p %DarkHelp API.  The old @p %Darkhelp class has
  * been renamed to @ref DarkHelp::NN, and the settings that used to be in @p %DarkHelp have been moved to
  * @ref DarkHelp::NN::config.
  *
- * @since October 2021
+ * @since November 2021
  *
  * @see @ref DarkHelp::Config
  * @see @ref DarkHelp::PredictionResult

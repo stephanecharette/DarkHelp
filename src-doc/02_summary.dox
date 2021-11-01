@@ -21,15 +21,15 @@ Since annotating pictures is something that many applications want -- especially
 If you're looking for some sample code to get started, this example loads a network and then loops through several image files:
 
 ~~~~{.cpp}
-	DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
+	DarkHelp::NN nn("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
 
 	const auto image_filenames = {"image_0.jpg", "image_1.jpg", "image_2.jpg"};
 
 	for (const auto & filename : image_filenames)
 	{
 		// these next two lines is where DarkHelp calls into Darknet to do all the hard work
-		darkhelp.predict(filename);
-		cv::Mat mat = darkhelp.annotate(); // annotates the most recent image seen by predict()
+		nn.predict(filename);
+		cv::Mat mat = nn.annotate(); // annotates the most recent image seen by predict()
 
 		// use standard OpenCV calls to show the image results in a window
 		cv::imshow("prediction", mat);
@@ -40,9 +40,9 @@ If you're looking for some sample code to get started, this example loads a netw
 The predictions are stored in a @p std::vector of structures.  (See @ref DarkHelp::PredictionResults.)  You can get this vector and iterate through the results like this:
 
 ~~~~{.cpp}
-	DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
+	DarkHelp::NN nn("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
 
-	const auto results = darkhelp.predict("test_image_01.jpg");
+	const auto results = nn.predict("test_image_01.jpg");
 
 	for (const auto & det : results)
 	{
@@ -60,19 +60,19 @@ The following is the shortest/simplest self-contained example showing how to loa
 
 int main(int argc, char *argv[])
 {
-	DarkHelp darkhelp("driving.cfg", "driving_best.weights", "driving.names");
+	DarkHelp::NN nn("driving.cfg", "driving_best.weights", "driving.names");
 
 	// Loop through all the images specified on the command-line:
 	for (int idx = 1; idx < argc; idx ++)
 	{
 		// get the predictions
-		const auto results = darkhelp.predict(argv[idx]);
+		const auto results = nn.predict(argv[idx]);
 
 		// display the results on the console (meaning coordinates, not displaying the images themselves)
 		std::cout << results << std::endl; // see the output in the next block below
 
 		// to annotate the images, you'd use this instead:
-//		cv::Mat output = darkhelp.annotate();
+//		cv::Mat output = nn.annotate();
 //		do_something_with_the_image(output);
 	}
 
@@ -98,8 +98,8 @@ Example output from sending the @p "results" to @p std::cout like the code in th
 If you call @ref DarkHelp::NN::annotate() to get back a OpenCV @p cv::Mat object, you can then display the image with all the annotations, or easily save it as a @p jpg or @p png.  For example:
 
 ~~~~{.cpp}
-    darkhelp.predict(argv[idx]);
-    cv::Mat mat = darkhelp.annotate();
+    nn.predict(argv[idx]);
+    cv::Mat mat = nn.annotate();
     cv::imwrite("output.png", mat, {CV_IMWRITE_PNG_COMPRESSION, 9});
 ~~~~
 

@@ -24,9 +24,9 @@ namespace DarkHelp
 	 * @note Some fields such as the neural network filenames are only used once when @ref DarkHelp::NN::init() is called
 	 * and then never referenced again.
 	 *
-	 * @since October 2021
+	 * @since November 2021
 	 */
-	class Config // final
+	class Config final
 	{
 		public:
 

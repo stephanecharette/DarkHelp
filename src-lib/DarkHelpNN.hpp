@@ -57,7 +57,7 @@ namespace DarkHelp
 	 * std::cout << results << std::endl;
 	 * ~~~~
 	 */
-	class NN // final
+	class NN final
 	{
 		public:
 

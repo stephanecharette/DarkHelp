@@ -90,5 +90,4 @@ Now from within your application, you must @p "#include <DarkHelp.hpp>" and link
 @li @p libdarknet.so
 @li OpenCV's libraries
 
-
 */
