@@ -3,10 +3,11 @@
 The DarkHelp C++ API is a wrapper to make it easier to use the Darknet neural network framework within a C++ application.  DarkHelp performs the following:
 
 - load a [Darknet](https://github.com/AlexeyAB/darknet)-style neural network (.cfg, .names, .weights)
-- run inference on images -- either filenames or OpenCV `cv::Mat` images and video frames -- and return [a vector of results](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#abcd5ee07c8d804ec37963cdb606511a9)
+- run inference on images -- either filenames or OpenCV `cv::Mat` images and video frames -- and return [a vector of results](https://www.ccoderun.ca/DarkHelp/api/structDarkHelp_1_1PredictionResult.html#details)
 - optionally annotate images/frames with the inference results
 
-Example annotated image after calling [`DarkHelp::predict()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a5c3e83dcf445d7c2590ae6f1672789b5) and [`DarkHelp::annotate()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a0777388373987711f6f955f95f7b413a):
+Example annotated image after calling [`DarkHelp::NN::predict()`](https://www.ccoderun.ca/DarkHelp/api/classDarkHelp_1_1NN.html#a827eaa61af42451f0796a4f0adb43013)
+and [`DarkHelp::NN::annotate()`](https://www.ccoderun.ca/DarkHelp/api/classDarkHelp_1_1NN.html#a718c604a24ffb20efca54bbd73d79de5):
 
 ![annotated image example](src-doc/shade_25pcnt.png)
 
@@ -97,31 +98,31 @@ If you have [NSIS](https://nsis.sourceforge.io/) installed, then you can create 
 
 # Example Code
 
-DarkHelp has many optional settings that impact the output, especially [`DarkHelp::annotate()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a0777388373987711f6f955f95f7b413a).
+DarkHelp has many optional settings that impact the output, especially [`DarkHelp::NN::annotate()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1NN.html#a718c604a24ffb20efca54bbd73d79de5).
 
 To keep it simple this example code doesn't change any settings.  It uses the default values as it runs inference on several images and saves the output:
 
-    // include DarkHelp.hpp and link against libdarkhelp.so, libdarknet.so, and OpenCV
+    // include DarkHelp.hpp and link against libdarkhelp, libdarknet, and OpenCV
     //
     const auto samples_images = {"dog.jpg", "cat.jpg", "horse.jpg"};
     //
     // Only do this once.  You don't want to keep reloading the network inside
     // the loop because loading the network is actually a long process that takes
     // several seconds to run to finish.
-    DarkHelp darkhelp("animals.cfg", "animals_best.weights", "animals.names");
+    DarkHelp::NN nn("animals.cfg", "animals_best.weights", "animals.names");
     //
     for (const auto & filename : samples_images)
     {
         // get the predictions; on a decent GPU this should take milliseconds,
         // while on a CPU this might take a full second or more
-        const auto results = darkhelp.predict(filename);
+        const auto results = nn.predict(filename);
         //
         // display the results on the console
         // (meaning coordinates and confidence levels, not displaying the image)
         std::cout << results << std::endl;
         //
         // annotate the image and save the results
-        cv::Mat output = darkhelp.annotate();
+        cv::Mat output = nn.annotate();
         cv::imwrite("output_" + filename, output, {CV_IMWRITE_PNG_COMPRESSION, 9});
     }
 
@@ -131,12 +132,10 @@ The official DarkHelp documentation and web site is at <https://www.ccoderun.ca/
 
 Some links to specific useful pages:
 
-- [`DarkHelp` class details](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#details)
-- [`DarkHelp::DarkHelp()` constructor](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a38176b90d636340be98b1ce16c1d0c81)
-- [`DarkHelp::predict(filename)`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a422ca1f4279521b68cf7e59d182d7709)
-- [`DarkHelp::predict(OpenCV Mat)`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a422ca1f4279521b68cf7e59d182d7709)
-- [`DarkHelp::annotate()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#a0777388373987711f6f955f95f7b413a)
+- [`DarkHelp` namespace](https://www.ccoderun.ca/darkhelp/api/namespaceDarkHelp.html)
+- [`DarkHelp::NN` class for "neural network"](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1NN.html#details)
+- [`DarkHelp::Config` class for configuration items](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1Config.html#details)
 - [Image tiling](https://www.ccoderun.ca/darkhelp/api/Tiling.html)
-- [`DarkHelp::predict_tile()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp.html#ae2afffea2f7c2fdd54ce47e22bc4e042)
+- [DarkHelp Server](https://www.ccoderun.ca/darkhelp/api/Server.html)
 
 ![tiled image example](src-doc/mailboxes_2x2_tiles_detection.png)
