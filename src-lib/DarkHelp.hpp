@@ -4,7 +4,8 @@
  */
 
 #pragma once
-
+// fix an std:chrono error
+#include <chrono>
 #include <map>
 #include <string>
 #include <vector>
