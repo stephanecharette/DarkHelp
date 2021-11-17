@@ -85,7 +85,7 @@ void configure(DarkHelp::NN & nn, const nlohmann::json & j)
 	{
 		driver = DarkHelp::EDriver::kOpenCV;
 	}
-	else if (driver_name != "opencvcpu")
+	else if (driver_name == "opencvcpu")
 	{
 		driver = DarkHelp::EDriver::kOpenCVCPU;
 	}
@@ -108,6 +108,7 @@ void configure(DarkHelp::NN & nn, const nlohmann::json & j)
 
 	std::cout
 		<< "-> using DarkHelp v"		<< DarkHelp::version()	<< std::endl
+		<< "-> using driver \""			<< driver_name << "\""	<< std::endl
 		<< "-> network loaded in "		<< nn.duration_string()	<< std::endl
 		<< "-> network dimensions: "	<< nn.network_size()	<< std::endl
 		<< "-> number of classes: "		<< nn.names.size()		<< std::endl;
@@ -373,7 +374,7 @@ void server(DarkHelp::NN & nn, const nlohmann::json & j)
 		width		= cap.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH	);
 		height		= cap.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT	);
 		fps			= cap.get(cv::VideoCaptureProperties::CAP_PROP_FPS			);
-		std::cout << "-> camera device " + name + " is reporting " << width << " x " << height << " @ " << fps << " with a buffer size of " << bufferSize << std::endl;
+		std::cout << "-> camera device " + name + " is reporting " << width << " x " << height << " @ " << fps << " FPS with a buffer size of " << bufferSize << std::endl;
 		std::cout << "-> actual frame from camera device " + name + " measures " << mat.cols << " x " << mat.rows << std::endl;
 	}
 	else
