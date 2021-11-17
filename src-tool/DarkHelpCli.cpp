@@ -524,6 +524,12 @@ void init(Options & options, int argc, char *argv[])
 	options.keep_annotated_images	= keep_images	.getValue();
 	options.use_json_output			= use_json		.getValue();
 
+	#ifndef HAVE_OPENCV_HIGHGUI
+	// if OpenCV does not have HighGUI, then pretend we're running with the --json flag
+	// so we don't attempt to open up any GUI window
+	options.use_json_output			= true;
+	#endif
+
 	options.json["network"]["cfg"			] = options.cfg_fn;
 	options.json["network"]["weights"		] = options.weights_fn;
 	options.json["network"]["names"			] = options.names_fn;

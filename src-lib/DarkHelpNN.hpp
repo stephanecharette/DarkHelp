@@ -62,7 +62,7 @@ namespace DarkHelp
 		public:
 
 			/** We know that Darknet and OpenCV DNN does fancy stuff with the GPU and memory allocated to be used by the GPU.
-			 * So delete the copying and moving of DarkHelp objects to prevent problems from happening.  @{
+			 * So delete the copying and moving of @ref DarkHelp::NN objects to prevent problems from happening.  @{
 			 */
 			NN(const NN &)				= delete;
 			NN(NN &&)					= delete;
@@ -209,8 +209,8 @@ namespace DarkHelp
 			 * a higher threshold originally used with @ref DarkHelp::NN::predict().  Here is an example:
 			 *
 			 * ~~~~
-			 * darkhelp.predict("image.jpg", 0.75);  // note the threshold is set to 75% for prediction
-			 * darkhelp.annotate(0.25);              // note the threshold is now modified to be 25%
+			 * nn.predict("image.jpg", 0.75);  // note the threshold is set to 75% for prediction
+			 * nn.annotate(0.25);              // note the threshold is now modified to be 25%
 			 * ~~~~
 			 *
 			 * In the previous example, when annotate() is called with the lower threshold of 25%, the predictions had already

@@ -19,7 +19,8 @@ namespace DarkHelp
 {
 	/** All of %DarkHelp's configuration is stored within an instance of this class.  You can either instantiate a
 	 * @ref DarkHelp::NN object and then access @ref DarkHelp::NN::config to set configuration as desired, or you can
-	 * intantiate a @ref DarkHelp::Config object and pass it in to the DarkHelp constructor where it will be copied.
+	 * intantiate a @ref DarkHelp::Config object and pass it in to the @ref DarkHelp::NN constructor where it will be
+	 * copied.
 	 *
 	 * @note Some fields such as the neural network filenames are only used once when @ref DarkHelp::NN::init() is called
 	 * and then never referenced again.
