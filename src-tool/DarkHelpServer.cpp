@@ -224,10 +224,10 @@ void process_image(DarkHelp::NN & nn, cv::Mat & mat, const std::string & stem)
 	{
 		nlohmann::json output;
 
-		const auto epoch		= now.time_since_epoch();
-		const auto nanoseconds	= std::chrono::duration_cast<std::chrono::nanoseconds>	(epoch).count();
-		const auto seconds		= std::chrono::duration_cast<std::chrono::seconds>		(epoch).count();
-		const auto lt			= std::localtime(&seconds);
+		const auto epoch			= now.time_since_epoch();
+		const auto nanoseconds		= std::chrono::duration_cast<std::chrono::nanoseconds>	(epoch).count();
+		const std::time_t seconds	= std::chrono::duration_cast<std::chrono::seconds>		(epoch).count();
+		const auto lt				= std::localtime(&seconds);
 		char buffer[50];
 		std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z", lt);
 
