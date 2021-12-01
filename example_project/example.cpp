@@ -26,8 +26,8 @@ int main()
 	cv::Mat img2 = nn.annotate();
 
 	const cv::Size size(1024, 768);
-	cv::imshow("img1", resize_keeping_aspect_ratio(img1, size));
-	cv::imshow("img2", resize_keeping_aspect_ratio(img2, size));
+	cv::imshow("img1", DarkHelp::resize_keeping_aspect_ratio(img1, size));
+	cv::imshow("img2", DarkHelp::resize_keeping_aspect_ratio(img2, size));
 	cv::waitKey();
 
 	return 0;
