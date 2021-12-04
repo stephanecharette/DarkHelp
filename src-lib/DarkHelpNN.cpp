@@ -964,16 +964,20 @@ void DarkHelp::NN::predict_internal_opencv()
 	cv::Mat resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
 	tile_size = network_dimensions;
 
-	auto blob = cv::dnn::blobFromImage(resized_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/false, /* crop=*/false);
+	/* OpenCV images are BGR, but DNN (or maybe specific to Darknet?) requires RGB,
+	 * so make sure to set the "swap" option, otherwise detection won't behave as
+	 * well as expected.
+	 */
+	auto blob = cv::dnn::blobFromImage(resized_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/true, /* crop=*/false);
 	opencv_net.setInput(blob);
 
 	/* The output mat is float and will have thousands of rows.  The fields are:
 	 *
-	 *		center x (0-1)
-	 *		center y (0-1)
-	 *		width (0-1)
-	 *		hight (0-1)
-	 *		??? something related to probability, but not sure what it represents
+	 *		center x (0-1f)
+	 *		center y (0-1f)
+	 *		width (0-1f)
+	 *		hight (0-1f)
+	 *		objectness (0-1f)
 	 *
 	 * Then for every class, another field with the probability for that class.
 	 */
@@ -1000,7 +1004,7 @@ void DarkHelp::NN::predict_internal_opencv()
 		// get a pointer to the 1st float for this row, which we easily increment to get all the floats
 		const float * const ptr = output.ptr<float>(i);
 
-		if (ptr[4] >= config.threshold)
+		if (ptr[4] >= 0.01f)
 		{
 			if (config.enable_debug)
 			{
@@ -1013,16 +1017,16 @@ void DarkHelp::NN::predict_internal_opencv()
 							offset==1 ? "cy" :
 							offset==2 ? "w" :
 							offset==3 ? "h" :
-							offset==4 ? "?" :
+							offset==4 ? "obj" :
 							names.at(offset-5).substr(0, 3))
 						<< "=";
-					if (ptr[offset] >= 0.0000001f)
+					if (ptr[offset] != 0.0f)
 					{
-						std::cout << std::fixed << std::setprecision(6) << ptr[offset];
+						std::cout << std::fixed << std::setprecision(8) << ptr[offset];
 					}
 					else
 					{
-						std::cout << "0.0     ";
+						std::cout << "0.0       ";
 					}
 				}
 				std::cout << std::endl;
