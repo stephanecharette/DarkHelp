@@ -240,6 +240,33 @@ namespace DarkHelp
 			/// Determine the size of the network.  For example, 416x416, or 608x480.
 			cv::Size network_size();
 
+			/** Snap all the annotations.  This is automatically called from @ref predict() when
+			 * @ref DarkHelp::Config::snapping_enabled is set to @p true.  When set to @p false,
+			 * you can manually invoke this method to get the annotations to snap, or you can also
+			 * manually call @ref DarkHelp::NN::snap_annotation() on specific annotations as needed.
+			 *
+			 * @note This can be expensive to run depending on the image dimensions, the image threshold
+			 * limits, and the amount of "snapping" required for each annotation since the process of "snapping"
+			 * is iterative and requires looking for blank spaces within the image.
+			 *
+			 * @see @ref DarkHelp::Config::snapping_enabled
+			 * @see @ref DarkHelp::Config::snapping_horizontal_tolerance
+			 *
+			 * Image								| Setting
+			 * -------------------------------------|--------
+			 * @image html snapping_disabled.png ""	| @p snapping_enabled=false
+			 * @image html snapping_enabled.png ""	| @p snapping_enabled=true
+			 *
+			 */
+			NN & snap_annotations();
+
+			/** Snap only the given annotation.
+			 * @see @ref DarkHelp::NN::snap_annotations()
+			 * @see @ref DarkHelp::Config::snapping_enabled
+			 * @see @ref DarkHelp::Config::snapping_horizontal_tolerance
+			 */
+			NN & snap_annotation(PredictionResult & pred);
+
 			/** The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
 			 * This will only be set when the driver is @ref DarkHelp::EDriver::kDarknet in @ref DarkHelp::NN::init().
 			 */
@@ -270,6 +297,9 @@ namespace DarkHelp
 
 			/// The most recent output produced by @ref DarkHelp::NN::annotate().
 			cv::Mat annotated_image;
+
+			/// Intended mostly for internal purpose, this is only useful when annotation "snapping" is enabled.
+			cv::Mat binary_inverted_image;
 
 			/** The number of horizontal tiles the image was split into by @ref DarkHelp::NN::predict_tile() prior to calling
 			 * @ref DarkHelp::NN::predict().  This is set to @p 1 if calling @ref DarkHelp::NN::predict().  It may be &gt; 1

@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.8-1		| 2022-01-24	| Added annotation "snapping" (see @ref DarkHelp::Config::snapping_enabled).
 1.4.6.1		| 2021-12-04	| Important fix for OpenCV DNN:  images need to be in RGB not BGR.
 1.4.1-1		| 2021-10-29	| Created the @ref DarkHelp namespace, and split the classes into @ref DarkHelp::NN, @ref DarkHelp::Config, and @ref DarkHelp::PredictionResult.  This is the last part of what was started in v1.4.0 a few days ago, and is also a breaking change to the %DarkHelp C++ API.
 1.4.0-1		| 2021-10-24	| Created @ref DarkHelp::Config to contain the configuration items.  This introduces some breaking changes to users of %DarkHelp's C++ API.

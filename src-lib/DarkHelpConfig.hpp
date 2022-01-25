@@ -392,5 +392,70 @@ namespace DarkHelp
 			 * force the neural network to be re-initialized.
 			 */
 			EDriver driver;
+
+			/** Toggle annotation snapping.  This automatically creates and uses a binary black-and-white image of the original
+			 * image to try and "snap" the annotations to an object.  Note that this is non-trivial and will slightly increase
+			 * the processing time.  The default is @p false.
+			 *
+			 * Snapping is mostly intended to be used with dark-coloured items on a light background, such as text on paper.
+			 * If you turn this on, you may also need to modify @ref DarkHelp::Config::binary_threshold_block_size,
+			 * @ref DarkHelp::Config::binary_threshold_constant, @ref DarkHelp::Config::snapping_horizontal_tolerance,
+			 * and @ref DarkHelp::Config::snapping_vertical_tolerance.
+			 *
+			 * @see @ref DarkHelp::NN::snap_annotations()
+			 * @see @ref DarkHelp::Config::snapping_horizontal_tolerance
+			 *
+			 * Image								| Setting
+			 * -------------------------------------|--------
+			 * @image html snapping_disabled.png ""	| @p snapping_enabled=false
+			 * @image html snapping_enabled.png ""	| @p snapping_enabled=true
+			 */
+			bool snapping_enabled;
+
+			/** Block size (in pixels) to use when creating a black-and-white binary image.
+			 * This is only used when @ref snapping_enabled is set to @p true or manually calling @ref DarkHelp::NN::snap_annotations().
+			 * Default size is @p 25.
+			 *
+			 * @see 6th parameter of OpenCV's @p cv::adaptiveThreshold()
+			 */
+			int binary_threshold_block_size;
+
+			/** Constant to remove from each pixel value when converting image during thresholding.
+			 * This is only used when @ref snapping_enabled is set to @p true or manually calling @ref DarkHelp::NN::snap_annotations().
+			 * Default is @p 25.0.
+			 *
+			 * @see 7th parameter of OpenCV's @p cv::adaptiveThreshold()
+			 */
+			double binary_threshold_constant;
+
+			/** Horizontal tolerance (in pixels) used when snapping annotations.
+			 * This is only used when @ref snapping_enabled is set to @p true or manually calling @ref DarkHelp::NN::snap_annotations().
+			 * Default is @p 5.
+			 *
+			 * For example, when working with text, you may need to increase this if you want to automatically snap the annotations
+			 * to grab multiple consecutive words in a sentence.  If you want to select a single word, then decrease this value so
+			 * snapping ends at the end of a word.  If you lower it too much, you'll grab individual letters instead of words.
+			 *
+			 * Image								| Setting
+			 * -------------------------------------|--------
+			 * @image html snapping_h01_v01.png ""	| @p snapping_horizontal_tolerance=1 <br/> @p snapping_vertical_tolerance=1
+			 * @image html snapping_h02_v01.png ""	| @p snapping_horizontal_tolerance=2 <br/> @p snapping_vertical_tolerance=1
+			 * @image html snapping_h03_v01.png ""	| @p snapping_horizontal_tolerance=3 <br/> @p snapping_vertical_tolerance=1
+			 * @image html snapping_h07_v01.png ""	| @p snapping_horizontal_tolerance=7 <br/> @p snapping_vertical_tolerance=1
+			 * @image html snapping_h07_v03.png ""	| @p snapping_horizontal_tolerance=7 <br/> @p snapping_vertical_tolerance=3
+			 * @image html snapping_h07_v15.png ""	| @p snapping_horizontal_tolerance=7 <br/> @p snapping_vertical_tolerance=15
+			 */
+			int snapping_horizontal_tolerance;
+
+			/** Vertical tolerance (in pixels) used when snapping annotations.
+			 * This is only used when @ref snapping_enabled is set to @p true or manually calling @ref DarkHelp::NN::snap_annotations().
+			 * Default is @p 5.
+			 *
+			 * For example, when working with text, you may need to increase this if you want to automatically snap the annotations
+			 * to grab an entire paragraph.  Smaller values will limit the snap to a single line of text.
+			 *
+			 * @see @ref DarkHelp::Config::snapping_horizontal_tolerance
+			 */
+			int snapping_vertical_tolerance;
 	};
 }

@@ -264,6 +264,7 @@ DarkHelp::NN & DarkHelp::NN::init()
 		predict_internal(mat);
 		prediction_results.clear();
 		original_image = cv::Mat();
+		binary_inverted_image = cv::Mat();
 	}
 
 	const auto t2 = std::chrono::high_resolution_clock::now();
@@ -287,13 +288,14 @@ DarkHelp::NN & DarkHelp::NN::reset()
 		opencv_net = cv::dnn::Net();
 	#endif
 
-	names				.clear();
-	prediction_results	.clear();
-	original_image		= cv::Mat();
-	annotated_image		= cv::Mat();
-	horizontal_tiles	= 1;
-	vertical_tiles		= 1;
-	network_dimensions	= {0, 0};
+	names					.clear();
+	prediction_results		.clear();
+	original_image			= cv::Mat();
+	binary_inverted_image	= cv::Mat();
+	annotated_image			= cv::Mat();
+	horizontal_tiles		= 1;
+	vertical_tiles			= 1;
+	network_dimensions		= {0, 0};
 
 	config.reset();
 
@@ -590,12 +592,13 @@ DarkHelp::PredictionResults DarkHelp::NN::predict_tile(cv::Mat mat, const float 
 		}
 	}
 
-	original_image		= mat;
-	prediction_results	= results;
-	duration			= total_duration;
-	horizontal_tiles	= horizontal_tiles_count;
-	vertical_tiles		= vertical_tiles_count;
-	tile_size			= new_tile_size;
+	original_image			= mat;
+	binary_inverted_image	= cv::Mat();
+	prediction_results		= results;
+	duration				= total_duration;
+	horizontal_tiles		= horizontal_tiles_count;
+	vertical_tiles			= vertical_tiles_count;
+	tile_size				= new_tile_size;
 
 	return results;
 }
@@ -798,12 +801,13 @@ DarkHelp::PredictionResults DarkHelp::NN::predict_internal(cv::Mat mat, const fl
 {
 	// this method is private and cannot be called directly -- instead, see predict()
 
-	prediction_results.clear();
-	original_image		= mat;
-	annotated_image		= cv::Mat();
-	horizontal_tiles	= 1;
-	vertical_tiles		= 1;
-	tile_size			= cv::Size(0, 0);
+	prediction_results		.clear();
+	original_image			= mat;
+	binary_inverted_image	= cv::Mat();
+	annotated_image			= cv::Mat();
+	horizontal_tiles		= 1;
+	vertical_tiles			= 1;
+	tile_size				= cv::Size(0, 0);
 
 	if (config.driver == EDriver::kInvalid)
 	{
@@ -867,6 +871,11 @@ DarkHelp::PredictionResults DarkHelp::NN::predict_internal(cv::Mat mat, const fl
 				  {
 					  return rhs.best_probability < lhs.best_probability;
 				  } );
+	}
+
+	if (config.snapping_enabled)
+	{
+		snap_annotations();
 	}
 
 	const auto t2 = std::chrono::high_resolution_clock::now();
@@ -1201,6 +1210,116 @@ DarkHelp::NN & DarkHelp::NN::name_prediction(PredictionResult & pred)
 				}
 			}
 		}
+	}
+
+	return *this;
+}
+
+
+DarkHelp::NN & DarkHelp::NN::snap_annotations()
+{
+	for (auto & pred : prediction_results)
+	{
+		snap_annotation(pred);
+	}
+
+	return *this;
+}
+
+
+DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
+{
+	if (binary_inverted_image.empty())
+	{
+		cv::Mat greyscale;
+		cv::Mat threshold;
+		cv::cvtColor(original_image, greyscale, cv::COLOR_BGR2GRAY);
+		cv::adaptiveThreshold(greyscale, threshold, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, config.binary_threshold_block_size, config.binary_threshold_constant);
+		binary_inverted_image = ~ threshold;
+	}
+
+	const auto original_rect = pred.rect;
+	auto final_rect = original_rect;
+	int attempt = 0;
+
+	while (true)
+	{
+		attempt ++;
+		const auto horizontal_snap_distance	= std::min(attempt, config.snapping_horizontal_tolerance);
+		const auto vertical_snap_distance	= std::min(attempt, config.snapping_vertical_tolerance);
+
+		auto roi = final_rect;
+		roi.x		-= (1 * horizontal_snap_distance	);
+		roi.y		-= (1 * vertical_snap_distance		);
+		roi.width	+= (2 * horizontal_snap_distance	);
+		roi.height	+= (2 * vertical_snap_distance		);
+
+		if (roi.x < 0)
+		{
+			const auto delta = 0 - roi.x;
+			roi.x += delta;
+			roi.width -= delta;
+		}
+
+		if (roi.y < 0)
+		{
+			const auto delta = 0 - roi.y;
+			roi.y += delta;
+			roi.width -= delta;
+		}
+
+		if (roi.x + roi.width > binary_inverted_image.cols)
+		{
+			roi.width = binary_inverted_image.cols - roi.x;
+		}
+
+		if (roi.y + roi.height > binary_inverted_image.rows)
+		{
+			roi.height = binary_inverted_image.rows - roi.y;
+		}
+
+		cv::Mat nonzero;
+		cv::findNonZero(binary_inverted_image(roi), nonzero);
+		auto new_rect = cv::boundingRect(nonzero);
+
+		// note that new_rect is relative to the RoI, so we need to move it back into the full image coordinate space
+		new_rect.x += roi.x;
+		new_rect.y += roi.y;
+
+		if (new_rect == final_rect)
+		{
+			attempt ++;
+
+			if (attempt >= std::max(config.snapping_horizontal_tolerance, config.snapping_vertical_tolerance))
+			{
+				// we found a rectangle size that is no longer growing or shrinking
+				// consider this mark as having snapped into place
+				break;
+			}
+		}
+		else
+		{
+			attempt = 0;
+		}
+
+		final_rect = new_rect;
+	}
+
+	if (final_rect != original_rect and final_rect.width >= 10 and final_rect.height >= 10)
+	{
+		pred.rect = final_rect;
+
+		const double w = final_rect.width;
+		const double h = final_rect.height;
+		const double x = final_rect.x + w / 2.0;
+		const double y = final_rect.y + h / 2.0;
+
+		const double image_w		= binary_inverted_image.cols;
+		const double image_h		= binary_inverted_image.rows;
+		pred.original_point.x		= x / image_w;
+		pred.original_point.y		= y / image_h;
+		pred.original_size.width	= w / image_w;
+		pred.original_size.height	= h / image_h;
 	}
 
 	return *this;

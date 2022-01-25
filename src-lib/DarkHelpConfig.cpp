@@ -74,6 +74,11 @@ DarkHelp::Config & DarkHelp::Config::reset()
 	modify_batch_and_subdivisions		= true;
 	driver								= EDriver::kInvalid;
 	annotation_suppress_classes			.clear();
+	snapping_enabled					= false;
+	binary_threshold_block_size			= 25;
+	binary_threshold_constant			= 25;
+	snapping_horizontal_tolerance		= 5;
+	snapping_vertical_tolerance			= 5;
 
 	return *this;
 }

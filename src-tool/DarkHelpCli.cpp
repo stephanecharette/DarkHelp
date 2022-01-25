@@ -92,6 +92,7 @@ const char* magic_file(magic_t cookie, const char* filename)
 #ifdef WIN32
 const int KEY_ESC		= 0x0000001b;
 const int KEY_c			= 0x00000063;
+const int KEY_d			= 0x00000064;
 const int KEY_g			= 0x00000067;
 const int KEY_h			= 0x00000068;
 const int KEY_l			= 0x0000006c;
@@ -110,6 +111,7 @@ const int KEY_DOWN		= 0x00280000;
 #else
 const int KEY_ESC		= 0x0010001b;
 const int KEY_c			= 0x00100063;
+const int KEY_d			= 0x00100064;
 const int KEY_g			= 0x00100067;
 const int KEY_h			= 0x00100068;
 const int KEY_l			= 0x0010006c;
@@ -203,6 +205,7 @@ void show_help_window()
 		{ "g"			, "Toggle greyscale."				},
 		// misc
 		{ "c"			, "Combine predictions."			},
+		{ "d"			, "Toggle snapping."				},
 		{ "h"			, "Show help."						},
 		{ "l"			, "Toggle labels."					},
 		{ "t"			, "Toggle image tiling."			},
@@ -210,7 +213,7 @@ void show_help_window()
 		{ "q or ESC"	, "Exit from DarkHelp."				}
 	};
 
-	cv::Mat mat(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+	cv::Mat mat(450, 400, CV_8UC3, cv::Scalar(255, 255, 255));
 
 	const auto font_face		= cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
 	const auto font_scale		= 0.5;
@@ -463,6 +466,7 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> percentage			("p", "percentage"	, "Determines if percentages are added to annotations."														, false, "true"		, &allowed_booleans		, cli);
 	TCLAP::SwitchArg random							("r", "random"		, "Randomly shuffle the set of images."																													, cli, false );
 	TCLAP::SwitchArg slideshow						("s", "slideshow"	, "Show the images in a slideshow."																														, cli, false );
+	TCLAP::ValueArg<std::string> snapping			("S", "snapping"	, "Snap the annotations."																					, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::ValueArg<std::string> threshold			("t", "threshold"	, "The threshold to use when predicting with the neural net. Default is 0.5."								, false, "0.5"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> use_tiles			("T", "tiles"		, "Determines if large images are processed by breaking into tiles. Default is \"false\"."					, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::ValueArg<std::string> hierarchy			("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint		, cli);
@@ -601,6 +605,7 @@ void init(Options & options, int argc, char *argv[])
 	options.nn.config.enable_tiles						= get_bool(use_tiles);
 	options.nn.config.tile_edge_factor					= std::stof(tile_edge.getValue());
 	options.nn.config.tile_rect_factor					= std::stof(tile_rect.getValue());
+	options.nn.config.snapping_enabled					= get_bool(snapping);
 
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["driver"]					= driver.getValue();
@@ -611,6 +616,7 @@ void init(Options & options, int argc, char *argv[])
 	options.json["settings"]["force_greyscale"]			= options.force_greyscale;
 	options.json["settings"]["keep_annotations"]		= options.keep_annotated_images;
 	options.json["settings"]["enable_tiles"]			= options.nn.config.enable_tiles;
+	options.json["settings"]["snapping"]				= options.nn.config.snapping_enabled;
 
 	if (resize1.isSet())
 	{
@@ -1136,6 +1142,12 @@ void process_image(Options & options)
 		{
 			options.nn.config.combine_tile_predictions = ! options.nn.config.combine_tile_predictions;
 			set_msg(options, "combining tile predictions has been turned " + std::string(options.nn.config.combine_tile_predictions ? "on" : "off"));
+			break;
+		}
+		case KEY_d:
+		{
+			options.nn.config.snapping_enabled = not options.nn.config.snapping_enabled;
+			set_msg(options, "snapping has been turned " + std::string(options.nn.config.snapping_enabled ? "on" : "off"));
 			break;
 		}
 		case KEY_g:
