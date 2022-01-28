@@ -116,6 +116,40 @@ namespace DarkHelp
 	 */
 	cv::Mat fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size);
 
+	/** Given an image filename, get the corresponding filename where the YOLO annotations should be saved.
+	 * This will be the same as the image filename but with a @p .txt file extension.
+	 * If the filename provided already ends in @p .txt, then the original filename will be returned.
+	 */
+	std::string yolo_annotations_filename(const std::string & image_filename);
+
+	/** Check to see if the given image has a corresponding @p .txt file for YOLO annotations.  This does not check the
+	 * contents of the file, it only checks to see if the file exists.  The annotation file is determined by calling
+	 * @ref yolo_annotations_filename().
+	 */
+	bool yolo_annotations_file_exists(const std::string & image_filename);
+
+	/** Load the given image and read in the corresponding YOLO annotations from the @p .txt file.  Both the image and
+	 * the @p .txt file must exist.
+	 */
+	cv::Mat yolo_load_image_and_annotations(const std::string & image_filename, PredictionResults & annotations);
+
+	/** Load the YOLO annotations from file.
+	 *.
+	 * @param [in] image_size Since YOLO annotations are normalized, the image dimensions must be provided for the
+	 * @p cv::Rect object to be populated with the correct coordinates.
+	 *
+	 * @param [out] filename Can be either the image filename, or the annotations filename.  This is then used in a call
+	 * to @ref yolo_annotations_filename() to find the actual annotations filename.
+	 *
+	 * @note Some simple input validation is performed on the annotations by calling @ref fix_out_of_bound_normalized_rect().
+	 */
+	PredictionResults yolo_load_annotations(const cv::Size & image_size, const std::string & filename);
+
+	/** Save the given annotations to the @p .txt file.  The filename can be either the image or the @p .txt file, and
+	 * will be used to call @ref yolo_annotations_filename().
+	 */
+	std::string yolo_save_annotations(const std::string & filename, const PredictionResults & annotations);
+
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
 	/** Function to convert the OpenCV @p cv::Mat objects to Darknet's internal @p image format.
 	 * Provided for convenience in case you need to call into one of Darknet's functions.

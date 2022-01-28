@@ -550,3 +550,148 @@ cv::Mat DarkHelp::fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv:
 
 	return resized_image;
 }
+
+
+std::string DarkHelp::yolo_annotations_filename(const std::string & image_filename)
+{
+	// This would be so much easier if I could use std::filesystem from C++17, but I'm trying to limit the library to C++11.
+	const auto last_dir_compoment = image_filename.find_last_of("/\\");
+	const auto last_period = image_filename.rfind(".");
+
+	if (last_period == std::string::npos)
+	{
+		return image_filename + ".txt";
+	}
+
+	if (image_filename.substr(last_period) == ".txt")
+	{
+		// this is already a .txt annotation file, no changes necessary
+		return image_filename;
+	}
+
+	if (last_dir_compoment != std::string::npos and last_period < last_dir_compoment)
+	{
+		// the period is in a *directory* instead of the filename, don't change the directory!
+		return image_filename + ".txt";
+	}
+
+	return image_filename.substr(0, last_period) + ".txt";
+}
+
+
+bool DarkHelp::yolo_annotations_file_exists(const std::string & image_filename)
+{
+	const std::string annotation_filename = yolo_annotations_filename(image_filename);
+
+	struct stat buffer;
+	const int rc = stat(annotation_filename.c_str(), &buffer);
+	if (rc == 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+
+cv::Mat DarkHelp::yolo_load_image_and_annotations(const std::string & image_filename, DarkHelp::PredictionResults & annotations)
+{
+	annotations.clear();
+
+	cv::Mat mat = cv::imread(image_filename);
+	if (mat.empty())
+	{
+		/// @throw std::invalid_argument if the image cannot be read (not an image file, or invalid filename?)
+		throw std::invalid_argument("failed to read image \"" + image_filename + "\"");
+	}
+
+	annotations = yolo_load_annotations(mat.size(), image_filename);
+
+	return mat;
+}
+
+
+DarkHelp::PredictionResults DarkHelp::yolo_load_annotations(const cv::Size & image_size, const std::string & filename)
+{
+	const std::string annotation_filename = yolo_annotations_filename(filename);
+	if (not yolo_annotations_file_exists(annotation_filename))
+	{
+		/// @throw std::invalid_argument if the annotation file does not exist
+		throw std::invalid_argument("failed to read annotation file \"" + annotation_filename + "\"");
+	}
+
+	if (image_size.width < 1 or image_size.height < 1)
+	{
+		/// @throw std::invalid_argument if the image dimensions appear to be invalid (both width and height should be greater than zero)
+		throw std::invalid_argument("invalid image size while reading \"" + filename + "\"");
+	}
+
+	const float iw = image_size.width;
+	const float ih = image_size.height;
+
+	std::string line;
+	std::ifstream ifs(annotation_filename);
+	PredictionResults annotations;
+
+	while (std::getline(ifs, line))
+	{
+		int class_idx	= 0;
+		float cx		= 0.0f;
+		float cy		= 0.0f;
+		float w			= 0.0f;
+		float h			= 0.0f;
+
+		std::stringstream ss(line);
+		ss >> class_idx >> cx >> cy >> w >> h;
+
+		fix_out_of_bound_normalized_rect(cx, cy, w, h);
+
+		// attempt to ignore blank lines
+		if (class_idx	> 0		or
+			cx			> 0.0	or
+			cy			> 0.0	or
+			w			> 0.0	or
+			h			> 0.0)
+		{
+			PredictionResult row;
+			row.all_probabilities[class_idx]	= 1.0;
+			row.name							= "#" + std::to_string(class_idx);
+			row.best_class						= class_idx;
+			row.best_probability				= 1.0;
+			row.tile							= 0;
+			row.original_point.x				= cx;
+			row.original_point.y				= cy;
+			row.original_size.width				= w;
+			row.original_size.height			= h;
+			row.rect.x							= std::round(iw * (cx - w / 2.0));
+			row.rect.y							= std::round(ih * (cy - h / 2.0));
+			row.rect.width						= std::round(iw * w);
+			row.rect.height						= std::round(ih * h);
+
+			annotations.push_back(row);
+		}
+	}
+
+	return annotations;
+}
+
+
+std::string DarkHelp::yolo_save_annotations(const std::string & filename, const DarkHelp::PredictionResults & annotations)
+{
+	const std::string annotation_filename = yolo_annotations_filename(filename);
+
+	std::ofstream ofs(annotation_filename);
+	if (not ofs.good())
+	{
+		/// @throw std::invalid_argument if the annotation file fails to open
+		throw std::invalid_argument("cannot save annotations to \"" + annotation_filename + "\"");
+	}
+
+	ofs << std::fixed << std::setprecision(10);
+	for (const auto & p : annotations)
+	{
+		ofs << p.best_class << " " << p.original_point.x << " " << p.original_point.y << " " << p.original_size.width << " " << p.original_size.height << std::endl;
+	}
+
+	return annotation_filename;
+}
