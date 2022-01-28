@@ -134,7 +134,7 @@ namespace DarkHelp
 	cv::Mat yolo_load_image_and_annotations(const std::string & image_filename, PredictionResults & annotations);
 
 	/** Load the YOLO annotations from file.
-	 *.
+	 *
 	 * @param [in] image_size Since YOLO annotations are normalized, the image dimensions must be provided for the
 	 * @p cv::Rect object to be populated with the correct coordinates.
 	 *
