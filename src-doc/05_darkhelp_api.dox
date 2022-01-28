@@ -10,7 +10,7 @@ To use %DarkHelp, you must include the project header file within your C++ appli
 
 @section API1 Method #1 (DarkHelp then configure)
 
-Instantiate a DarkHelp object.  These can easily be placed either on the stack, or created dynamically with @p new.  You'll want this object to persist for a long time, as the constructor loads the neural network into memory which takes a (relatively) long time.
+Instantiate a @ref DarkHelp::NN object.  These can easily be placed either on the stack, or created dynamically with @p new.  You'll want this object to persist for a long time, as the constructor loads the neural network into memory which takes a (relatively) long time.
 
 ~~~~{.cpp}
 const std::string config_file	= argv[1];
@@ -35,7 +35,7 @@ nn.config.sort_predictions				= DarkHelp::ESort::kAscending;
 
 @section API2 Method #2 (Config then DarkHelp)
 
-The alternative method is to instantiate a @ref DarkHelp::Config object first and configuring it as needed.  Once it has been setup correctly, then you use it to instantiate the @ref DarkHelp object.
+The alternative method is to instantiate a @ref DarkHelp::Config object first and configuring it as needed.  Once it has been setup correctly, then you use it to instantiate the @ref DarkHelp::NN object.
 
 ~~~~{.cpp}
 DarkHelp::Config cfg(argv[1], argv[2], argv[3]);
