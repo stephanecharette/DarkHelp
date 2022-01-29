@@ -103,8 +103,27 @@ namespace DarkHelp
 			/// Initialize ("load") the darknet neural network.  This uses the values within @ref DarkHelp::NN::config.
 			NN & init();
 
-			/// The opposite of @ref DarkHelp::NN::init().  This is automatically called by the destructor.
+			/** The opposite of @ref DarkHelp::NN::init().  This is automatically called by the destructor.
+			 * @see @ref clear()
+			 */
 			NN & reset();
+
+			/** Clear out the images and the predictions stored internally within this object.  This makes it seem as if the
+			 * @p NN object has not yet been used to process any images.  Unlike @ref reset(), this does not change any settings,
+			 * it only clears the images and the predictions.
+			 *
+			 * Calling this method is not necessary, but is included for completeness.
+			 */
+			NN & clear();
+
+			/** Only returns @p true if both @ref original_image and @ref prediction_results are both empty.  This will only happen
+			 * in the following situations:
+			 *
+			 * @li when a @ref NN object has been instantiated but @ref init() has not yet been called and no neural network is loaded
+			 * @li when a @ref NN object is initialized but no image has been processed
+			 * @li after @ref clear() has been called which results in the removal of internal images and predictions
+			 */
+			bool empty() const;
 
 			/** Use the neural network to predict what is contained in this image.  This results in a call to either
 			 * @ref DarkHelp::NN::predict_internal() or @ref DarkHelp::NN::predict_tile() depending on how

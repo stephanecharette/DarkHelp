@@ -130,6 +130,16 @@ namespace DarkHelp
 
 	/** Load the given image and read in the corresponding YOLO annotations from the @p .txt file.  Both the image and
 	 * the @p .txt file must exist.
+	 *
+	 * Each line of a YOLO-format annotation is composed of 5 space-delimited fields:
+	 *
+	 * @li the zero-based class id
+	 * @li the normalized center X coordinate
+	 * @li the normalized center Y coordinate
+	 * @li the normalized width
+	 * @li the normalized height
+	 *
+	 * @see https://www.ccoderun.ca/programming/darknet_faq/#darknet_annotations
 	 */
 	cv::Mat yolo_load_image_and_annotations(const std::string & image_filename, PredictionResults & annotations);
 
@@ -141,12 +151,27 @@ namespace DarkHelp
 	 * @param [out] filename Can be either the image filename, or the annotations filename.  This is then used in a call
 	 * to @ref yolo_annotations_filename() to find the actual annotations filename.
 	 *
-	 * @note Some simple input validation is performed on the annotations by calling @ref fix_out_of_bound_normalized_rect().
+	 * @note Some simple input validation is automatically performed on the annotations by using @ref fix_out_of_bound_normalized_rect().
+	 *
+	 * Each line of a YOLO-format annotation is composed of 5 space-delimited fields:
+	 *
+	 * @li the zero-based class id
+	 * @li the normalized center X coordinate
+	 * @li the normalized center Y coordinate
+	 * @li the normalized width
+	 * @li the normalized height
+	 *
+	 * @see https://www.ccoderun.ca/programming/darknet_faq/#darknet_annotations
 	 */
 	PredictionResults yolo_load_annotations(const cv::Size & image_size, const std::string & filename);
 
 	/** Save the given annotations to the @p .txt file.  The filename can be either the image or the @p .txt file, and
 	 * will be used to call @ref yolo_annotations_filename().
+	 *
+	 * Each line of a YOLO-format annotation is composed of 5 space-delimited fields, and is intended to be used by Darknet
+	 * or Darknet-compatible software.
+	 *
+	 * @see https://www.ccoderun.ca/programming/darknet_faq/#darknet_annotations
 	 */
 	std::string yolo_save_annotations(const std::string & filename, const PredictionResults & annotations);
 

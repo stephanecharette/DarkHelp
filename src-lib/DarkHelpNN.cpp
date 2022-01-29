@@ -58,6 +58,20 @@ DarkHelp::NN::NN() :
 	 *		sizeof(data) ........... 64
 	 *		sizeof(metadata) ....... 16
 	 *		sizeof(tree) ........... 72
+	 *
+	 * On 2022-01-28, the same output looks like this:
+	 *		sizeof(network) ........ 656	<--
+	 *		sizeof(network_state) .. 696	<--
+	 *		sizeof(layer) .......... 2616	<--
+	 *		sizeof(image) .......... 24
+	 *		sizeof(detection) ...... 88		<--
+	 *		sizeof(load_args) ...... 240	<--
+	 *		sizeof(data) ........... 64
+	 *		sizeof(metadata) ....... 16
+	 *		sizeof(tree) ........... 72
+	 *
+	 * This shows that the darknet structures are changing in size over time, and why it is so important to recompile
+	 * DarkHelp when Darknet gets updated.
 	 */
 	#if 0
 	std::cout
@@ -262,9 +276,7 @@ DarkHelp::NN & DarkHelp::NN::init()
 	{
 		cv::Mat mat(network_dimensions, CV_8UC3, cv::Scalar(0, 0, 0));
 		predict_internal(mat);
-		prediction_results.clear();
-		original_image = cv::Mat();
-		binary_inverted_image = cv::Mat();
+		clear();
 	}
 
 	const auto t2 = std::chrono::high_resolution_clock::now();
@@ -288,18 +300,33 @@ DarkHelp::NN & DarkHelp::NN::reset()
 		opencv_net = cv::dnn::Net();
 	#endif
 
-	names					.clear();
+	clear();
+	names.clear();
+	network_dimensions = {0, 0};
+
+	config.reset();
+
+	return *this;
+}
+
+
+DarkHelp::NN & DarkHelp::NN::clear()
+{
 	prediction_results		.clear();
 	original_image			= cv::Mat();
 	binary_inverted_image	= cv::Mat();
 	annotated_image			= cv::Mat();
 	horizontal_tiles		= 1;
 	vertical_tiles			= 1;
-	network_dimensions		= {0, 0};
-
-	config.reset();
+	tile_size				= cv::Size(0, 0);
 
 	return *this;
+}
+
+
+bool DarkHelp::NN::empty() const
+{
+	return prediction_results.empty() and original_image.empty();
 }
 
 
@@ -801,13 +828,8 @@ DarkHelp::PredictionResults DarkHelp::NN::predict_internal(cv::Mat mat, const fl
 {
 	// this method is private and cannot be called directly -- instead, see predict()
 
-	prediction_results		.clear();
-	original_image			= mat;
-	binary_inverted_image	= cv::Mat();
-	annotated_image			= cv::Mat();
-	horizontal_tiles		= 1;
-	vertical_tiles			= 1;
-	tile_size				= cv::Size(0, 0);
+	clear();
+	original_image = mat;
 
 	if (config.driver == EDriver::kInvalid)
 	{
