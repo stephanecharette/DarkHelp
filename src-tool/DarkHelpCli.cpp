@@ -1020,7 +1020,7 @@ void process_image(Options & options)
 			{
 				basename.erase(0, pos + 1);
 			}
-			pos = basename.find(".");
+			pos = basename.rfind(".");
 			if (pos != std::string::npos)
 			{
 				basename.erase(pos);
