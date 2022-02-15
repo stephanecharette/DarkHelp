@@ -1,5 +1,5 @@
 # DarkHelp - C++ helper class for Darknet's C API.
-# Copyright 2019-2021 Stephane Charette <stephanecharette@gmail.com>
+# Copyright 2019-2022 Stephane Charette <stephanecharette@gmail.com>
 # MIT license applies.  See "license.txt" for details.
 
 
