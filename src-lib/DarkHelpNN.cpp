@@ -1251,6 +1251,13 @@ DarkHelp::NN & DarkHelp::NN::snap_annotations()
 
 DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 {
+	if (config.snapping_limit_shrink	>= 1.0f and	// cannot shrink
+		config.snapping_limit_grow		<= 1.0f)	// cannot grow
+	{
+		// nothing we can do with snapping, the limits wont let us either shrink nor grow annotations
+		return *this;
+	}
+
 	if (binary_inverted_image.empty())
 	{
 		cv::Mat greyscale;
@@ -1329,19 +1336,37 @@ DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 
 	if (final_rect != original_rect and final_rect.width >= 10 and final_rect.height >= 10)
 	{
-		pred.rect = final_rect;
+		const float old_area	= original_rect.area();
+		const float new_area	= final_rect.area();
+		const float snap_factor	= new_area / old_area;
+		bool use_snap			= true;
 
-		const double w = final_rect.width;
-		const double h = final_rect.height;
-		const double x = final_rect.x + w / 2.0;
-		const double y = final_rect.y + h / 2.0;
+		if (config.snapping_limit_shrink > 0.0f and snap_factor < config.snapping_limit_shrink)
+		{
+			use_snap = false;
+		}
 
-		const double image_w		= binary_inverted_image.cols;
-		const double image_h		= binary_inverted_image.rows;
-		pred.original_point.x		= x / image_w;
-		pred.original_point.y		= y / image_h;
-		pred.original_size.width	= w / image_w;
-		pred.original_size.height	= h / image_h;
+		if (config.snapping_limit_grow >= 1.0f and snap_factor > config.snapping_limit_grow)
+		{
+			use_snap = false;
+		}
+
+		if (use_snap)
+		{
+			pred.rect = final_rect;
+
+			const double w = final_rect.width;
+			const double h = final_rect.height;
+			const double x = final_rect.x + w / 2.0;
+			const double y = final_rect.y + h / 2.0;
+
+			const double image_w		= binary_inverted_image.cols;
+			const double image_h		= binary_inverted_image.rows;
+			pred.original_point.x		= x / image_w;
+			pred.original_point.y		= y / image_h;
+			pred.original_size.width	= w / image_w;
+			pred.original_size.height	= h / image_h;
+		}
 	}
 
 	return *this;

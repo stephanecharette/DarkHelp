@@ -79,6 +79,8 @@ DarkHelp::Config & DarkHelp::Config::reset()
 	binary_threshold_constant			= 25;
 	snapping_horizontal_tolerance		= 5;
 	snapping_vertical_tolerance			= 5;
+	snapping_limit_shrink				= 0.4;
+	snapping_limit_grow					= 1.25;
 
 	return *this;
 }

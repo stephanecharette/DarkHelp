@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.12-1	| 2022-02-15	| Added @ref DarkHelp::Config::snapping_limit_shrink and @ref DarkHelp::Config::snapping_limit_grow.
 1.4.9-1		| 2022-01-28	| Added several @p yolo_* functions for convenience, such as @ref DarkHelp::yolo_load_annotations().
 1.4.8-1		| 2022-01-24	| Added annotation "snapping" (see @ref DarkHelp::Config::snapping_enabled).
 1.4.6.1		| 2021-12-04	| Important fix for OpenCV DNN:  images need to be in RGB not BGR.
