@@ -459,7 +459,7 @@ namespace DarkHelp
 			int snapping_vertical_tolerance;
 
 			/** When snapping is enabled, this is used to establish a @b minimum for snapping.  If the snapped annotation shrinks
-			 * less than this amount, the "snap" is ignored and the original annotation is retained.
+			 * to a value smaller than this amount, the "snap" is ignored and the original annotation is retained.
 			 *
 			 * The valid range for this is any number between @p 0 and @p 1.0.  If set to @p 0, then no minimum limit will be
 			 * applied during snapping.  If set to exactly @p 1, then snapping cannot shrink annotations, it can only grow them.
@@ -471,7 +471,7 @@ namespace DarkHelp
 			float snapping_limit_shrink;
 
 			/** When snapping is enabled, this is used to establish a @b maximum for snapping.  If the snapped annotation grows
-			 * more than this amount, the "snap" is ignored and the original annotation is retained.
+			 * to a value greater than this amount, the "snap" is ignored and the original annotation is retained.
 			 *
 			 * The valid range for this is any number larger than or equal to @p 1.0.  If set to @p 0, then no maximum limit
 			 * will be applied during snapping.  If set to exactly @p 1, then snapping cannot grow annotations, it can only
