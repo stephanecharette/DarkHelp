@@ -1269,8 +1269,27 @@ DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 
 	const auto original_rect = pred.rect;
 	auto final_rect = original_rect;
-	int attempt = 0;
 
+	if (config.snapping_limit_shrink < 1.0f and config.snapping_limit_grow > 1.0f)
+	{
+		const int hgrow = 2;
+		const int vgrow = 2;
+
+		// start by slightly shrinking the rectangle, and then we'll grow it out if necessary during snapping
+		if (final_rect.width >= (5 * hgrow))
+		{
+			final_rect.x		+= (2 * hgrow);
+			final_rect.width	-= (4 * hgrow);
+		}
+
+		if (final_rect.height >= (5 * vgrow))
+		{
+			final_rect.y		+= (2 * vgrow);
+			final_rect.height	-= (4 * vgrow);
+		}
+	}
+
+	int attempt = 0;
 	while (true)
 	{
 		attempt ++;
