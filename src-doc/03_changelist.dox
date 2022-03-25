@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.14-1	| 2022-03-24	| Exception will now be thrown if a blank line is detected within the .names file since that causes darknet to hang in some situations.
 1.4.12-1	| 2022-02-15	| Added @ref DarkHelp::Config::snapping_limit_shrink and @ref DarkHelp::Config::snapping_limit_grow.
 1.4.9-1		| 2022-01-28	| Added several @p yolo_* functions for convenience, such as @ref DarkHelp::yolo_load_annotations().
 1.4.8-1		| 2022-01-24	| Added annotation "snapping" (see @ref DarkHelp::Config::snapping_enabled).

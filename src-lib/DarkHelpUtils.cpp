@@ -267,6 +267,15 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 		while (std::getline(ifs, line))
 		{
 			line_counter ++;
+
+			// Blank lines in the .names file (sometimes found at the end of the file) cause serious issues in darknet.
+			// We need to find these instances and bring them to the attention of the users so the problem can be fixed.
+			const auto p = line.find_first_not_of(" \t\r\n");
+			if (p == std::string::npos)
+			{
+				/// @throw std::invalid_argument if there is a blank line in the .names file.
+				throw std::runtime_error("unexpected blank line detected at " + names_filename + " line #" + std::to_string(line_counter));
+			}
 		}
 		m["number of names"] = std::to_string(line_counter);
 

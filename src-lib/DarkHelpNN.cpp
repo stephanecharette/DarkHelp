@@ -223,8 +223,8 @@ DarkHelp::NN & DarkHelp::NN::init()
 			p = line.find_first_not_of(" \t\r\n");
 			if (p == std::string::npos)
 			{
-				// completely blank line in .names?
-				break;
+				/// @throw std::invalid_argument if there is a blank line in the .names file.
+				throw std::runtime_error("unexpected blank line detected at " + config.names_filename + " line #" + std::to_string(names.size() + 1));
 			}
 			line.erase(0, p);
 
