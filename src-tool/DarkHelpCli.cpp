@@ -89,44 +89,39 @@ const char* magic_file(magic_t cookie, const char* filename)
 
 
 // possible return values from cv::waitKeyEx()
+const int KEY_SIMPLE_MASK	= 0xff;
+const int KEY_ESC			= 0x1b;
+const int KEY_c				= 0x63;
+const int KEY_d				= 0x64;
+const int KEY_g				= 0x67;
+const int KEY_h				= 0x68;
+const int KEY_l				= 0x6c;
+const int KEY_p				= 0x70;
+const int KEY_q				= 0x71;
+const int KEY_s				= 0x73;
+const int KEY_t				= 0x74;
+const int KEY_u				= 0x75;
+const int KEY_w				= 0x77;
 #ifdef WIN32
-const int KEY_ESC		= 0x0000001b;
-const int KEY_c			= 0x00000063;
-const int KEY_d			= 0x00000064;
-const int KEY_g			= 0x00000067;
-const int KEY_h			= 0x00000068;
-const int KEY_l			= 0x0000006c;
-const int KEY_p			= 0x00000070;
-const int KEY_q			= 0x00000071;
-const int KEY_s			= 0x00000073;
-const int KEY_t			= 0x00000074;
-const int KEY_w			= 0x00000077;
-const int KEY_PAGE_UP	= 0x00210000;
-const int KEY_PAGE_DOWN = 0x00220000;
-const int KEY_END		= 0x00230000;
-const int KEY_HOME		= 0x00240000;
-const int KEY_LEFT		= 0x00250000;
-const int KEY_UP		= 0x00260000;
-const int KEY_DOWN		= 0x00280000;
+const int KEY_COMPLEX_MASK	= 0x00ffffff;
+const int KEY_PAGE_UP		= 0x00210000;
+const int KEY_PAGE_DOWN 	= 0x00220000;
+const int KEY_END			= 0x00230000;
+const int KEY_HOME			= 0x00240000;
+const int KEY_LEFT			= 0x00250000;
+const int KEY_UP			= 0x00260000;
+const int KEY_RIGHT			= 0x00270000;
+const int KEY_DOWN			= 0x00280000;
 #else
-const int KEY_ESC		= 0x0010001b;
-const int KEY_c			= 0x00100063;
-const int KEY_d			= 0x00100064;
-const int KEY_g			= 0x00100067;
-const int KEY_h			= 0x00100068;
-const int KEY_l			= 0x0010006c;
-const int KEY_p			= 0x00100070;
-const int KEY_q			= 0x00100071;
-const int KEY_s			= 0x00100073;
-const int KEY_t			= 0x00100074;
-const int KEY_w			= 0x00100077;
-const int KEY_HOME		= 0x0010ff50;
-const int KEY_LEFT		= 0x0010ff51;
-const int KEY_UP		= 0x0010ff52;
-const int KEY_DOWN		= 0x0010ff54;
-const int KEY_PAGE_UP	= 0x0010ff55;
-const int KEY_PAGE_DOWN = 0x0010ff56;
-const int KEY_END		= 0x0010ff57;
+const int KEY_COMPLEX_MASK	= 0x00ffffff;
+const int KEY_HOME			= 0x0010ff50;
+const int KEY_LEFT			= 0x0010ff51;
+const int KEY_UP			= 0x0010ff52;
+const int KEY_RIGHT			= 0x0010ff53;
+const int KEY_DOWN			= 0x0010ff54;
+const int KEY_PAGE_UP		= 0x0010ff55;
+const int KEY_PAGE_DOWN 	= 0x0010ff56;
+const int KEY_END			= 0x0010ff57;
 #endif
 
 
@@ -149,6 +144,7 @@ struct Options
 	std::string		cfg_fn;
 	std::string		weights_fn;
 	std::string		names_fn;
+	std::string		neural_network_name; // descriptive name made by combining the .cfg and .weights filenames
 	std::string		out_dir;
 	std::string		image_type; // either "png" or "jpg"
 	bool			keep_annotated_images;
@@ -209,6 +205,7 @@ void show_help_window()
 		{ "h"			, "Show help."						},
 		{ "l"			, "Toggle labels."					},
 		{ "t"			, "Toggle image tiling."			},
+		{ "u"			, "Toggle duration."				},
 		{ "w"			, "Write image to disk."			},
 		{ "q or ESC"	, "Exit from DarkHelp."				}
 	};
@@ -242,7 +239,7 @@ void set_msg(Options & options, const std::string & msg)
 	options.message_text = msg;
 	if (options.message_text.empty() == false)
 	{
-		std::cout << "-> setting message: \"" << msg << "\"" << std::endl;
+		std::cout << "setting message: \"" << msg << "\"" << std::endl;
 	}
 
 	return;
@@ -573,6 +570,23 @@ void init(Options & options, int argc, char *argv[])
 	// because calling init() causes reset() to be called!
 	options.nn.init(options.cfg_fn, options.weights_fn, options.names_fn, false, darkhelp_driver);
 
+	if (options.neural_network_name.empty())
+	{
+		const auto cfg		= std::filesystem::path(options.cfg_fn		);
+		const auto weights	= std::filesystem::path(options.weights_fn	);
+
+		if (weights.stem().string().find(cfg.stem()) != std::string::npos)
+		{
+			// the cfg and the weights have similar names, so we only need to specify 1 file
+			options.neural_network_name = weights.filename().string();
+		}
+		else
+		{
+			// the cfg and the weights have completely different names
+			options.neural_network_name = cfg.filename().string() + "+" + weights.filename().string();
+		}
+	}
+
 	if (get_bool(debug))
 	{
 		options.nn.config.enable_debug = true;
@@ -690,7 +704,6 @@ void init(Options & options, int argc, char *argv[])
 			}
 
 			const std::string filename = entry.path().string();
-//			if (entry.is_directory() == false) -- experimental fs does not have this call
 			if (std::filesystem::is_directory(entry.path()) == false)
 			{
 				const std::string mime_type = magic_file(options.magic_cookie, filename.c_str());
@@ -739,6 +752,10 @@ void init(Options & options, int argc, char *argv[])
 		std::random_device rd;
 		std::mt19937 rng(rd());
 		std::shuffle(options.all_files.begin(), options.all_files.end(), rng);
+	}
+	else
+	{
+		std::sort(options.all_files.begin(), options.all_files.end());
 	}
 
 	return;
@@ -817,10 +834,10 @@ void process_video(Options & options)
 	{
 		show_video = true;
 		cv::namedWindow("DarkHelp", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-		cv::setWindowTitle("DarkHelp", short_filename);
+		cv::setWindowTitle("DarkHelp", options.neural_network_name + " - " + short_filename);
 		cv::imshow("DarkHelp", mat);
 		cv::resizeWindow("DarkHelp", output_width, output_height);
-		cv::waitKey(10);
+		cv::waitKey(50); // give the initial window some time to display itself before we start to loop
 	}
 
 	output_video.open(long_filename.string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), input_fps, {output_width, output_height});
@@ -1118,11 +1135,19 @@ void process_image(Options & options)
 	}
 
 	cv::namedWindow("DarkHelp", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-	cv::setWindowTitle("DarkHelp", short_filename);
+	cv::setWindowTitle("DarkHelp", options.neural_network_name + " - " + std::to_string(options.file_index + 1) + "/" + std::to_string(options.all_files.size()) + " - " + short_filename);
 	cv::imshow("DarkHelp", output_image);
 
 	const int key = cv::waitKeyEx(delay_in_milliseconds);
-	std::cout << "KEY=" << key << std::endl;
+
+	/* I have no idea how these keys work.  This was working for me for years, and recently (2022) no longer
+	 * works because...?  OpenCV now returns different values than what I expected.  Some of the higher bits
+	 * are obviously used for flags of some sort, which I didn't use to see but now are set.  Will attempt to
+	 * simplify the comparisons to see if I can get this working again on as many platforms as possible, but
+	 * the complete lack of documentation for the return value of cv::waitKeyEx() does not help.
+	 */
+	const int key_simple	= (key & KEY_SIMPLE_MASK); // suspect this is only good for keys like A-Z, a-z, 0-9 but this should give us a start
+	const int key_complex	= (key & KEY_COMPLEX_MASK); // non-alphabetical keys seem to use this, not sure what most of these bits represent
 
 	if (key == -1 && options.in_slideshow == false)
 	{
@@ -1130,151 +1155,134 @@ void process_image(Options & options)
 		return;
 	}
 
-	switch (key)
+	if (key_simple == KEY_ESC or key_simple == KEY_q)
 	{
-		case KEY_ESC:
-		case KEY_q:
-		{
-			options.done = true;
-			break;
-		}
-		case KEY_c:
-		{
-			options.nn.config.combine_tile_predictions = ! options.nn.config.combine_tile_predictions;
-			set_msg(options, "combining tile predictions has been turned " + std::string(options.nn.config.combine_tile_predictions ? "on" : "off"));
-			break;
-		}
-		case KEY_d:
-		{
-			options.nn.config.snapping_enabled = not options.nn.config.snapping_enabled;
-			set_msg(options, "snapping has been turned " + std::string(options.nn.config.snapping_enabled ? "on" : "off"));
-			break;
-		}
-		case KEY_g:
-		{
-			options.force_greyscale = not options.force_greyscale;
-			break;
-		}
-		case KEY_l:
-		{
-			options.nn.config.annotation_auto_hide_labels = ! options.nn.config.annotation_auto_hide_labels;
-			set_msg(options, "auto-labels has been turned " + std::string(options.nn.config.annotation_auto_hide_labels ? "on" : "off"));
-			break;
-		}
-		case KEY_s:
-		{
-			auto & shade = options.nn.config.annotation_shade_predictions;
-			if		(shade < 0.25)	shade = 0.25;
-			else if	(shade < 0.50)	shade = 0.50;
-			else if	(shade < 0.75)	shade = 0.75;
-			else					shade = 0.0;
+		options.done = true;
+	}
+	else if (key_simple == KEY_c)
+	{
+		options.nn.config.combine_tile_predictions = ! options.nn.config.combine_tile_predictions;
+		set_msg(options, "combining tile predictions has been turned " + std::string(options.nn.config.combine_tile_predictions ? "on" : "off"));
+	}
+	else if (key_simple == KEY_d)
+	{
+		options.nn.config.snapping_enabled = not options.nn.config.snapping_enabled;
+		set_msg(options, "snapping has been turned " + std::string(options.nn.config.snapping_enabled ? "on" : "off"));
+	}
+	else if (key_simple == KEY_g)
+	{
+		options.force_greyscale = not options.force_greyscale;
+	}
+	else if (key_simple == KEY_l)
+	{
+		options.nn.config.annotation_auto_hide_labels = ! options.nn.config.annotation_auto_hide_labels;
+		set_msg(options, "auto-labels has been turned " + std::string(options.nn.config.annotation_auto_hide_labels ? "on" : "off"));
+	}
+	else if (key_simple == KEY_s)
+	{
+		auto & shade = options.nn.config.annotation_shade_predictions;
+		if		(shade < 0.25)	shade = 0.25;
+		else if	(shade < 0.50)	shade = 0.50;
+		else if	(shade < 0.75)	shade = 0.75;
+		else					shade = 0.0;
 
-			set_msg(options, "annotation shading has been set to " + std::to_string(int(shade * 100.0)) + "%");
-			break;
-		}
-		case KEY_t:
+		set_msg(options, "annotation shading has been set to " + std::to_string(int(shade * 100.0)) + "%");
+	}
+	else if (key_simple == KEY_t)
+	{
+		options.nn.config.enable_tiles = not options.nn.config.enable_tiles;
+		set_msg(options, "image tiling has been turned " + std::string(options.nn.config.enable_tiles ? "on" : "off"));
+	}
+	else if (key_simple == KEY_u)
+	{
+		options.nn.config.annotation_include_duration = not options.nn.config.annotation_include_duration;
+		set_msg(options, "duration has been turned " + std::string(options.nn.config.annotation_include_duration ? "on" : "off"));
+	}
+	else if (key_simple == KEY_w)
+	{
+		// save the file to disk, then re-load the same image
+		auto output_filename = std::filesystem::path(options.out_dir);
+		if (options.image_type == "png")
 		{
-			options.nn.config.enable_tiles = not options.nn.config.enable_tiles;
-			set_msg(options, "image tiling has been turned " + std::string(options.nn.config.enable_tiles ? "on" : "off"));
-			break;
+			output_filename /= "output.png";
+			cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
 		}
-		case KEY_w:
+		else
 		{
-			// save the file to disk, then re-load the same image
-			auto output_filename = std::filesystem::path(options.out_dir);
-			if (options.image_type == "png")
-			{
-				output_filename /= "output.png";
-				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
-			}
-			else
-			{
-				output_filename /= "output.jpg";
-				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_JPEG_QUALITY, 75});
-			}
-			std::cout << "-> output image saved to \"" << output_filename.string() << "\"" << std::endl;
-			set_msg(options, "saved image to \"" + output_filename.string() + "\"");
-			break;
+			output_filename /= "output.jpg";
+			cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_JPEG_QUALITY, 75});
 		}
-		case KEY_h:
+		std::cout << "-> output image saved to \"" << output_filename.string() << "\"" << std::endl;
+		set_msg(options, "saved image to \"" + output_filename.string() + "\"");
+	}
+	else if (key_simple == KEY_h)
+	{
+		show_help_window();
+	}
+	else if (key_simple == KEY_p)
+	{
+		options.in_slideshow = not options.in_slideshow;
+	}
+	else if (key_complex == KEY_HOME)
+	{
+		options.in_slideshow = false;
+		options.file_index = 0;
+	}
+	else if (key_complex == KEY_END)
+	{
+		options.in_slideshow = false;
+		options.file_index = options.all_files.size() - 1;
+	}
+	else if (key_complex == KEY_LEFT)
+	{
+		options.in_slideshow = false;
+		if (options.file_index > 0)
 		{
-			show_help_window();
-			break;
+			options.file_index --;
 		}
-		case KEY_HOME:
+	}
+	else if (key_complex == KEY_UP)
+	{
+		// quicker slideshow
+		options.wait_time_in_milliseconds_for_slideshow *= 0.5;
+		if (options.wait_time_in_milliseconds_for_slideshow < 50)
 		{
-			options.in_slideshow = false;
-			options.file_index = 0;
-			break;
+			options.wait_time_in_milliseconds_for_slideshow = 50;
 		}
-		case KEY_END:
+		std::cout << "-> slideshow timeout has been decreased to " << options.wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
+		set_msg(options, "slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
+		options.in_slideshow = true;
+	}
+	else if (key_complex == KEY_DOWN)
+	{
+		// slower slideshow
+		options.wait_time_in_milliseconds_for_slideshow /= 0.5;
+		std::cout << "-> slideshow timeout has been increased to " << options.wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
+		set_msg(options, "slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
+		options.in_slideshow = true;
+	}
+	else if (key_complex == KEY_PAGE_UP)
+	{
+		options.nn.config.threshold += 0.1;
+		if (options.nn.config.threshold > 1.0)
 		{
-			options.in_slideshow = false;
-			options.file_index = options.all_files.size() - 1;
-			break;
+			options.nn.config.threshold = 1.0;
 		}
-		case KEY_LEFT:
+		set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.nn.config.threshold * 100.0)) + "%");
+	}
+	else if (key_complex == KEY_PAGE_DOWN)
+	{
+		options.nn.config.threshold -= 0.1;
+		if (options.nn.config.threshold < 0.01)
 		{
-			options.in_slideshow = false;
-			if (options.file_index > 0)
-			{
-				options.file_index --;
-			}
-			break;
+			options.nn.config.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
 		}
-		case KEY_UP:
-		{
-			// quicker slideshow
-			options.wait_time_in_milliseconds_for_slideshow *= 0.5;
-			if (options.wait_time_in_milliseconds_for_slideshow < 50)
-			{
-				options.wait_time_in_milliseconds_for_slideshow = 50;
-			}
-			std::cout << "-> slideshow timeout has been decreased to " << options.wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
-			set_msg(options, "slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
-			options.in_slideshow = true;
-			break;
-		}
-		case KEY_DOWN:
-		{
-			// slower slideshow
-			options.wait_time_in_milliseconds_for_slideshow /= 0.5;
-			std::cout << "-> slideshow timeout has been increased to " << options.wait_time_in_milliseconds_for_slideshow << " milliseconds" << std::endl;
-			set_msg(options, "slideshow timer: " + std::to_string(options.wait_time_in_milliseconds_for_slideshow) + " milliseconds");
-			options.in_slideshow = true;
-			break;
-		}
-		case KEY_PAGE_UP:
-		{
-			options.nn.config.threshold += 0.1;
-			if (options.nn.config.threshold > 1.0)
-			{
-				options.nn.config.threshold = 1.0;
-			}
-			set_msg(options, "increased threshold: " + std::to_string((int)std::round(options.nn.config.threshold * 100.0)) + "%");
-			break;
-		}
-		case KEY_PAGE_DOWN:
-		{
-			options.nn.config.threshold -= 0.1;
-			if (options.nn.config.threshold < 0.01)
-			{
-				options.nn.config.threshold = 0.001; // not a typo, allow the lower limit to be 0.1%
-			}
-			set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.nn.config.threshold * 100.0)) + "%");
-			break;
-		}
-		case KEY_p:
-		{
-			options.in_slideshow = not options.in_slideshow;
-			// don't increment the image index, stay on this image
-			break;
-		}
-		default:
-		{
-			options.file_index ++;
-			break;
-		}
+		set_msg(options, "decreased threshold: " + std::to_string((int)std::round(options.nn.config.threshold * 100.0)) + "%");
+	}
+	else
+	{
+		std::cout << "KEY=0x" << std::hex << key << std::dec << std::endl;
+		options.file_index ++;
 	}
 
 	return;
