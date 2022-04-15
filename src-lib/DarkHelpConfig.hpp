@@ -116,6 +116,9 @@ namespace DarkHelp
 			 * -------------------------------------|------
 			 * @p names_include_percentage=true		| @image html include_percentage_true.png
 			 * @p names_include_percentage=false	| @image html include_percentage_false.png
+			 *
+			 * @see @ref auto_hide_labels
+			 * @see @ref annotation_suppress_all_labels
 			 */
 			bool names_include_percentage;
 
@@ -131,8 +134,21 @@ namespace DarkHelp
 			 * -----------------------------|------
 			 * @p auto_hide_labels=true		| @image html auto_hide_labels_true.png
 			 * @p auto_hide_labels=false	| @image html auto_hide_labels_false.png
+			 *
+			 * @see @ref names_include_percentage
+			 * @see @ref annotation_suppress_all_labels
 			 */
 			bool annotation_auto_hide_labels;
+
+			/** Completely skip drawing any labels when annotating images.  Defaults to @p false.
+			 *
+			 * @since 2022-04-14
+			 *
+			 * @see @ref annotation_auto_hide_labels
+			 * @see @ref names_include_percentage
+			 * @see @ref annotation_line_thickness
+			 */
+			bool annotation_suppress_all_labels;
 
 			/** Determines the amount of "shade" used when drawing the prediction rectangles.  When set to zero, the rectangles
 			 * are not shaded.  When set to 1.0, prediction recangles are completely filled.  Values in between are semi-transparent.
@@ -161,7 +177,7 @@ namespace DarkHelp
 
 			/** The colours to use in @ref DarkHelp::NN::annotate().  Defaults to @ref DarkHelp::get_default_annotation_colours().
 			 *
-			 * Remember that OpenCV uses BGR, not RGB.  So pure red is @p "(0, 0, 255)".
+			 * Remember that OpenCV uses @p BGR, not @p RGB.  For example, pure red is @p "(0, 0, 255)".
 			 */
 			VColours annotation_colours;
 
@@ -174,7 +190,11 @@ namespace DarkHelp
 			/// Thickness of the font in @ref DarkHelp::NN::annotate().  Defaults to @p 1.
 			int annotation_font_thickness;
 
-			/// Thickness of the lines to draw in @ref DarkHelp::NN::annotate().  Defaults to @p 2.
+			/** Thickness of the lines to draw in @ref DarkHelp::NN::annotate().  Annotations will not be drawn
+			 * if this is set to @p 0 (zero).  Defaults to @p 2.
+			 *
+			 * @see @ref annotation_suppress_all_labels
+			 */
 			int annotation_line_thickness;
 
 			/** If set to @p true then @ref DarkHelp::NN::annotate() will call @ref DarkHelp::NN::duration_string() and display

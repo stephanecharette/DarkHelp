@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.16-1	| 2022-04-14	| Added @ref DarkHelp::Config::annotation_suppress_all_labels to completely hide labels.
 1.4.15-1	| 2022-04-02	| Attempt to fix (simplify?) rather opaque cv::waitKeyEx() which was no longer working on my system.
 1.4.14-1	| 2022-03-24	| Exception will now be thrown if a blank line is detected within the .names file since that causes darknet to hang in some situations.
 1.4.12-1	| 2022-02-15	| Added @ref DarkHelp::Config::snapping_limit_shrink and @ref DarkHelp::Config::snapping_limit_grow.

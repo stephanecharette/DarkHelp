@@ -36,7 +36,7 @@ DarkHelp -a 640x480 -s barcodetest.cfg barcodetest_final.weights barcodetest.nam
 DarkHelp -j -t 0.5 barcodetest.cfg barcodetest_best.weights barcodetest.names *.jpg
 ~~~~
 
-In addition to command-line arguments, there are several keys you can use in the viewer.  They are:
+In addition to command-line arguments, there are several keys you can use in the viewer.  Some of which are:
 
 @li @p q or @p ESC to exit from the viewer.
 @li @p t to toggle image tiling (see @ref Tiling)
@@ -50,6 +50,8 @@ In addition to command-line arguments, there are several keys you can use in the
 @li @p PAGE-DOWN decrease the threshold
 @li @p g to toggle greyscale images
 @li @p p to pause or play the slideshow
+
+Press @p h in %DarkHelp to show the help page with all the keyboard shortcuts.
 
 Also see:
 - @subpage Parameters

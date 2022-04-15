@@ -203,7 +203,7 @@ void show_help_window()
 		{ "c"			, "Combine predictions."			},
 		{ "d"			, "Toggle snapping."				},
 		{ "h"			, "Show help."						},
-		{ "l"			, "Toggle labels."					},
+		{ "l"			, "Toggle label display."			},
 		{ "t"			, "Toggle image tiling."			},
 		{ "u"			, "Toggle duration."				},
 		{ "w"			, "Write image to disk."			},
@@ -469,6 +469,7 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> hierarchy			("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> image_type			("Y", "type"		, "The image type to use when --keep has also been enabled. Can be \"png\" or \"jpg\". Default is \"png\"."	, false, "png"		, &image_type_constraint, cli);
 	TCLAP::ValueArg<std::string> out_dir			("", "outdir"		, "Output directory to use when --keep has also been enabled. Default is /tmp/."							, false, ""			, &dir_exist_constraint	, cli);
+	TCLAP::SwitchArg suppress						("", "suppress"		, "Suppress all labels (bounding boxes are shown, but not the labels at the top of each bounding box)."													, cli, false );
 	TCLAP::ValueArg<std::string> tile_edge			("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> tile_rect			("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint		, cli);
 	TCLAP::UnlabeledValueArg<std::string> cfg		("config"			, "The darknet config filename, usually ends in \".cfg\"."													, true	, ""		, &file_exist_constraint, cli);
@@ -620,6 +621,13 @@ void init(Options & options, int argc, char *argv[])
 	options.nn.config.tile_edge_factor					= std::stof(tile_edge.getValue());
 	options.nn.config.tile_rect_factor					= std::stof(tile_rect.getValue());
 	options.nn.config.snapping_enabled					= get_bool(snapping);
+
+	if (suppress.isSet())
+	{
+		// user doesn't want labels, so assume they also want thin lines
+		options.nn.config.annotation_suppress_all_labels	= true;
+		options.nn.config.annotation_line_thickness			= 1;
+	}
 
 	options.force_greyscale								= greyscale.getValue();
 	options.json["settings"]["driver"]					= driver.getValue();
@@ -1175,8 +1183,22 @@ void process_image(Options & options)
 	}
 	else if (key_simple == KEY_l)
 	{
-		options.nn.config.annotation_auto_hide_labels = ! options.nn.config.annotation_auto_hide_labels;
-		set_msg(options, "auto-labels has been turned " + std::string(options.nn.config.annotation_auto_hide_labels ? "on" : "off"));
+		if (options.nn.config.annotation_suppress_all_labels)
+		{
+			options.nn.config.annotation_suppress_all_labels = false;
+			options.nn.config.annotation_auto_hide_labels = false;
+			set_msg(options, "showing all labels");
+		}
+		else if (options.nn.config.annotation_auto_hide_labels == false)
+		{
+			options.nn.config.annotation_auto_hide_labels = true;
+			set_msg(options, "auto-hide labels has been enabled");
+		}
+		else
+		{
+			options.nn.config.annotation_suppress_all_labels = true;
+			set_msg(options, "suppressing all labels");
+		}
 	}
 	else if (key_simple == KEY_s)
 	{

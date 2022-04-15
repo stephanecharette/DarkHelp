@@ -64,6 +64,7 @@ DarkHelp::Config & DarkHelp::Config::reset()
 	annotation_colours					= DarkHelp::get_default_annotation_colours();
 	sort_predictions					= ESort::kAscending;
 	annotation_auto_hide_labels			= true;
+	annotation_suppress_all_labels		= false;
 	annotation_shade_predictions		= 0.25;
 	enable_debug						= false;
 	enable_tiles						= false;

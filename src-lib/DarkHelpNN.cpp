@@ -681,6 +681,11 @@ cv::Mat DarkHelp::NN::annotate(const float new_threshold)
 //			std::cout << "class id=" << pred.best_class << ", probability=" << pred.best_probability << ", point=(" << pred.rect.x << "," << pred.rect.y << "), name=\"" << pred.name << "\", duration=" << duration_string() << std::endl;
 			cv::rectangle(annotated_image, pred.rect, colour, line_thickness_or_fill);
 
+			if (config.annotation_suppress_all_labels)
+			{
+				continue;
+			}
+
 			int baseline = 0;
 			const cv::Size text_size = cv::getTextSize(pred.name, config.annotation_font_face, config.annotation_font_scale, config.annotation_font_thickness, &baseline);
 
