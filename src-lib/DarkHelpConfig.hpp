@@ -117,7 +117,7 @@ namespace DarkHelp
 			 * @p names_include_percentage=true		| @image html include_percentage_true.png
 			 * @p names_include_percentage=false	| @image html include_percentage_false.png
 			 *
-			 * @see @ref auto_hide_labels
+			 * @see @ref annotation_auto_hide_labels
 			 * @see @ref annotation_suppress_all_labels
 			 */
 			bool names_include_percentage;
