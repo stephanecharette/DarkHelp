@@ -573,18 +573,18 @@ void init(Options & options, int argc, char *argv[])
 
 	if (options.neural_network_name.empty())
 	{
-		const auto cfg		= std::filesystem::path(options.cfg_fn		);
-		const auto weights	= std::filesystem::path(options.weights_fn	);
+		const auto cfg_fn		= std::filesystem::path(options.cfg_fn		);
+		const auto weights_fn	= std::filesystem::path(options.weights_fn	);
 
-		if (weights.stem().string().find(cfg.stem()) != std::string::npos)
+		if (weights_fn.stem().string().find(cfg_fn.stem().string()) != std::string::npos)
 		{
 			// the cfg and the weights have similar names, so we only need to specify 1 file
-			options.neural_network_name = weights.filename().string();
+			options.neural_network_name = weights_fn.filename().string();
 		}
 		else
 		{
 			// the cfg and the weights have completely different names
-			options.neural_network_name = cfg.filename().string() + "+" + weights.filename().string();
+			options.neural_network_name = cfg_fn.filename().string() + "+" + weights_fn.filename().string();
 		}
 	}
 
