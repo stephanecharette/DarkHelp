@@ -1272,8 +1272,10 @@ DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 		binary_inverted_image = ~ threshold;
 	}
 
-	const auto original_rect = pred.rect;
-	auto final_rect = original_rect;
+	const auto original_rect	= pred.rect;
+	const float original_area	= original_rect.area();
+	auto final_rect				= original_rect;
+	bool use_snap				= true;
 
 	if (config.snapping_limit_shrink < 1.0f and config.snapping_limit_grow > 1.0f)
 	{
@@ -1352,18 +1354,29 @@ DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 		}
 		else
 		{
+			// rectangle is still growing
+			final_rect = new_rect;
 			attempt = 0;
-		}
 
-		final_rect = new_rect;
+			// Have we grown beyond the limit of what we'd accept?
+			// If so, then stop now, no use in trying to grow more.
+			if (config.snapping_limit_grow >= 1.0f)
+			{
+				const float new_area	= new_rect.area();
+				const float snap_factor	= new_area / original_area;
+				if (snap_factor > config.snapping_limit_grow)
+				{
+					use_snap = false;
+					break;
+				}
+			}
+		}
 	}
 
-	if (final_rect != original_rect and final_rect.width >= 10 and final_rect.height >= 10)
+	if (use_snap and final_rect != original_rect and final_rect.width >= 10 and final_rect.height >= 10)
 	{
-		const float old_area	= original_rect.area();
 		const float new_area	= final_rect.area();
-		const float snap_factor	= new_area / old_area;
-		bool use_snap			= true;
+		const float snap_factor	= new_area / original_area;
 
 		if (config.snapping_limit_shrink > 0.0f and snap_factor < config.snapping_limit_shrink)
 		{
