@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.19-1	| 2022-06-24	| Added RoI to DarkHelp Server.
 1.4.18-1	| 2022-04-25	| Make snapping run much faster (detects when a snap is growing out of control).
 1.4.16-1	| 2022-04-14	| Added @ref DarkHelp::Config::annotation_suppress_all_labels to completely hide labels.
 1.4.15-1	| 2022-04-02	| Attempt to fix (simplify?) rather opaque cv::waitKeyEx() which was no longer working on my system.

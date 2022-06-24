@@ -11,6 +11,15 @@
 #include "json.hpp"
 #include "filesystem.hpp"
 
+size_t total_number_of_images_processed	= 0;
+bool crop_and_save_detected_objects		= false;
+bool save_annotated_image				= false;
+bool save_txt_annotations				= false;
+bool save_json_results					= false;
+bool apply_roi							= false;
+auto last_activity						= std::chrono::high_resolution_clock::now();
+std::vector<cv::Rect> roi_rectangles;
+std::filesystem::path roi_fn;
 std::vector<std::string> messages;
 
 
@@ -69,6 +78,8 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["server"]["settings"]["camera"]["height"							] = 480;
 	j["darkhelp"]["server"]["settings"]["camera"]["fps"								] = 30;
 	j["darkhelp"]["server"]["settings"]["camera"]["buffersize"						] = 2;
+
+	j["darkhelp"]["server"]["settings"]["apply_roi"									] = false;
 
 	return j;
 }
@@ -175,12 +186,45 @@ nlohmann::json merge(const nlohmann::json & lhs, const nlohmann::json & rhs)
 }
 
 
-size_t total_number_of_images_processed	= 0;
-bool crop_and_save_detected_objects		= false;
-bool save_annotated_image				= false;
-bool save_txt_annotations				= false;
-bool save_json_results					= false;
-auto last_activity						= std::chrono::high_resolution_clock::now();
+void load_roi(const std::filesystem::path & src)
+{
+	if (apply_roi == false)
+	{
+		return;
+	}
+
+	roi_rectangles.clear();
+
+	roi_fn = std::filesystem::path(src).replace_extension(".roi");
+	if (std::filesystem::exists(roi_fn) == false)
+	{
+		roi_fn.clear();
+		return;
+	}
+
+	std::ifstream ifs(roi_fn);
+	while (ifs.good())
+	{
+		int x = -1;
+		int y = -1;
+		int w = -1;
+		int h = -1;
+		ifs >> x >> y >> w >> h;
+
+		if (x >= 0 and y >= 0 and w > 0 and h > 0)
+		{
+			roi_rectangles.emplace_back(cv::Rect(x, y, w, h));
+		}
+	}
+
+	std::cout << "Number of RoI defined in " << roi_fn << ": " << roi_rectangles.size() << std::endl;
+	for (const auto & r : roi_rectangles)
+	{
+		std::cout << "-> " << r << std::endl;
+	}
+
+	return;
+}
 
 
 void process_image(DarkHelp::NN & nn, cv::Mat & mat, const std::string & stem)
@@ -201,7 +245,13 @@ void process_image(DarkHelp::NN & nn, cv::Mat & mat, const std::string & stem)
 	if (save_annotated_image)
 	{
 		annotated_filename = stem + "_annotated.jpg";
-		cv::imwrite(annotated_filename, nn.annotate(), {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
+		auto annotated_image = nn.annotate();
+		for (const auto & r : roi_rectangles)
+		{
+			cv::rectangle(annotated_image, r, cv::Scalar(0, 255, 0));
+			cv::rectangle(annotated_image, cv::Point(r.x - 1, r.y - 1), cv::Point(r.x + r.width + 1, r.y + r.height + 1), cv::Scalar(0, 0, 255));
+		}
+		cv::imwrite(annotated_filename, annotated_image, {cv::ImwriteFlags::IMWRITE_JPEG_QUALITY, 70});
 	}
 
 	std::string txt_filename;
@@ -284,6 +334,27 @@ void process_image(DarkHelp::NN & nn, cv::Mat & mat, const std::string & stem)
 				j["all_probabilities"][prop_count]["name"			] = nn.names[prop.first];
 				prop_count ++;
 			}
+
+			if (apply_roi)
+			{
+				bool roi_found = false;
+				for (const auto & r : roi_rectangles)
+				{
+					const cv::Rect intersection = (r & pred.rect);
+					if (intersection.empty() == false)
+					{
+						// the object detected is in a RoI, so remember this rectangle
+						j["roi"]["x"]				= r.x;
+						j["roi"]["y"]				= r.y;
+						j["roi"]["width"]			= r.width;
+						j["roi"]["height"]			= r.height;
+						roi_found = true;
+						break;
+					}
+				}
+
+				j["detection_is_in_roi"] = roi_found;
+			}
 		}
 
 		std::ofstream ofs(stem + ".json");
@@ -331,6 +402,7 @@ void server(DarkHelp::NN & nn, const nlohmann::json & j)
 	save_annotated_image								= server_settings["save_annotated_image"			];
 	save_txt_annotations								= server_settings["save_txt_annotations"			];
 	save_json_results									= server_settings["save_json_results"				];
+	apply_roi											= server_settings["apply_roi"						] ;
 	const bool save_original_image						= server_settings["camera"]["save_original_image"	];
 
 	cv::VideoCapture cap;
@@ -420,16 +492,35 @@ void server(DarkHelp::NN & nn, const nlohmann::json & j)
 
 			if (dir_iter != std::filesystem::directory_iterator())
 			{
-				const auto & entry = *dir_iter;
+				auto src = dir_iter->path();
+				dir_iter ++;
 
-				auto src = entry.path();
+				if (std::filesystem::exists(src) == false)
+				{
+					// file has since been deleted -- nothing we can do but move on
+					if (src.extension() != ".roi")
+					{
+						std::cout << "skipping (no longer exists?): " << src << std::endl;
+					}
+					continue;
+				}
+
 				std::cout << "-> [" << total_number_of_images_processed << "] " << src.string() << std::endl;
-				const auto dst = output_dir / src.filename();
+				auto dst = output_dir / src.filename();
 				dst_stem = (output_dir / src.stem()).string();
-				mat = cv::imread(src.string());
+				mat = cv::imread(src);
 
 				std::filesystem::rename(src, dst);
-				dir_iter ++;
+
+				if (apply_roi)
+				{
+					load_roi(src);
+					if (not roi_fn.empty())
+					{
+						dst.replace_extension(".roi");
+						std::filesystem::rename(roi_fn, dst);
+					}
+				}
 			}
 		}
 
