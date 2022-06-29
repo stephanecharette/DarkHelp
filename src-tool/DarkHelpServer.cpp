@@ -341,7 +341,7 @@ void process_image(DarkHelp::NN & nn, cv::Mat & mat, const std::string & stem)
 				for (const auto & r : roi_rectangles)
 				{
 					const cv::Rect intersection = (r & pred.rect);
-					if (intersection.empty() == false)
+					if (intersection.area() > 0.0f)
 					{
 						// the object detected is in a RoI, so remember this rectangle
 						j["roi"]["x"]				= r.x;
@@ -508,7 +508,7 @@ void server(DarkHelp::NN & nn, const nlohmann::json & j)
 				std::cout << "-> [" << total_number_of_images_processed << "] " << src.string() << std::endl;
 				auto dst = output_dir / src.filename();
 				dst_stem = (output_dir / src.stem()).string();
-				mat = cv::imread(src);
+				mat = cv::imread(src.string());
 
 				std::filesystem::rename(src, dst);
 
