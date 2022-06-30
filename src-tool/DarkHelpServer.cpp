@@ -508,7 +508,23 @@ void server(DarkHelp::NN & nn, const nlohmann::json & j)
 				std::cout << "-> [" << total_number_of_images_processed << "] " << src.string() << std::endl;
 				auto dst = output_dir / src.filename();
 				dst_stem = (output_dir / src.stem()).string();
-				mat = cv::imread(src.string());
+
+				// on older versions of OpenCV, such as the one from Ubuntu 18.04,
+				// cv::imread() will throw instead of returning an empty cv::mat
+				try
+				{
+					mat = cv::imread(src.string());
+				}
+				catch (...)
+				{
+//					std::cout << "failed to load image " << src << std::endl;
+				}
+
+				if (mat.empty())
+				{
+					// maybe this is a .roi file?  loop back to the top and see if we can find the image
+					continue;
+				}
 
 				std::filesystem::rename(src, dst);
 
