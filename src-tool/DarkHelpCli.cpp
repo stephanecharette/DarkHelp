@@ -469,6 +469,7 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> hierarchy			("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> image_type			("Y", "type"		, "The image type to use when --keep has also been enabled. Can be \"png\" or \"jpg\". Default is \"png\"."	, false, "png"		, &image_type_constraint, cli);
 	TCLAP::ValueArg<std::string> out_dir			("", "outdir"		, "Output directory to use when --keep has also been enabled. Default is /tmp/."							, false, ""			, &dir_exist_constraint	, cli);
+	TCLAP::ValueArg<std::string> pixelate			("", "pixelate"		, "Determines if predictions are pixelated in the output annotation image. Default is false."				, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::SwitchArg suppress						("", "suppress"		, "Suppress all labels (bounding boxes are shown, but not the labels at the top of each bounding box)."													, cli, false );
 	TCLAP::ValueArg<std::string> tile_edge			("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> tile_rect			("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint		, cli);
@@ -621,6 +622,7 @@ void init(Options & options, int argc, char *argv[])
 	options.nn.config.tile_edge_factor					= std::stof(tile_edge.getValue());
 	options.nn.config.tile_rect_factor					= std::stof(tile_rect.getValue());
 	options.nn.config.snapping_enabled					= get_bool(snapping);
+	options.nn.config.annotation_pixelate_enabled		= get_bool(pixelate);
 
 	if (suppress.isSet())
 	{
@@ -1029,6 +1031,7 @@ void process_image(Options & options)
 	if (options.keep_annotated_images or options.use_json_output == false)
 	{
 		output_image = options.nn.annotate();
+
 		if (options.size2_is_set)
 		{
 			std::cout << "-> resizing output image from " << output_image.cols << "x" << output_image.rows << " to " << options.size2.width << "x" << options.size2.height << std::endl;

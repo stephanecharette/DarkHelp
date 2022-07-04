@@ -214,6 +214,56 @@ namespace DarkHelp
 			 */
 			bool annotation_include_timestamp;
 
+			/** If set to @p true then @ref DarkHelp::NN::annotate() will call @ref DarkHelp::pixelate_rectangles() to pixelate
+			 * the predictions in the output image.
+			 *
+			 * @see @ref DarkHelp::Config::annotation_pixelate_size
+			 * @see @ref DarkHelp::Config::annotation_pixelate_classes
+			 * @see @ref DarkHelp::pixelate_rectangle()
+			 *
+			 * @since 2022-07-04
+			 */
+			bool annotation_pixelate_enabled;
+
+			/** The size of the pixelation cell when calling @ref DarkHelp::pixelate_rectangles().  This is only used when
+			 * @ref annotation_pixelate_enabled has also been set to @p true.  The size must be @p >=5, otherwise pixelation
+			 * will be ignored.
+			 *
+			 * Setting																	| Image
+			 * -------------------------------------------------------------------------|------
+			 * @p annotation_pixelate_enabled=false										| @image html pixelate_off.png
+			 * @p annotation_pixelate_enabled=true <br/>@p annotation_pixelate_size=5	| @image html pixelate_size_05.png
+			 * @p annotation_pixelate_enabled=true <br/>@p annotation_pixelate_size=15	| @image html pixelate_size_15.png
+			 * @p annotation_pixelate_enabled=true <br/>@p annotation_pixelate_size=25	| @image html pixelate_size_25.png
+			 *
+			 * @since 2022-07-04
+			 */
+			int annotation_pixelate_size;
+
+			/** This can be used to control which classes are pixelated when @ref annotation_pixelate_enabled has been toggled.
+			 *
+			 * By default if pixelation has been enabled then @em all predictions from @em all classes are pixelated.  If only
+			 * some classes should be pixelated, then the class IDs can be added to this set.
+			 *
+			 * For example, say your classes are:
+			 *
+			 * @li vehicle
+			 * @li person
+			 * @li stop sign
+			 *
+			 * If you only want @p people to be pixelated, then you'd add @p 1 to this set:
+			 * ~~~~
+			 * DarkHelp::NN nn(...);
+			 * nn.config.annotation_pixelate_classes.insert(1);
+			 * ~~~~
+			 * (Classes are always zero-based, so @p vehicle would be class #0 and @p person would be class #1.)
+			 *
+			 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
+			 *
+			 * @since 2022-07-04
+			 */
+			std::set<int> annotation_pixelate_classes;
+
 			/** Darknet sometimes will return values that are out-of-bound, especially when working with low thresholds.
 			 * For example, the @p X or @p Y coordinates might be less than zero, or the @p width and @p height might extend
 			 * beyond the edges of the image.  When @p %fix_out_of_bound_values is set to @p true (the default) then the

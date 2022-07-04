@@ -646,6 +646,11 @@ cv::Mat DarkHelp::NN::annotate(const float new_threshold)
 
 	annotated_image = original_image.clone();
 
+	if (config.annotation_pixelate_enabled)
+	{
+		pixelate_rectangles(original_image, annotated_image, prediction_results, config.annotation_pixelate_classes, config.annotation_pixelate_size);
+	}
+
 	// make sure we always have colours we can use
 	if (config.annotation_colours.empty())
 	{

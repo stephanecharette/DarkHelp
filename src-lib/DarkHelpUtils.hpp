@@ -188,4 +188,47 @@ namespace DarkHelp
 	 */
 	cv::Mat convert_darknet_image_to_opencv_mat(const image img);
 #endif
- };
+
+	/** Pixelate all of the predictions.
+	 * @see @ref DarkHelp::pixelate_rectangle()
+	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
+	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 */
+	void pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const PredictionResults & prediction_results, const int size = 15);
+
+	/** Pixelate only the predictions where the class ID matches a value in the class filter.
+	 * If the class filter is empty then this will pixelate all predictions.
+	 *
+	 * @see @ref DarkHelp::pixelate_rectangle()
+	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
+	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 * @see @ref DarkHelp::Config::annotation_pixelate_classes
+	 */
+	void pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const PredictionResults & prediction_results, const std::set<int> & class_filter, const int size = 15);
+
+	/** Pixelate all of the rectangles.
+	 * @see @ref DarkHelp::pixelate_rectangle()
+	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
+	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 */
+	void pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const VRect & rects, const int size = 15);
+
+	/** Pixelate the given rectangle.
+	 *
+	 * This will copy the @p src image to @p dst prior to pixelating if the two images are not the same size.
+	 *
+	 * The @p size determines the width and height of the cells that will be used to pixelate the rectangle.
+	 * If @p size is less than @p 5, no pixelation will take place.
+	 *
+	 * Setting																	| Image
+	 * -------------------------------------------------------------------------|------
+	 * @p annotation_pixelate_enabled=false										| @image html pixelate_off.png
+	 * @p annotation_pixelate_enabled=true <br/>@p annotation_pixelate_size=5	| @image html pixelate_size_05.png
+	 * @p annotation_pixelate_enabled=true <br/>@p annotation_pixelate_size=15	| @image html pixelate_size_15.png
+	 * @p annotation_pixelate_enabled=true <br/>@p annotation_pixelate_size=25	| @image html pixelate_size_25.png
+	 *
+	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
+	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 */
+	void pixelate_rectangle(const cv::Mat & src, cv::Mat & dst, const cv::Rect & r, const int size = 15);
+};

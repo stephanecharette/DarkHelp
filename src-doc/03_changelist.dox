@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.22-1	| 2022-07-04	| Options to pixelate prediction results has been added.  @ref DarkHelp::Config::annotation_pixelate_enabled
 1.4.19-1	| 2022-06-24	| Added RoI to DarkHelp Server.
 1.4.18-1	| 2022-04-25	| Make snapping run much faster (detects when a snap is growing out of control).
 1.4.16-1	| 2022-04-14	| Added @ref DarkHelp::Config::annotation_suppress_all_labels to completely hide labels.

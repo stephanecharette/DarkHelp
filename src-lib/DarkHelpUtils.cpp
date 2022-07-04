@@ -704,3 +704,140 @@ std::string DarkHelp::yolo_save_annotations(const std::string & filename, const 
 
 	return annotation_filename;
 }
+
+
+void DarkHelp::pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const PredictionResults & prediction_results, const int size)
+{
+	for (const auto & p : prediction_results)
+	{
+		pixelate_rectangle(src, dst, p.rect, size);
+	}
+
+	return;
+}
+
+
+void DarkHelp::pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const PredictionResults & prediction_results, const std::set<int> & class_filter, const int size)
+{
+	for (const auto & p : prediction_results)
+	{
+		if (class_filter.empty() or class_filter.count(p.best_class) > 0)
+		{
+			pixelate_rectangle(src, dst, p.rect, size);
+		}
+	}
+
+	return;
+}
+
+
+void DarkHelp::pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const VRect & rects, const int size)
+{
+	for (const auto & r : rects)
+	{
+		pixelate_rectangle(src, dst, r, size);
+	}
+
+	return;
+}
+
+
+void DarkHelp::pixelate_rectangle(const cv::Mat & src, cv::Mat & dst, const cv::Rect & r, const int size)
+{
+	if (src.empty()					or
+		r.area() <= 0				or
+		r.x < 0						or
+		r.y < 0						or
+		r.x + r.width	> src.cols	or
+		r.y + r.height	> src.rows	or
+		size < 5)
+	{
+		return;
+	}
+
+	if (dst.size() != src.size())
+	{
+		dst = src.clone();
+	}
+
+	// if the rectangle is too big, then we need to split it up into smaller pieces we call "cells"
+	if (r.width >= (size * 2) or r.height >= (size * 2))
+	{
+		const float cell_cols	= std::ceil(r.width		/ static_cast<float>(size));
+		const float cell_rows	= std::ceil(r.height	/ static_cast<float>(size));
+		const float cell_width	= r.width	/ cell_cols;
+		const float cell_height	= r.height	/ cell_rows;
+
+		for (int y = 0; y < cell_rows; y ++)
+		{
+			for (int x = 0; x < cell_cols; x ++)
+			{
+				cv::Rect cell;
+				cell.x		= std::floor(r.x + x * cell_width);
+				cell.y		= std::floor(r.y + y * cell_height);
+				cell.width	= std::ceil(cell_width);
+				cell.height	= std::ceil(cell_height);
+
+				pixelate_rectangle(src, dst, cell, size);
+			}
+		}
+
+		return;
+	}
+
+	// get the dominant colour (not the average!) within this square
+	struct comp
+	{
+		bool operator() (const cv::Scalar & lhs, const cv::Scalar & rhs) const
+		{
+			for (size_t idx = 0; idx < 4; idx ++)
+			{
+				if (lhs[idx] != rhs[idx])
+				{
+					return lhs[idx] < rhs[idx];
+				}
+			}
+
+			return false;
+		}
+	};
+	std::map<cv::Scalar, std::size_t, comp> m;
+
+	// the larger the bucket, the more we'll combine colours together
+	const float bucket = 4.0f;
+
+	for (int row = r.y; row < r.y + r.height; row ++)
+	{
+		auto ptr = src.ptr(row);
+
+		for (int col = r.x; col < r.x + r.width; col ++)
+		{
+			cv::Scalar colour;
+			for (int i = 0; i < 3; i ++)
+			{
+				colour[i] = std::min(255.0f, std::round(ptr[3 * col + i] / bucket) * bucket);
+			}
+
+			m[colour] ++;
+		}
+	}
+
+	// look through the map to see which colour is used the most
+	cv::Scalar colour;
+	size_t count = 0;
+	for (auto iter : m)
+	{
+		const cv::Scalar & first	= iter.first;
+		const size_t & second		= iter.second;
+
+		if (second > count)
+		{
+			count = second;
+			colour = first;
+		}
+	}
+
+	dst(r) = colour;
+
+	return;
+}

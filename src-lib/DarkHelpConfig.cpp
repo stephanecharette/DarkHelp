@@ -58,6 +58,9 @@ DarkHelp::Config & DarkHelp::Config::reset()
 	annotation_line_thickness			= 2;
 	annotation_include_duration			= true;
 	annotation_include_timestamp		= false;
+	annotation_pixelate_enabled			= false;
+	annotation_pixelate_size			= 15;
+	annotation_pixelate_classes			.clear();
 	names_include_percentage			= true;
 	include_all_names					= true;
 	fix_out_of_bound_values				= true;
