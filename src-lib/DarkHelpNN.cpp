@@ -324,6 +324,27 @@ DarkHelp::NN & DarkHelp::NN::clear()
 }
 
 
+bool DarkHelp::NN::is_initialized() const
+{
+	if (config.driver == EDriver::kDarknet and darknet_net == nullptr)
+	{
+		return false;
+	}
+
+	if (names.empty())
+	{
+		return false;
+	}
+
+	if (network_dimensions.area() <= 0)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
 bool DarkHelp::NN::empty() const
 {
 	return prediction_results.empty() and original_image.empty();

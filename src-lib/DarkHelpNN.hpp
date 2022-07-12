@@ -110,11 +110,30 @@ namespace DarkHelp
 
 			/** Clear out the images and the predictions stored internally within this object.  This makes it seem as if the
 			 * @p NN object has not yet been used to process any images.  Unlike @ref reset(), this does not change any settings,
-			 * it only clears the images and the predictions.
+			 * it only clears the images and the predictions.  If a neural network has been loaded, calling @p clear() does not
+			 * unload that neural network, and @ref is_initialized() will continue to return @p true.
 			 *
-			 * Calling this method is not necessary, but is included for completeness.
+			 * Calling this method between images is not necessary, but is included for completeness.
 			 */
 			NN & clear();
+
+			/** Determines if a neural network has been loaded.
+			 *
+			 * For example:
+			 * @li When a @p NN object has been created with the default constructor, @p is_initialized() returns @p false.
+			 * @li Once @ref init() has been called, @p is_initialized() returns @p true.
+			 * @li After @ref clear() has been called, @p is_initialized() would continue to return @p true.
+			 * @li After @ref reset() has been called, @p is_initialized() returns @p false.
+			 *
+			 * @see @ref empty()
+			 * @see @ref clear()
+			 *
+			 * @since 2022-07-12
+			 */
+			bool is_initialized() const;
+
+			/// Alias for @ref is_initialized().  Returns @p true if the neural network has been loaded.
+			bool is_loaded() const { return is_initialized(); }
 
 			/** Only returns @p true if both @ref original_image and @ref prediction_results are both empty.  This will only happen
 			 * in the following situations:
@@ -122,6 +141,9 @@ namespace DarkHelp
 			 * @li when a @ref NN object has been instantiated but @ref init() has not yet been called and no neural network is loaded
 			 * @li when a @ref NN object is initialized but no image has been processed
 			 * @li after @ref clear() has been called which results in the removal of internal images and predictions
+			 *
+			 * @see @ref is_initialized()
+			 * @see @ref clear()
 			 */
 			bool empty() const;
 
