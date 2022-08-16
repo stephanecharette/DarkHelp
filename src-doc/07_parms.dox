@@ -44,6 +44,7 @@ Short Name							| Long Name			| Description
 -Y &lt;jpg,png&gt;					| --type ...		| The file type %DarkHelp should use when saving image files.  @p PNG files are larger and slower to write.  @p JPG files are faster but use lossy compreesion.
 -y &lt;float&gt;					| --hierarchy ...	| The hierarchy threshold to use when predicting.  See @ref DarkHelp::Config::hierarchy_threshold for details.
 &nbsp;								| --outdir ...		| Output directory to use when saving files.  Default is /tmp/.
+&nbsp;								| --pixelate ...	| Determines if predictions are pixelated in the output annotation image.  See @ref DarkHelp::Config::annotation_pixelate_size for details.
 &nbsp;								| --tile-edge ...	| When tiling is enabled, this determines how close objects must be to the tile's edge to be re-combined.  Range is 0.01-1.0+. Default is 0.25.  See @ref DarkHelp::Config::tile_edge_factor for details.
 &nbsp;								| --tile-rect ...	| When tiling is enabled, this determines how similarly objects must line up across tiles to be re-combined.  Range is 1.0-2.0+. Default is 1.20.  See @ref DarkHelp::Config::tile_rect_factor for details.
 &nbsp;								| --version			| Display the version string.
