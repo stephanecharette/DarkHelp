@@ -470,6 +470,7 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> image_type			("Y", "type"		, "The image type to use when --keep has also been enabled. Can be \"png\" or \"jpg\". Default is \"png\"."	, false, "png"		, &image_type_constraint, cli);
 	TCLAP::ValueArg<std::string> out_dir			("", "outdir"		, "Output directory to use when --keep has also been enabled. Default is /tmp/."							, false, ""			, &dir_exist_constraint	, cli);
 	TCLAP::ValueArg<std::string> pixelate			("", "pixelate"		, "Determines if predictions are pixelated in the output annotation image. Default is false."				, false, "false"	, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> redirection		("", "redirection"	, "Determines if STDOUT and STDERR redirection will be performed when Darknet loads. Default is true."		, false, "true"		, &allowed_booleans		, cli);
 	TCLAP::SwitchArg suppress						("", "suppress"		, "Suppress all labels (bounding boxes are shown, but not the labels at the top of each bounding box)."													, cli, false );
 	TCLAP::ValueArg<std::string> tile_edge			("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> tile_rect			("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint		, cli);
@@ -566,10 +567,7 @@ void init(Options & options, int argc, char *argv[])
 		<< std::endl;
 
 	// we already verified the files several lines up, so no need to do it again
-	//
-	// WARNING:
-	// Don't bother trying to set any darkhelp options *prior* to this line,
-	// because calling init() causes reset() to be called!
+	options.nn.config.redirect_darknet_output = get_bool(redirection);
 	options.nn.init(options.cfg_fn, options.weights_fn, options.names_fn, false, darkhelp_driver);
 
 	if (options.neural_network_name.empty())
@@ -623,6 +621,7 @@ void init(Options & options, int argc, char *argv[])
 	options.nn.config.tile_rect_factor					= std::stof(tile_rect.getValue());
 	options.nn.config.snapping_enabled					= get_bool(snapping);
 	options.nn.config.annotation_pixelate_enabled		= get_bool(pixelate);
+	options.nn.config.redirect_darknet_output			= get_bool(redirection);
 
 	if (suppress.isSet())
 	{
@@ -641,6 +640,7 @@ void init(Options & options, int argc, char *argv[])
 	options.json["settings"]["keep_annotations"]		= options.keep_annotated_images;
 	options.json["settings"]["enable_tiles"]			= options.nn.config.enable_tiles;
 	options.json["settings"]["snapping"]				= options.nn.config.snapping_enabled;
+	options.json["settings"]["output_redirection"]		= options.nn.config.redirect_darknet_output;
 
 	if (resize1.isSet())
 	{

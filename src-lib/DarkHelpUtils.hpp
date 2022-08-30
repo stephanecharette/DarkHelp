@@ -242,10 +242,10 @@ namespace DarkHelp
 
 	/** Toggle STDOUT and STDERR output redirection.
 	 *
-	 * The first time this is called, both STDOUT and STDERR will be redirected to @p /dev/null (on Linux) or @p NUL: (on
-	 * Windows).  Then when called again, both STDOUT and STDERR should be restored to their original location.  This is
-	 * used to temporarily redirect the flood of output from Darknet when it loads the neural network.  This may be called
-	 * multiple times as necessary to toggle the state of redirection.
+	 * The first time this is called, both @p STDOUT and @p STDERR will be redirected to @p /dev/null (on Linux) or @p NUL:
+	 * (on Windows).  Then when called again, both @p STDOUT and @p STDERR should be restored to their original location.
+	 * This is used to temporarily redirect the flood of output from Darknet while it loads the neural network.  This may
+	 * be called multiple times as necessary to toggle the state of redirection.
 	 *
 	 * @see @ref DarkHelp::Config::redirect_darknet_output
 	 *

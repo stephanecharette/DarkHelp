@@ -554,9 +554,10 @@ namespace DarkHelp
 
 			/** Redirect Darknet output to @p /dev/null or @p NUL:.
 			 *
-			 * Darknet by default generates a lot of output on both STDOUT and STDERR on startup.  When this option is set to
-			 * @p true, DarkHelp will temporarily redirect both STDOUT and STDERR to discard that output while the network is
-			 * loading.  Once all the network layers are loaded, both STDOUT and STDERR are restored.  The default is @p true.
+			 * Darknet by default generates a lot of output on both @p STDOUT and @p STDERR at startup.  When this option is set
+			 * to @p true, DarkHelp will temporarily redirect both @p STDOUT and @p STDERR to discard that output while the network
+			 * is loading.  Once all the network layers are loaded, both @p STDOUT and @p STDERR are restored.
+			 * The default is @p true.
 			 *
 			 * @see @ref DarkHelp::toggle_output_redirection()
 			 *
