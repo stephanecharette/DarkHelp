@@ -7,11 +7,13 @@
 #include <regex>
 #include <sys/stat.h>
 
-#ifndef WIN32
-// needed for dup() and dup2() to redirect STDOUT and STDERR
+// dup(), dup2(), and open() needed to redirect STDOUT and STDERR
 #include <fcntl.h>
+#ifdef WIN32
+#pragma warning(disable: 4996)
+#include <io.h>
+#else
 #include <unistd.h>
-#define DARKHELP_CAN_REDIRECT_OUTPUT
 #endif
 
 #ifdef HAVE_OPENCV_CUDAWARPING
@@ -828,8 +830,6 @@ void DarkHelp::pixelate_rectangle(const cv::Mat & src, cv::Mat & dst, const cv::
 
 void DarkHelp::toggle_output_redirection()
 {
-	#ifdef DARKHELP_CAN_REDIRECT_OUTPUT
-
 	static int redirected_stdout	= -1;
 	static int redirected_stderr	= -1;
 	static int original_stdout		= -1;
@@ -845,8 +845,8 @@ void DarkHelp::toggle_output_redirection()
 
 		std::fflush(stdout);
 		std::fflush(stderr);
-		redirected_stdout	= open(null_device, O_WRONLY + O_APPEND, S_IWUSR);
-		redirected_stderr	= open(null_device, O_WRONLY + O_APPEND, S_IWUSR);
+		redirected_stdout	= open(null_device, O_WRONLY + O_APPEND);
+		redirected_stderr	= open(null_device, O_WRONLY + O_APPEND);
 		original_stdout		= dup(1);
 		original_stderr		= dup(2);
 		dup2(redirected_stdout, 1);
@@ -867,8 +867,6 @@ void DarkHelp::toggle_output_redirection()
 		original_stdout		= -1;
 		original_stderr		= -1;
 	}
-
-	#endif
 
 	return;
 }
