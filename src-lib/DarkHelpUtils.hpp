@@ -193,6 +193,8 @@ namespace DarkHelp
 	 * @see @ref DarkHelp::pixelate_rectangle()
 	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
 	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 *
+	 * @since 2022-07-04
 	 */
 	void pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const PredictionResults & prediction_results, const int size = 15);
 
@@ -203,6 +205,8 @@ namespace DarkHelp
 	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
 	 * @see @ref DarkHelp::Config::annotation_pixelate_size
 	 * @see @ref DarkHelp::Config::annotation_pixelate_classes
+	 *
+	 * @since 2022-07-04
 	 */
 	void pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const PredictionResults & prediction_results, const std::set<int> & class_filter, const int size = 15);
 
@@ -210,6 +214,8 @@ namespace DarkHelp
 	 * @see @ref DarkHelp::pixelate_rectangle()
 	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
 	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 *
+	 * @since 2022-07-04
 	 */
 	void pixelate_rectangles(const cv::Mat & src, cv::Mat & dst, const VRect & rects, const int size = 15);
 
@@ -229,6 +235,22 @@ namespace DarkHelp
 	 *
 	 * @see @ref DarkHelp::Config::annotation_pixelate_enabled
 	 * @see @ref DarkHelp::Config::annotation_pixelate_size
+	 *
+	 * @since 2022-07-04
 	 */
 	void pixelate_rectangle(const cv::Mat & src, cv::Mat & dst, const cv::Rect & r, const int size = 15);
+
+	/** Toggle STDOUT and STDERR output redirection.
+	 *
+	 * The first time this is called, both STDOUT and STDERR will be redirected to @p /dev/null (on Linux) or @p NUL: (on
+	 * Windows).  Then when called again, both STDOUT and STDERR should be restored to their original location.  This is
+	 * used to temporarily redirect the flood of output from Darknet when it loads the neural network.  This may be called
+	 * multiple times as necessary to toggle the state of redirection.
+	 *
+	 * @see @ref DarkHelp::Config::redirect_darknet_output
+	 *
+	 * @since 2022-08-30
+	 */
+	void toggle_output_redirection();
+
 };

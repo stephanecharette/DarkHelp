@@ -4,35 +4,18 @@
  */
 
 #include <DarkHelp.hpp>
-//#include <fstream>
 #include <regex>
-//#include <cmath>
-//#include <ctime>
 #include <sys/stat.h>
+
+#ifndef WIN32
+// needed for dup() and dup2() to redirect STDOUT and STDERR
+#include <fcntl.h>
+#include <unistd.h>
+#define DARKHELP_CAN_REDIRECT_OUTPUT
+#endif
 
 #ifdef HAVE_OPENCV_CUDAWARPING
 #include <opencv2/cudawarping.hpp>
-#endif
-
-
-#if 0
-/* OpenCV4 has renamed some common defines and placed them in the cv namespace.  Need to deal with this until older
- * versions of OpenCV are no longer in use.
- */
-#if 1 /// @todo remove this soon
-#ifndef CV_INTER_CUBIC
-#define CV_INTER_CUBIC cv::INTER_CUBIC
-#endif
-#ifndef CV_INTER_AREA
-#define CV_INTER_AREA cv::INTER_AREA
-#endif
-#ifndef CV_AA
-#define CV_AA cv::LINE_AA
-#endif
-#ifndef CV_FILLED
-#define CV_FILLED cv::FILLED
-#endif
-#endif
 #endif
 
 
@@ -838,6 +821,54 @@ void DarkHelp::pixelate_rectangle(const cv::Mat & src, cv::Mat & dst, const cv::
 	}
 
 	dst(r) = colour;
+
+	return;
+}
+
+
+void DarkHelp::toggle_output_redirection()
+{
+	#ifdef DARKHELP_CAN_REDIRECT_OUTPUT
+
+	static int redirected_stdout	= -1;
+	static int redirected_stderr	= -1;
+	static int original_stdout		= -1;
+	static int original_stderr		= -1;
+
+	if (original_stderr == -1)
+	{
+		#ifdef WIN32
+		const char * const null_device = "NUL:";
+		#else
+		const char * const null_device = "/dev/null";
+		#endif
+
+		std::fflush(stdout);
+		std::fflush(stderr);
+		redirected_stdout	= open(null_device, O_WRONLY + O_APPEND, S_IWUSR);
+		redirected_stderr	= open(null_device, O_WRONLY + O_APPEND, S_IWUSR);
+		original_stdout		= dup(1);
+		original_stderr		= dup(2);
+		dup2(redirected_stdout, 1);
+		dup2(redirected_stderr, 2);
+	}
+	else
+	{
+		// put everything back the way it was
+		std::fflush(stdout);
+		std::fflush(stderr);
+		dup2(original_stdout, 1);
+		dup2(original_stderr, 2);
+		close(redirected_stdout);
+		close(redirected_stderr);
+
+		redirected_stdout	= -1;
+		redirected_stderr	= -1;
+		original_stdout		= -1;
+		original_stderr		= -1;
+	}
+
+	#endif
 
 	return;
 }

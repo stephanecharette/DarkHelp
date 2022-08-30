@@ -551,5 +551,20 @@ namespace DarkHelp
 			 * @see @ref DarkHelp::Config::snapping_limit_shrink
 			 */
 			float snapping_limit_grow;
+
+			/** Redirect Darknet output to @p /dev/null.
+			 *
+			 * Darknet by default generates a lot of output on both STDOUT and STDERR on startup.  When this option is set to
+			 * @p true, DarkHelp will temporarily redirect both STDOUT and STDERR to @p /dev/null to discard that output while
+			 * the network is loading.  Once all the network layers are loaded, both STDOUT and STDERR are restored.
+			 * The default is @p true.
+			 *
+			 * @note This option does nothing on Windows.
+			 *
+			 * @see @ref DarkHelp::toggle_output_redirection()
+			 *
+			 * @since 2022-08-30
+			 */
+			bool redirect_darknet_output;
 	};
 }

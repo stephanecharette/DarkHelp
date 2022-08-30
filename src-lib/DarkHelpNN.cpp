@@ -170,7 +170,18 @@ DarkHelp::NN & DarkHelp::NN::init()
 	{
 		// The calls we make into darknet are based on what was found in test_detector() from src/detector.c.
 
+		if (config.redirect_darknet_output)
+		{
+			toggle_output_redirection();
+		}
+
 		darknet_net = load_network_custom(const_cast<char*>(config.cfg_filename.c_str()), const_cast<char*>(config.weights_filename.c_str()), 1, 1);
+
+		if (config.redirect_darknet_output)
+		{
+			toggle_output_redirection();
+		}
+
 		if (darknet_net == nullptr)
 		{
 			/// @throw std::runtime_error if the call to darknet's @p load_network_custom() has failed.
