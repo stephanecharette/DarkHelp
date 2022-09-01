@@ -289,9 +289,9 @@ namespace DarkHelp
 			 */
 			ESort sort_predictions;
 
-			/** This enables some non-specific debug functionality within the DarkHelp library.  The exact results of enabling
+			/** This enables some non-specific debug functionality within the %DarkHelp library.  The exact results of enabling
 			 * this is undocumented, and will change or may be completely removed without prior notice.  It is not meant for the
-			 * end-user, but instead is used for developers debugging DarkHelp and Darknet.  Default value is @p false.
+			 * end-user, but instead is used for developers debugging %DarkHelp and Darknet.  Default value is @p false.
 			 */
 			bool enable_debug;
 
@@ -555,7 +555,7 @@ namespace DarkHelp
 			/** Redirect Darknet output to @p /dev/null or @p NUL:.
 			 *
 			 * Darknet by default generates a lot of output on both @p STDOUT and @p STDERR at startup.  When this option is set
-			 * to @p true, DarkHelp will temporarily redirect both @p STDOUT and @p STDERR to discard that output while the network
+			 * to @p true, %DarkHelp will temporarily redirect both @p STDOUT and @p STDERR to discard that output while the network
 			 * is loading.  Once all the network layers are loaded, both @p STDOUT and @p STDERR are restored.
 			 * The default is @p true.
 			 *
