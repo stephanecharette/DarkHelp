@@ -1047,6 +1047,8 @@ void DarkHelp::NN::predict_internal_opencv()
 	throw std::runtime_error("OpenCV DNN driver is not supported with this version of OpenCV");
 	#else
 
+	const size_t number_of_classes = names.size();
+
 	cv::Mat resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
 	tile_size = network_dimensions;
 
@@ -1057,86 +1059,115 @@ void DarkHelp::NN::predict_internal_opencv()
 	auto blob = cv::dnn::blobFromImage(resized_image, 1.0 / 255.0, network_dimensions, {}, /* swapRB=*/true, /* crop=*/false);
 	opencv_net.setInput(blob);
 
-	/* The output mat is float and will have thousands of rows.  The fields are:
+	/* Get the names of all the layers we're interested in (should start with "yolo_").
+	 * This is important!  We're going to have to combine the results from all these layers.
+	 */
+	VStr yolo_layer_names;
+	for (const auto & name : opencv_net.getLayerNames())
+	{
+		if (name.find("yolo_") == 0)
+		{
+			yolo_layer_names.push_back(name);
+		}
+	}
+
+	/* The output mat is float and will have thousands of rows.
+	 * Each row has the following fields, each of which is a "float":
 	 *
 	 *		center x (0-1f)
 	 *		center y (0-1f)
 	 *		width (0-1f)
 	 *		hight (0-1f)
 	 *		objectness (0-1f)
+	 *		% class 1 (0-1f)
+	 *		% class 2 (0-1f)
+	 *		% class 3 ...etc...
 	 *
-	 * Then for every class, another field with the probability for that class.
+	 * For every class, another field with the probability for that class.
 	 */
-	cv::Mat output = opencv_net.forward();
-
-	const size_t number_of_classes = names.size();
+	std::vector<std::vector<cv::Mat>> output_mats;
+	opencv_net.forward(output_mats, yolo_layer_names);
 
 	/* To get the final output to behave/look as similar as we can to the original
 	 * darknet results, we'll need to refer back to the OpenCV results as we build
 	 * up the results vector.  For this reason, we need to know where in the matrix
-	 * to look up the individual results, so we'll use a map.
-	 *
-	 * KEY = the vector index
-	 * VAL = the zero-based row number in the output matrix
+	 * to look up the individual results.
 	 */
-	typedef std::map<int, int> MatMap;
+	struct Lookup
+	{
+		size_t	idx; // each of the YOLO layer will have an entry in "output_mats"
+		int		row; // cv::Mat rows is of type "int", not size_t
+	};
+	using VLookups = std::vector<Lookup>;
 
 	std::vector<VRect2d>	boxes	(number_of_classes);
 	std::vector<VFloat>		scores	(number_of_classes);
-	std::vector<MatMap>		mat_map	(number_of_classes);
+	std::vector<VLookups>	lookups	(number_of_classes);
 
-	for (int i = 0; i < output.rows; i++)
+	for (size_t output_idx = 0; output_idx < yolo_layer_names.size(); output_idx ++)
 	{
-		// get a pointer to the 1st float for this row, which we easily increment to get all the floats
-		const float * const ptr = output.ptr<float>(i);
-
-		if (ptr[4] >= 0.01f)
+		cv::Mat & output = output_mats[output_idx][0];
+		if (config.enable_debug)
 		{
-			if (config.enable_debug)
+			std::cout << "Layer \"" << yolo_layer_names[output_idx] << "\":" << std::endl;
+		}
+
+		for (int row = 0; row < output.rows; row ++)
+		{
+			// get a pointer to the 1st float for this row, which we easily increment to get all the floats
+			const float * const ptr = output.ptr<float>(row);
+
+			// [4] is the "objectness"
+			if (ptr[4] >= 0.01f)
 			{
-				std::cout << "i=" << std::setw(4) << i;
-				for (size_t offset = 0; offset < number_of_classes + 5; offset ++)
+				// *** DEBUG ***
+				if (config.enable_debug)
 				{
-					std::cout
-						<< " "
-						<< (offset==0 ? "cx" :
-							offset==1 ? "cy" :
-							offset==2 ? "w" :
-							offset==3 ? "h" :
-							offset==4 ? "obj" :
-							names.at(offset-5).substr(0, 3))
-						<< "=";
-					if (ptr[offset] != 0.0f)
+					std::cout << "i=" << std::setw(4) << row;
+					for (size_t offset = 0; offset < number_of_classes + 5; offset ++)
 					{
-						std::cout << std::fixed << std::setprecision(8) << ptr[offset];
+						std::cout
+							<< " "
+							<< (offset==0 ? "cx" :
+								offset==1 ? "cy" :
+								offset==2 ? "w" :
+								offset==3 ? "h" :
+								offset==4 ? "obj" :
+								names.at(offset-5).substr(0, 3))
+							<< "=";
+						if (ptr[offset] != 0.0f)
+						{
+							std::cout << std::fixed << std::setprecision(8) << ptr[offset];
+						}
+						else
+						{
+							std::cout << "0.0       ";
+						}
 					}
-					else
-					{
-						std::cout << "0.0       ";
-					}
+					std::cout << std::endl;
 				}
-				std::cout << std::endl;
-			}
+				// *** DEBUG ***
 
-			const float & cx	= ptr[0];
-			const float & cy	= ptr[1];
-			const float & w		= ptr[2];
-			const float & h		= ptr[3];
+				const float & cx	= ptr[0];
+				const float & cy	= ptr[1];
+				const float & w		= ptr[2];
+				const float & h		= ptr[3];
 
-			const cv::Rect2d r(
-				cx - w / 2.0f	,
-				cy - h / 2.0f	,
-				w				,
-				h				);
+				const cv::Rect2d r(
+					cx - w / 2.0f	,
+					cy - h / 2.0f	,
+					w				,
+					h				);
 
-			for (size_t c = 0; c < number_of_classes; c++)
-			{
-				const auto & confidence = ptr[5 + c];
-				if (confidence >= config.threshold)
+				for (size_t c = 0; c < number_of_classes; c++)
 				{
-					mat_map[c][boxes[c].size()] = i;
-					boxes[c].push_back(r);
-					scores[c].push_back(confidence);
+					const auto & confidence = ptr[5 + c];
+					if (confidence >= config.threshold)
+					{
+						lookups	[c].push_back({output_idx, row});
+						boxes	[c].push_back(r);
+						scores	[c].push_back(confidence);
+					}
 				}
 			}
 		}
@@ -1144,7 +1175,7 @@ void DarkHelp::NN::predict_internal_opencv()
 
 	// This is where we run non maximal suppression, which tells us which indices we need to keep.
 	// We'll take the output of NMS and keep track of all the mat rows which need to be in the results.
-	std::set<int> rows_of_interest;
+	VLookups rows_of_interest;
 	for (size_t c = 0; c < number_of_classes; c++)
 	{
 		VInt indices;
@@ -1152,9 +1183,10 @@ void DarkHelp::NN::predict_internal_opencv()
 
 		for (const auto & i : indices)
 		{
-			rows_of_interest.insert(mat_map[c][i]);
+			rows_of_interest.push_back(lookups[c][i]);
 		}
 
+		// *** DEBUG ***
 		if (config.enable_debug)
 		{
 			if (boxes[c].size() > 0 or indices.size() > 0)
@@ -1167,17 +1199,22 @@ void DarkHelp::NN::predict_internal_opencv()
 				std::cout << ":";
 				for (const auto & i : indices)
 				{
-					std::cout << " " << i << "=" << mat_map[c][i];
+					std::cout << " " << i << "=[" << lookups[c][i].idx << "," << lookups[c][i].row << "]";
 				}
 				std::cout << std::endl;
 			}
 		}
+		// *** DEBUG ***
 	}
 
-	// now iterate through just those rows and build the DarkHelp-style results
-	for (const auto & i : rows_of_interest)
+	// now iterate through just those indexes returned by NMS and build the DarkHelp-style results
+	for (const auto iter : rows_of_interest)
 	{
-		float * ptr	= output.ptr<float>(i);
+		const auto & output_idx	= iter.idx;
+		const auto & row		= iter.row;
+
+		cv::Mat & output = output_mats[output_idx][0];
+		float * ptr	= output.ptr<float>(row);
 
 		PredictionResult pr;
 		pr.tile				= 0;

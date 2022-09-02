@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.4.27-1	| 2022-09-01	| Fixed OpenCV DNN driver so it doesn't miss any detections. Should be the same as Darknet but much faster.
 1.4.24-1	| 2022-08-30	| New function and config option to redirect Darknet's output to @p /dev/null or @p NUL:.  @ref DarkHelp::Config::redirect_darknet_output
 1.4.22-1	| 2022-07-04	| Options to pixelate prediction results has been added.  @ref DarkHelp::Config::annotation_pixelate_enabled
 1.4.19-1	| 2022-06-24	| Added RoI to DarkHelp Server.
