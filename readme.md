@@ -68,6 +68,7 @@ The Windows build uses `vcpkg` to install the necessary 3rd-party libraries such
 
 Start the "Developer Command Prompt for Visual Studio" (not Power Shell!) and run the following commands to build Darknet and OpenCV:
 
+	md c:\src
 	cd c:\src
 	git clone https://github.com/microsoft/vcpkg
 	cd vcpkg
