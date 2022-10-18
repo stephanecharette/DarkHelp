@@ -114,7 +114,8 @@ namespace DarkHelp
 	{
 		kUnsorted	= 0,	///< Do not sort predictions.
 		kAscending	,		///< Sort predictions using @ref DarkHelp::PredictionResult::best_probability in ascending order (low values first, high values last).
-		kDescending			///< Sort predictions using @ref DarkHelp::PredictionResult::best_probability in descending order (high values first, low values last).
+		kDescending	,		///< Sort predictions using @ref DarkHelp::PredictionResult::best_probability in descending order (high values first, low values last).
+		kPageOrder			///< Sort predictions based @em loosely on where they appear within the image.  From top-to-bottom, and left-to-right.
 	};
 }
 

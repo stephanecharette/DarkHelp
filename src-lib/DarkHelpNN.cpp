@@ -923,18 +923,34 @@ DarkHelp::PredictionResults DarkHelp::NN::predict_internal(cv::Mat mat, const fl
 	if (config.sort_predictions == ESort::kAscending)
 	{
 		std::sort(prediction_results.begin(), prediction_results.end(),
-				  [](const PredictionResult & lhs, const PredictionResult & rhs)
-				  {
-					  return lhs.best_probability < rhs.best_probability;
-				  } );
+				[](const PredictionResult & lhs, const PredictionResult & rhs)
+				{
+					return lhs.best_probability < rhs.best_probability;
+				} );
 	}
 	else if (config.sort_predictions == ESort::kDescending)
 	{
 		std::sort(prediction_results.begin(), prediction_results.end(),
-				  [](const PredictionResult & lhs, const PredictionResult & rhs)
-				  {
-					  return rhs.best_probability < lhs.best_probability;
-				  } );
+				[](const PredictionResult & lhs, const PredictionResult & rhs)
+				{
+					return rhs.best_probability < lhs.best_probability;
+				} );
+	}
+	else if (config.sort_predictions == ESort::kPageOrder)
+	{
+		std::sort(prediction_results.begin(), prediction_results.end(),
+				[](const PredictionResult & lhs, const PredictionResult & rhs)
+				{
+					const int lhs_y = std::round(10.0f * lhs.original_point.y);
+					const int rhs_y = std::round(10.0f * rhs.original_point.y);
+					if (lhs_y != rhs_y) return lhs_y < rhs_y;
+
+					const int lhs_x = std::round(10.0f * lhs.original_point.x);
+					const int rhs_x = std::round(10.0f * rhs.original_point.x);
+					if (lhs_x != rhs_x) return lhs_x < rhs_x;
+
+					return lhs.best_probability < rhs.best_probability;
+				} );
 	}
 
 	if (config.snapping_enabled)
