@@ -6,7 +6,7 @@
 #include <DarkHelp.hpp>
 
 
-std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred)
+std::ostream & DarkHelp::operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred)
 {
 	os	<< "\""			<< pred.name << "\""
 		<< " #"			<< pred.best_class
@@ -35,7 +35,7 @@ std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & 
 }
 
 
-std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults & results)
+std::ostream & DarkHelp::operator<<(std::ostream & os, const DarkHelp::PredictionResults & results)
 {
 	const size_t number_of_results = results.size();
 	os << "prediction results: " << number_of_results;

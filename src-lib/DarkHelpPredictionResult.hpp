@@ -140,44 +140,44 @@ namespace DarkHelp
 	 * @see @ref DarkHelp::Config::sort_predictions
 	 */
 	using PredictionResults = std::vector<PredictionResult>;
+
+
+	/** Convenience function to stream a single result as a "readable" line of text.
+	 * Mostly intended for debug or logging purposes.
+	 */
+	std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred);
+
+
+	/** Convenience function to stream an entire vector of results as readable text.
+	 * Mostly intended for debug or logging purposes.
+	 *
+	 * For example:
+	 *
+	 * ~~~~
+	 * DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
+	 * const auto results = darkhelp.predict("test_image_01.jpg");
+	 * std::cout << results << std::endl;
+	 * ~~~~
+	 *
+	 * This would generate text similar to this:
+	 *
+	 * ~~~~{.txt}
+	 * prediction results: 12
+	 * -> 1/12: "Barcode 94%" #43 prob=0.939646 x=430 y=646 w=173 h=17 entries=1
+	 * -> 2/12: "Tag 100%" #40 prob=0.999954 x=366 y=320 w=281 h=375 entries=1
+	 * -> 3/12: "G 85%, 2 12%" #19 prob=0.846418 x=509 y=600 w=28 h=37 entries=2 [ 2=0.122151 19=0.846418 ]
+	 * ...
+	 * ~~~~
+	 *
+	 * Where:
+	 *
+	 * @li @p "1/12" is the number of predictions found.
+	 * @li @p "Barcode 94%" is the class name and the probability if @ref DarkHelp::names_include_percentage is enabled.
+	 * @li @p "#43" is the zero-based class index.
+	 * @li @p "prob=0.939646" is the probabilty that it is class #43.  (Multiply by 100 to get percentage.)
+	 * @li @p "x=..." are the X, Y, width, and height of the rectangle that was identified.
+	 * @li @p "entries=1" means that only 1 class was matched.  If there is more than 1 possible class,
+	 * then the class index and probability for each class will be shown.
+	 */
+	std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults & results);
 }
-
-
-/** Convenience function to stream a single result as a "readable" line of text.
- * Mostly intended for debug or logging purposes.
- */
-std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred);
-
-
-/** Convenience function to stream an entire vector of results as readable text.
- * Mostly intended for debug or logging purposes.
- *
- * For example:
- *
- * ~~~~
- * DarkHelp darkhelp("mynetwork.cfg", "mynetwork.weights", "mynetwork.names");
- * const auto results = darkhelp.predict("test_image_01.jpg");
- * std::cout << results << std::endl;
- * ~~~~
- *
- * This would generate text similar to this:
- *
- * ~~~~{.txt}
- * prediction results: 12
- * -> 1/12: "Barcode 94%" #43 prob=0.939646 x=430 y=646 w=173 h=17 entries=1
- * -> 2/12: "Tag 100%" #40 prob=0.999954 x=366 y=320 w=281 h=375 entries=1
- * -> 3/12: "G 85%, 2 12%" #19 prob=0.846418 x=509 y=600 w=28 h=37 entries=2 [ 2=0.122151 19=0.846418 ]
- * ...
- * ~~~~
- *
- * Where:
- *
- * @li @p "1/12" is the number of predictions found.
- * @li @p "Barcode 94%" is the class name and the probability if @ref DarkHelp::names_include_percentage is enabled.
- * @li @p "#43" is the zero-based class index.
- * @li @p "prob=0.939646" is the probabilty that it is class #43.  (Multiply by 100 to get percentage.)
- * @li @p "x=..." are the X, Y, width, and height of the rectangle that was identified.
- * @li @p "entries=1" means that only 1 class was matched.  If there is more than 1 possible class,
- * then the class index and probability for each class will be shown.
- */
-std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults & results);
