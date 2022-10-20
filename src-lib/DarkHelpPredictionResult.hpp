@@ -172,7 +172,7 @@ namespace DarkHelp
 	 * Where:
 	 *
 	 * @li @p "1/12" is the number of predictions found.
-	 * @li @p "Barcode 94%" is the class name and the probability if @ref DarkHelp::names_include_percentage is enabled.
+	 * @li @p "Barcode 94%" is the class name and the probability if @ref DarkHelp::Config::names_include_percentage is enabled.
 	 * @li @p "#43" is the zero-based class index.
 	 * @li @p "prob=0.939646" is the probabilty that it is class #43.  (Multiply by 100 to get percentage.)
 	 * @li @p "x=..." are the X, Y, width, and height of the rectangle that was identified.
