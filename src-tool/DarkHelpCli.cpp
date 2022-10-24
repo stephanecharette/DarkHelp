@@ -335,7 +335,28 @@ class FloatConstraint : public TCLAP::Constraint<std::string>
 			{
 				size_t idx = 0;
 				const float f = std::stof(value, &idx);
-				if (f >= 0.0 && idx == value.size()) { return true; } // this is a valid float
+				if (f >= 0.0 and idx == value.size()) { return true; } // this is a valid float
+			}
+			catch (...) {}
+			return false;
+		}
+};
+
+
+// Class used to validate "int" parameters.
+class IntConstraint : public TCLAP::Constraint<std::string>
+{
+	public:
+
+		virtual std::string description() const	{ return "positive integer"; }
+		virtual std::string shortID() const		{ return "positive integer"; }
+		virtual bool check(const std::string & value) const
+		{
+			try
+			{
+				size_t idx = 0;
+				const int i = std::stoi(value, &idx);
+				if (i >= 0 and idx == value.size()) { return true; } // valid positive int
 			}
 			catch (...) {}
 			return false;
@@ -409,7 +430,7 @@ class WxHConstraint : public TCLAP::Constraint<std::string>
 			try
 			{
 				const cv::Size s = get_WxH(value);
-				if (s.width >= 10 && s.height >= 10) { return true; }
+				if (s.width >= 10 and s.height >= 10) { return true; }
 			}
 			catch (...) {}
 			return false;
@@ -439,6 +460,7 @@ void init(Options & options, int argc, char *argv[])
 	std::vector<std::string> booleans = { "true", "false", "on", "off", "yes", "no", "t", "f", "y", "n", "1", "0" };
 	auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
 	auto float_constraint = FloatConstraint();
+	auto int_constraint = IntConstraint();
 	auto WxH_constraint = WxHConstraint();
 	auto dir_exist_constraint = DirExistConstraint();
 	auto file_exist_constraint = FileExistConstraint();
@@ -451,6 +473,7 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> driver				("D", "driver"		, "Determines if Darknet or OpenCV DNN is used. Default is \"darknet\"."									, false, "darknet"	, &driver_constraint	, cli);
 	TCLAP::ValueArg<std::string> debug				("", "debug"		, "Enable debug output. Default is \"false\"."																, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::ValueArg<std::string> shade				("e", "shade"		, "Amount of alpha-blending to use when shading in rectangles. Default is 0.25."							, false, "0.25"		, &float_constraint		, cli);
+	TCLAP::ValueArg<std::string> line_thickness		("", "line"			, "Thickness of annotation lines in pixels. Default is 2."													, false, "2"		, &int_constraint		, cli);
 	TCLAP::ValueArg<std::string> fontscale			("f", "fontscale"	, "Determines how the font is scaled for annotations. Default is 0.5."										, false, "0.5"		, &float_constraint		, cli);
 	TCLAP::SwitchArg greyscale						("g", "greyscale"	, "Force the images to be loaded in greyscale."																											, cli, false );
 	TCLAP::ValueArg<std::string> timestamp			("i", "timestamp"	, "Determines if a timestamp is added to annotations."														, false, "false"	, &allowed_booleans		, cli);
@@ -611,6 +634,7 @@ void init(Options & options, int argc, char *argv[])
 	options.nn.config.hierarchy_threshold				= std::stof(hierarchy.getValue());
 	options.nn.config.non_maximal_suppression_threshold	= std::stof(nms.getValue());
 	options.nn.config.names_include_percentage			= get_bool(percentage);
+	options.nn.config.annotation_line_thickness			= std::stoi(line_thickness.getValue());
 	options.nn.config.annotation_font_scale				= std::stod(fontscale.getValue());
 	options.nn.config.annotation_include_duration		= get_bool(duration);
 	options.nn.config.annotation_include_timestamp		= get_bool(timestamp);
@@ -1160,7 +1184,7 @@ void process_image(Options & options)
 	const int key_simple	= (key & KEY_SIMPLE_MASK); // suspect this is only good for keys like A-Z, a-z, 0-9 but this should give us a start
 	const int key_complex	= (key & KEY_COMPLEX_MASK); // non-alphabetical keys seem to use this, not sure what most of these bits represent
 
-	if (key == -1 && options.in_slideshow == false)
+	if (key == -1 and options.in_slideshow == false)
 	{
 		// we didn't really timeout, this is simply an indication that a message needs to be erased
 		return;
