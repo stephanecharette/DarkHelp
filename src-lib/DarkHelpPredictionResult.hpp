@@ -145,7 +145,7 @@ namespace DarkHelp
 	/** Convenience function to stream a single result as a "readable" line of text.
 	 * Mostly intended for debug or logging purposes.
 	 */
-	std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred);
+	std::ostream & operator<<(std::ostream & os, const PredictionResult & pred);
 
 
 	/** Convenience function to stream an entire vector of results as readable text.
@@ -179,5 +179,5 @@ namespace DarkHelp
 	 * @li @p "entries=1" means that only 1 class was matched.  If there is more than 1 possible class,
 	 * then the class index and probability for each class will be shown.
 	 */
-	std::ostream & operator<<(std::ostream & os, const DarkHelp::PredictionResults & results);
+	std::ostream & operator<<(std::ostream & os, const PredictionResults & results);
 }

@@ -281,6 +281,9 @@ namespace DarkHelp
 			/// Determine the size of the network.  For example, 416x416, or 608x480.
 			cv::Size network_size();
 
+			/// Return the number of channels defined in the .cfg file.  Usually, this will be @p 3.
+			int image_channels();
+
 			/** Snap all the annotations.  This is automatically called from @ref predict() when
 			 * @ref DarkHelp::Config::snapping_enabled is set to @p true.  When set to @p false,
 			 * you can manually invoke this method to get the annotations to snap, or you can also
@@ -401,5 +404,8 @@ namespace DarkHelp
 
 			/// Size of the neural network, e.g., @p 416x416 or @p 608x608.  @see @ref DarkHelp::NN::network_size()
 			cv::Size network_dimensions;
+
+			/// The number of channels defined in the .cfg file.  This is normally set to @p 3.  @see @ref image_channels()
+			int number_of_channels;
 	};
 }

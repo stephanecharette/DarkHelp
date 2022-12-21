@@ -41,7 +41,8 @@ DarkHelp::NN::~NN()
 
 
 DarkHelp::NN::NN() :
-	darknet_net(nullptr)
+	darknet_net(nullptr),
+	number_of_channels(-1)
 {
 	reset();
 
@@ -253,23 +254,30 @@ DarkHelp::NN & DarkHelp::NN::init()
 	}
 
 	// cache the network network_dimensions (read the "width" and "height" from the .cfg file)
-	const std::regex rx("^\\s*(width|height)\\s*=\\s*(\\d+)");
+	network_dimensions = cv::Size(0, 0);
+	number_of_channels = -1;
+	const std::regex rx("^\\s*(channels|width|height)\\s*=\\s*(\\d+)");
 	std::ifstream ifs(config.cfg_filename);
-	while (ifs.good() and network_dimensions.area() <= 0)
+	while (ifs.good() and (network_dimensions.area() <= 0 or number_of_channels <= 0))
 	{
 		std::string line;
 		std::getline(ifs, line);
 		std::smatch sm;
 		if (std::regex_search(line, sm, rx))
 		{
+			const std::string key = sm.str(1);
 			const int value = std::stoi(sm.str(2));
-			if (sm.str(1) == "width")
+			if (key == "width")
 			{
 				network_dimensions.width = value;
 			}
-			else
+			else if (key == "height")
 			{
 				network_dimensions.height = value;
+			}
+			else
+			{
+				number_of_channels = value;
 			}
 		}
 	}
@@ -280,12 +288,27 @@ DarkHelp::NN & DarkHelp::NN::init()
 		throw std::invalid_argument("failed to read the network width or height from " + config.cfg_filename);
 	}
 
+	if (number_of_channels != 1 and number_of_channels != 3)
+	{
+		/// @throw std::invalid_argument if the @p channels=... line in the .cfg file is not 1 or 3
+		throw std::invalid_argument("invalid number of channels in " + config.cfg_filename);
+	}
+
 	// OpenCV's construction uses lazy initialization, and doesn't actually happen until we call into it.
 	// This can have a huge impact on FPS calculations when the initial image pauses for a "long" time as
 	// the network is loaded.  So pass a "dummy" image through the network to force everything to load.
 	if (config.driver != DarkHelp::EDriver::kDarknet)
 	{
-		cv::Mat mat(network_dimensions, CV_8UC3, cv::Scalar(0, 0, 0));
+		cv::Mat mat;
+		if (number_of_channels == 1)
+		{
+			mat = cv::Mat(network_dimensions, CV_8UC1, cv::Scalar(0));
+		}
+		else
+		{
+			mat = cv::Mat(network_dimensions, CV_8UC3, cv::Scalar(0, 0, 0));
+		}
+
 		predict_internal(mat);
 		clear();
 	}
@@ -863,6 +886,12 @@ cv::Size DarkHelp::NN::network_size()
 	// This used to be more complicated, but now we get and cache
 	// the network dimensions when the DarkHelp object is initialized.
 	return network_dimensions;
+}
+
+
+int DarkHelp::NN::image_channels()
+{
+	return number_of_channels;
 }
 
 
