@@ -31,6 +31,34 @@ namespace DarkHelp
 	 */
 	struct PredictionResult final
 	{
+		/// Constructor.
+		PredictionResult()
+		{
+			clear();
+		}
+
+		/// Returns @p true if this prediction hasn't yet been initialized, or if @ref clear() has been called.
+		bool empty() const
+		{
+			return rect.empty() or all_probabilities.empty() or original_size.area() == 0.0f;
+		}
+
+		/// Erase all the information in this prediction object.
+		PredictionResult & clear()
+		{
+			rect				= cv::Rect();
+			original_point		= {0.0f, 0.0f};
+			original_size		= {0.0f, 0.0f};
+			best_probability	= -1.0f;
+			best_class			= -1;
+			tile				= -1;
+
+			all_probabilities	.clear();
+			name				.clear();
+
+			return *this;
+		}
+
 		/** OpenCV rectangle which describes where the object is located in the original image.
 		 *
 		 * Given this example annotated 230x134 image:
