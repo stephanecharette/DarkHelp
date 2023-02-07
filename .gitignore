@@ -1,4 +1,4 @@
 *.kdev4
 build
 /.vs
-/CMakeFiles
+/.vscode
