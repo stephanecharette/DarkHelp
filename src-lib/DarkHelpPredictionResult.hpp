@@ -52,6 +52,7 @@ namespace DarkHelp
 			best_probability	= -1.0f;
 			best_class			= -1;
 			tile				= -1;
+			object_id			= 0;
 
 			all_probabilities	.clear();
 			name				.clear();
@@ -159,6 +160,12 @@ namespace DarkHelp
 		 * has been enabled (see @ref DarkHelp::Config::enable_tiles), otherwise the value will always be zero.
 		 */
 		int tile;
+
+		/** If object @b tracking is in use, then the unique object ID will be stored here by the tracker.
+		 * Otherwise, this field will be @p zero.  Object tracking is not active by default.
+		 * @see @ref DarkHelp::PositionTracker
+		 */
+		size_t object_id;
 	};
 
 	/** A vector of predictions for the image analyzed by @ref DarkHelp::NN::predict().

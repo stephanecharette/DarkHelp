@@ -123,3 +123,4 @@ namespace DarkHelp
 #include <DarkHelpConfig.hpp>
 #include <DarkHelpNN.hpp>
 #include <DarkHelpUtils.hpp>
+#include <DarkHelpPositionTracker.hpp>

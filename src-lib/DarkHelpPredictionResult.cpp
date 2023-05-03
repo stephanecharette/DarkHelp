@@ -15,6 +15,7 @@ std::ostream & DarkHelp::operator<<(std::ostream & os, const DarkHelp::Predictio
 		<< " y="		<< pred.rect.y
 		<< " w="		<< pred.rect.width
 		<< " h="		<< pred.rect.height
+		<< " oid="		<< pred.object_id
 		<< " tile="		<< pred.tile
 		<< " entries="	<< pred.all_probabilities.size()
 		;

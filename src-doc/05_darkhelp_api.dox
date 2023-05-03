@@ -1,5 +1,7 @@
 /** @page API %DarkHelp C++ API
 
+@tableofcontents
+
 The %DarkHelp C++ API is a wrapper (not a replacement!) for the @p libdarknet.so C API.
 
 To use %DarkHelp, you must include the project header file within your C++ application:
@@ -79,7 +81,7 @@ While the previous example used image filenames, you can also use @p cv::Mat obj
 ~~~~{.cpp}
 DarkHelp::NN nn(...);
 cv::VideoCapture cap("sample.mp4");
-while (true)
+while (cap.isOpened())
 {
 	cv::Mat frame;
 	cap >> frame;
@@ -105,5 +107,50 @@ For example, the @p std::cout line in the previous example might results in the 
 ~~~~
 
 But most likely you'll want to handle the @p result vector yourself, instead of dumping lines of text to @p std::cout.  See @ref DarkHelp::PredictionResult and the various members it provides, such as @ref DarkHelp::PredictionResult::rect and @ref DarkHelp::PredictionResult::all_probabilities.
+
+@section ObjectTracking Tracking
+
+The results from object detection can be passed in to an instance of @ref DarkHelp::PositionTracker.  This will attempt
+to do simple position-based object tracking.  The information gathered during object tracking can then be leveraged to
+draw tails, or uniquely count the objects in a video.
+
+~~~~{.cpp}
+DarkHelp::NN nn("pigs.cfg", "pigs.names", "pigs_best.weights");
+DarkHelp::PositionTracker tracker;
+
+cv::VideoCapture cap("pigs.mp4");
+while (cap.isOpened())
+{
+	cv::Mat frame;
+	cap >> frame;
+	if (frame.empty())
+	{
+		break;
+	}
+
+	auto results = nn.predict(mat);
+	tracker.add(results);
+
+	std::cout << results << std::endl;
+	std::cout << tracker << std::endl;
+
+	for (const auto & prediction : results)
+	{
+		// get the tracking details for this specific prediction
+		const auto & obj = tracker.get(prediction.object_id);
+		cv::putText(mat, std::to_string(obj.oid, obj.center(), cv::FONT_HERSHEY_SIMPLEX, 0.75, {0, 0, 0}, 1, cv::LINE_AA);
+
+		// use the many rectangles stored in obj.fids_and_rects to draw the tail
+		// ...etc...
+	}
+
+	cv::imshow("output", mat);
+	cv::waitKey();
+}
+~~~~
+
+@image html tracking_pigs.jpg
+
+@see @ref DarkHelp::PositionTracker
 
 */
