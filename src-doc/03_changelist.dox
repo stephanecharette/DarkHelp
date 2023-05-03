@@ -2,7 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
-1.5.1-1		| 2023-05-02	| Added @ref DarkHelp::PositionTracker to track objects while processing videos.
+1.5.1-1		| 2023-05-02	| Added @ref DarkHelp::PositionTracker to track objects while processing videos. This adds 1 new field to prediction results, making the structure larger.
 1.5.0-1		| 2023-02-08	| Merge changes from user "olokos" to better support building in Windows.
 1.4.31-1	| 2022-12-21	| Added @ref DarkHelp::NN::image_channels() which will normally return @p 3.
 1.4.27-1	| 2022-09-01	| Fixed OpenCV DNN driver so it doesn't miss any detections. Should be the same as Darknet but much faster.

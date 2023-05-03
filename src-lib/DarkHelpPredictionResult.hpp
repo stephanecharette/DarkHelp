@@ -164,6 +164,8 @@ namespace DarkHelp
 		/** If object @b tracking is in use, then the unique object ID will be stored here by the tracker.
 		 * Otherwise, this field will be @p zero.  Object tracking is not active by default.
 		 * @see @ref DarkHelp::PositionTracker
+		 *
+		 * @since May 2023
 		 */
 		size_t object_id;
 	};

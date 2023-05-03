@@ -15,6 +15,8 @@ namespace DarkHelp
 	 * @image html tracking_cars.jpg
 	 *
 	 * @see @ref DarkHelp::PositionTracker::PositionTracker()
+	 *
+	 * @since May 2023
 	 */
 	class PositionTracker final
 	{
@@ -24,6 +26,8 @@ namespace DarkHelp
 			 * This includes the frame IDs and the bounding box rectangles for the object on each of those frames.
 			 * If needed (for example to draw a tail showing where the object has been) these object structures
 			 * can be obtained via @ref PositionTracker::get().
+			 *
+			 * @since May 2023
 			 */
 			struct Obj final
 			{
@@ -194,6 +198,8 @@ namespace DarkHelp
 			 *
 			 * This value is the number of consecutive frames that must elapse before an object is removed.  Set to @p zero
 			 * to keep all objects.  Default value is @p 10.
+			 *
+			 * @since May 2023
 			 */
 			size_t age_of_objects_before_deletion;
 
@@ -201,6 +207,8 @@ namespace DarkHelp
 			 * few frames and rectangles are always kept, but those in the middle can be pruned to limit the amount of memory
 			 * that object tracking consumes.  Set to @p zero to keep all frames and rectangles.  Default value is 90, which
 			 * is 3 seconds of data with a typical 30 FPS video.
+			 *
+			 * @since May 2023
 			 */
 			size_t maximum_number_of_frames_per_object;
 
@@ -217,6 +225,8 @@ namespace DarkHelp
 			 * @p double and not an @p int is because the distance is calculated using @p cv::norm() (aka pythagoras).
 			 *
 			 * Default value is @p 100.0.
+			 *
+			 * @since May 2023
 			 */
 			double maximum_distance_to_consider;
 
