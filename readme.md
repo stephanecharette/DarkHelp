@@ -2,7 +2,7 @@
 
 The DarkHelp C++ API is a wrapper to make it easier to use the Darknet neural network framework within a C++ application.  DarkHelp performs the following:
 
-- load a [Darknet](https://github.com/AlexeyAB/darknet)-style neural network (.cfg, .names, .weights)
+- load a [Darknet](https://github.com/hank-ai/darknet)-style neural network (.cfg, .names, .weights)
 - run inference on images -- either filenames or OpenCV `cv::Mat` images and video frames -- and return [a vector of results](https://www.ccoderun.ca/DarkHelp/api/structDarkHelp_1_1PredictionResult.html#details)
 - optionally annotate images/frames with the inference results
 
@@ -31,7 +31,7 @@ Extremely simple easy-to-follow tutorial on how to build Darknet, DarkHelp, and 
 
 [![DarkHelp build tutorial](src-doc/darkmark_build_thumbnail.png)](https://www.youtube.com/watch?v=pJ2iyf_E9PM)
 
-DarkHelp requires that [Darknet](https://github.com/AlexeyAB/darknet) has already been built and installed, since DarkHelp is a *wrapper* for the C functionality available in `libdarknet.so`.
+DarkHelp requires that [Darknet](https://github.com/hank-ai/darknet) has already been built and installed, since DarkHelp is a *wrapper* for the C functionality available in `libdarknet.so`.
 
 ## Building Darknet (Linux)
 
@@ -39,7 +39,7 @@ You must build Darknet with the `LIBSO=1` variable set to have it build `libdark
 
 	sudo apt-get install build-essential git libopencv-dev
 	cd ~/src
-	git clone https://github.com/AlexeyAB/darknet.git
+	git clone https://github.com/hank-ai/darknet.git
 	cd darknet
 	# edit Makefile to set LIBSO=1, and possibly other flags
 	make

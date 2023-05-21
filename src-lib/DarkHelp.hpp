@@ -15,7 +15,7 @@
 
 /** @file
  * DarkHelp is a C++ helper layer for accessing Darknet.  It was developed and tested with AlexeyAB's fork of the
- * popular Darknet project:  https://github.com/AlexeyAB/darknet
+ * popular Darknet project, which is now maintained by Hank.ai:  https://github.com/hank-ai/darknet
  *
  * @note The original darknet.h header file defines structures in the global namespace with names such as "image" and
  * "network" which are likely to cause problems in large existing projects.  For this reason, the DarkHelp class uses
@@ -81,9 +81,6 @@ namespace DarkHelp
 	/** %DarkHelp can utilise either @p libdarknet.so or OpenCV's DNN module to load the neural network and run inference.
 	 * OpenCV is much faster, but support for it is relatively new in %DarkHelp and support for newer models like YOLOv4
 	 * requires @em very recent versions of OpenCV.  The default is @p kDarknet.
-	 *
-	 * Expect the results to be slightly different between Darknet and OpenCV.  For example, see
-	 * <a target="_blank" href="https://github.com/AlexeyAB/darknet/issues/8146">issue #8146</a>.
 	 *
 	 * @see @ref DarkHelp::NN::init()
 	 *

@@ -52,7 +52,7 @@ Once Darknet has built, remember to copy the library and header file to a locati
 ~~~~{.sh}
 sudo apt-get install build-essential git libopencv-dev
 cd ~/src/
-git clone https://github.com/AlexeyAB/darknet.git
+git clone https://github.com/hank-ai/darknet.git
 cd darknet
 vi Makefile # to set LIBSO=1, and possibly other flags
 make

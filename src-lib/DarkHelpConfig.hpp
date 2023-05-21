@@ -339,7 +339,7 @@ namespace DarkHelp
 			 * DarkHelp::NN nn(cfg);
 			 * ~~~~
 			 *
-			 * @since Between version 1.1.9 on 2021-03-02 until 1.1.12 on 2021-04-08, this was modified to also toggle the new
+			 * @since Between version 1.1.9 on 2021-03-02 until 1.1.12 on 2021-04-08, this was modified to also toggle the
 			 * @p use_cuda_graph=1 flag in the @p [net] section.  See
 			 * <a target="_blank" href="https://github.com/AlexeyAB/darknet/issues/7444">issue #7444</a> for additional details on
 			 * @p use_cuda_graph.  Because this new option was suspected of causing some problems with some segfaults and object

@@ -18,9 +18,9 @@ Source code for %DarkHelp is available at https://github.com/stephanecharette/Da
 @li The @ref Tool used to run inference on images or videos.  This CLI tool was written using the @ref API.
 @li The @ref Server CLI tool used to create a server that keeps running in a CLI window.  This CLI tool was also written using the @ref API.
 
-I recommend AlexeyAB's popular fork of Darknet, available at https://github.com/AlexeyAB/darknet.  %DarkHelp was specifically written for and tested against AlexeyAB's fork.
+I recommend the Hank.ai fork of Darknet, available at https://github.com/hank-ai/darknet.
 
-The original author of the Darknet neural network framework is Joseph Redmon, but his repo was abandoned many years ago and shouldn't be used.  I've removed the link to it, please use AlexeyAB's fork instead.
+There are 2 other popular repos for Darknet, by Joseph Redmon and Alexey Bochkovskiy.  However, both of those have been abandoned for several years.  Please use the Hank.ai fork instead.
 
 <div style="padding:1em; margin:2em; border:1px solid black; display:inline-block;">
 %DarkHelp is written by <a target="_blank" href="https://www.ccoderun.ca/stephane/">Stéphane Charette d.b.a. C Code Run</a><br/>
