@@ -14,23 +14,23 @@ namespace DarkHelp
 	/** This class attempts to do @em very @em simple object tracking based on the position of the object.  It assumes
 	 * that objects move a small amount between frames, and don't randomly appear and disapear from view.
 	 *
-	 * The tracker stores location rectangles for all objects.  This data is kept in @ref PositionTracker::Obj::fids_and_rects
+	 * The tracker stores location rectangles for all objects.  This data is kept in @ref DarkHelp::PositionTracker::Obj::fids_and_rects
 	 * which stores the rectangles by frame IDs (aka "fids").  This mapping between frame IDs and rectangles increases in
 	 * size very quickly, which is why the tracker places a limit on how large it is allowed to grow.  This can be modified
-	 * using @ref PositionTracker::maximum_number_of_frames_per_object.  This puts an upper limit on the number of past
-	 * rectangles, meaning that recent location is kept while older historical location rectangles are deleted.
+	 * using @ref DarkHelp::PositionTracker::maximum_number_of_frames_per_object.  This puts an upper limit on the number
+	 * of past rectangles, meaning that recent location is kept while older historical location rectangles are deleted.
 	 *
-	 * When a new frame is processed and @ref PositionTracker::add() is called with the results, the tracker computes the
-	 * distance between the center of the rectangle to the previous known center coordinates of all tracked objects.  The
-	 * possible classes are compared, and already-identified objects are excluded.  The remaining results are ordered by
-	 * distance between past known locations and the new current location.  If the distance is less than or equal to
-	 * @ref PositionTracker::maximum_distance_to_consider then we assume this is a match, and we assign it the same object
-	 * ID as the previous frame.  If the distance is greater, then we assume this is a new object and assign it a new
-	 * unique object ID.
+	 * When a new frame is processed and @ref DarkHelp::PositionTracker::add() is called with the results, the tracker
+	 * computes the distance between the center of the rectangle to the previous known center coordinates of all tracked
+	 * objects.  The possible classes are compared, and already-identified objects are excluded.  The remaining results are
+	 * ordered by distance between past known locations and the new current location.  If the distance is less than or equal
+	 * to @ref DarkHelp::PositionTracker::maximum_distance_to_consider then we assume this is a match, and we assign it the
+	 * same object ID as the previous frame.  If the distance is greater, then we assume this is a new object and assign
+	 * it a new unique object ID.
 	 *
 	 * Once an object has not appeared (or matched) for several consecutive frames, @em all information on that object is
 	 * removed from the container of tracked objects.  The length of time (aka "frames") before this behaviour triggers
-	 * is controlled using @ref PositonTracker::age_of_objects_before_deletion.
+	 * is controlled using @ref DarkHelp::PositionTracker::age_of_objects_before_deletion.
 	 *
 	 * @li This tracker works best when the camera frame rate is high enough to @ref DarkHelp::PositionTracker::maximum_distance_to_consider "minimize the distance" an object moves.
 	 * @li This tracker makes no attempt to re-identify objects that move off-screen and then come back into view.  A new ID will be assigned to the object.
