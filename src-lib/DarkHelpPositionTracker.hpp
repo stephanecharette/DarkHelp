@@ -124,7 +124,7 @@ namespace DarkHelp
 			 * 	{
 			 * 		// get the tracking details for this specific prediction
 			 * 		const auto & obj = tracker.get(prediction.object_id);
-			 * 		cv::putText(mat, std::to_string(obj.oid, obj.center(), cv::FONT_HERSHEY_SIMPLEX, 0.75, {0, 0, 0}, 1, cv::LINE_AA);
+			 * 		cv::putText(mat, std::to_string(obj.oid), obj.center(), cv::FONT_HERSHEY_SIMPLEX, 0.75, {0, 0, 0}, 1, cv::LINE_AA);
 			 *
 			 * 		// use the many rectangles stored in obj.fids_and_rects to draw the tail
 			 * 		// ...etc...
