@@ -998,7 +998,16 @@ void DarkHelp::NN::predict_internal_darknet()
 {
 	network * nw = reinterpret_cast<network*>(darknet_net);
 
-	cv::Mat resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	cv::Mat resized_image;
+	if (config.use_fast_image_resize)
+	{
+		resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	}
+	else
+	{
+		resized_image = slow_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	}
+
 	tile_size = network_dimensions;
 	image img = convert_opencv_mat_to_darknet_image(resized_image);
 
@@ -1094,7 +1103,16 @@ void DarkHelp::NN::predict_internal_opencv()
 
 	const size_t number_of_classes = names.size();
 
-	cv::Mat resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	cv::Mat resized_image;
+	if (config.use_fast_image_resize)
+	{
+		resized_image = fast_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	}
+	else
+	{
+		resized_image = slow_resize_ignore_aspect_ratio(original_image, network_dimensions);
+	}
+
 	tile_size = network_dimensions;
 
 	/* OpenCV images are BGR, but DNN (or maybe specific to Darknet?) requires RGB,

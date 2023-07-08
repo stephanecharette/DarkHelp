@@ -564,5 +564,21 @@ namespace DarkHelp
 			 * @since 2022-08-30
 			 */
 			bool redirect_darknet_output;
+
+			/** Determine if %DarkHelp should use a fast method of resizing images, or a slower but more accurate method.  By
+			 * default, the OpenCV @p cv::INTER_NEAREST method will be used.  This is faster, but the image quality may be
+			 * impacted.  If this is set to @p false, then %DarkHelp will use OpenCV's @p INTER_AREA or @p INTER_CUBIC, which
+			 * are slower but result in better images.
+			 *
+			 * For "real world" images, the default of @p true for this option is probably what you want.  If you are working
+			 * with documents that contain black-and-white text, or zoomed-in images such as close-ups of barcodes and components
+			 * to detect manufacturing detects, you probably want to set this to @p false.
+			 *
+			 * @see @ref DarkHelp::fast_resize_ignore_aspect_ratio()
+			 * @see @ref DarkHelp::slow_resize_ignore_aspect_ratio()
+			 *
+			 * @since 2023-07-08
+			 */
+			bool use_fast_image_resize;
 	};
 }

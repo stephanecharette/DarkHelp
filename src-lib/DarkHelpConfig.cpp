@@ -86,6 +86,7 @@ DarkHelp::Config & DarkHelp::Config::reset()
 	snapping_limit_shrink				= 0.4;
 	snapping_limit_grow					= 1.25;
 	redirect_darknet_output				= true;
+	use_fast_image_resize				= true;
 
 	return *this;
 }

@@ -474,7 +474,7 @@ cv::Mat DarkHelp::resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desi
 		return mat;
 	}
 
-	if (desired_size.width == mat.cols and desired_size.height == mat.rows)
+	if (mat.size() == desired_size)
 	{
 		return mat;
 	}
@@ -494,18 +494,7 @@ cv::Mat DarkHelp::resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desi
 	const double new_height			= image_height	/ largest_factor;
 	const cv::Size new_size(std::round(new_width), std::round(new_height));
 
-	// "To shrink an image, it will generally look best with CV_INTER_AREA interpolation ..."
-	auto interpolation = CV_INTER_AREA;
-	if (largest_factor < 1.0)
-	{
-		// "... to enlarge an image, it will generally look best with CV_INTER_CUBIC"
-		interpolation = CV_INTER_CUBIC;
-	}
-
-	cv::Mat dst;
-	cv::resize(mat, dst, new_size, 0, 0, interpolation);
-
-	return dst;
+	return slow_resize_ignore_aspect_ratio(mat, new_size);
 }
 
 
@@ -519,9 +508,7 @@ cv::Mat DarkHelp::fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv:
 	cv::Mat resized_image;
 
 	// INTER_NEAREST is the fastest resize method at a cost of quality, but since we're making the image match the
-	// network dimensions (416x416, etc) we're aiming for speed, not quality.  Truth is when saving the file out to
-	// disk as a .png file during testing I noticed the output is *exactly* the same.  MD5 sum of the image files
-	// was exactly the same regardless of the method used.  So we may as well use the fastest method available.
+	// network dimensions (416x416, etc) we're (probably!?) aiming for speed, not quality.
 
 	#ifdef HAVE_OPENCV_CUDAWARPING
 
@@ -543,6 +530,38 @@ cv::Mat DarkHelp::fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv:
 	#endif
 
 	return resized_image;
+}
+
+
+cv::Mat DarkHelp::slow_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size)
+{
+	if (mat.size() == desired_size or mat.empty())
+	{
+		return mat;
+	}
+
+	if (desired_size.width < 1 or desired_size.height < 1)
+	{
+		// return an empty image
+		return cv::Mat();
+	}
+
+	/* See the cv::resize() docs, which states:
+	 *
+	 * To shrink an image, it will generally look best with CV_INTER_AREA interpolation, whereas to enlarge an image,
+	 * it will generally look best with CV_INTER_CUBIC (slow) or CV_INTER_LINEAR (faster but still looks OK).
+	 */
+
+	auto interpolation = cv::InterpolationFlags::INTER_AREA; // image needs to shrink
+	if (mat.size().area() < desired_size.area())
+	{
+		interpolation = cv::InterpolationFlags::INTER_CUBIC; // image needs to grow
+	}
+
+	cv::Mat dst;
+	cv::resize(mat, dst, desired_size, 0, 0, interpolation);
+
+	return dst;
 }
 
 

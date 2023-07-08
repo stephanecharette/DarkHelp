@@ -113,8 +113,22 @@ namespace DarkHelp
 	 * @note Timing tests on Jetson devices as well as full NVIDIA GPUs show this is not significantly different than the
 	 * usual call to @p cv::resize().  Probably would be of bigger impact if the image resizing was done on a different
 	 * thread, and then fed to DarkHelp for inference so the image resize and inference can happen in parallel.
+	 *
+	 * @see @ref DarkHelp::Config::use_fast_image_resize
+	 * @see @ref DarkHelp::slow_resize_ignore_aspect_ratio()
 	 */
 	cv::Mat fast_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size);
+
+	/** Similar to @ref DarkHelp::fast_resize_ignore_aspect_ratio() but uses OpenCV algorithms that result in better
+	 * quality images at a cost of slower speed.
+	 *
+	 * @see @ref DarkHelp::Config::use_fast_image_resize
+	 * @see @ref DarkHelp::resize_keeping_aspect_ratio()
+	 * @see @ref DarkHelp::fast_resize_ignore_aspect_ratio()
+	 *
+	 * @since 2023-07-08
+	 */
+	cv::Mat slow_resize_ignore_aspect_ratio(const cv::Mat & mat, const cv::Size & desired_size);
 
 	/** Given an image filename, get the corresponding filename where the YOLO annotations should be saved.
 	 * This will be the same as the image filename but with a @p .txt file extension.
