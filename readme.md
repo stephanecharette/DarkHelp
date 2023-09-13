@@ -27,31 +27,21 @@ DarkHelp is open source and published using the MIT license.  Meaning you can us
 
 # How to Build DarkHelp (Linux)
 
-Extremely simple easy-to-follow tutorial on how to build Darknet, DarkHelp, and [DarkMark](https://github.com/stephanecharette/DarkMark).
+Extremely simple easy-to-follow tutorial on how to build [Darknet](https://github.com/hank-ai/darknet#table-of-contents), DarkHelp, and [DarkMark](https://github.com/stephanecharette/DarkMark).
 
-[![DarkHelp build tutorial](src-doc/darkmark_build_thumbnail.png)](https://www.youtube.com/watch?v=pJ2iyf_E9PM)
+[![DarkHelp build tutorial](https://github.com/hank-ai/darknet/raw/master/doc/linux_build_thumbnail.jpg)](https://www.youtube.com/watch?v=WTT1s8JjLFk)
 
 DarkHelp requires that [Darknet](https://github.com/hank-ai/darknet) has already been built and installed, since DarkHelp is a *wrapper* for the C functionality available in `libdarknet.so`.
 
 ## Building Darknet (Linux)
 
-You must build Darknet with the `LIBSO=1` variable set to have it build `libdarknet.so`.  On Ubuntu:
-
-	sudo apt-get install build-essential git libopencv-dev
-	cd ~/src
-	git clone https://github.com/hank-ai/darknet.git
-	cd darknet
-	# edit Makefile to set LIBSO=1, and possibly other flags
-	make
-	sudo cp libdarknet.so /usr/local/lib/
-	sudo cp include/darknet.h /usr/local/include/
-	sudo ldconfig
+You must build Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#linux-cmake-method) for details.
 
 ## Building DarkHelp (Linux)
 
 Now that Darknet is built and installed, you can go ahead and build DarkHelp.  On Ubuntu:
 
-	sudo apt-get install cmake build-essential libtclap-dev libmagic-dev libopencv-dev
+	sudo apt-get install build-essential libtclap-dev libmagic-dev libopencv-dev
 	cd ~/src
 	git clone https://github.com/stephanecharette/DarkHelp.git
 	cd DarkHelp
@@ -64,22 +54,11 @@ Now that Darknet is built and installed, you can go ahead and build DarkHelp.  O
 
 ## Building Darknet (Windows)
 
-The Windows build uses `vcpkg` to install the necessary 3rd-party libraries such as OpenCV.  See the files `readme_windows.txt` and `build_windows.cmd` for details.
-
-Start the "Developer Command Prompt for Visual Studio" (not Power Shell!) and run the following commands to build Darknet and OpenCV:
-
-	md c:\src
-	cd c:\src
-	git clone https://github.com/microsoft/vcpkg
-	cd vcpkg
-	bootstrap-vcpkg.bat
-	vcpkg.exe integrate install
-	vcpkg.exe integrate powershell
-	vcpkg.exe install opencv[contrib,core,dnn,ffmpeg,jpeg,png,quirc,tiff,webp]:x64-windows darknet[opencv-base]:x64-windows
+You must build Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#windows-cmake-method) for details.
 
 ## Building DarkHelp (Windows)
 
-Once you finish building Darknet and OpenCV, run the following commands in the "Developer Command Prompt for VS" to build DarkHelp:
+Once you finish building Darknet, run the following commands in the "Developer Command Prompt for VS" to build DarkHelp:
 
 	cd c:\src\vcpkg
 	vcpkg.exe install tclap:x64-windows
