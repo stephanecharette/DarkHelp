@@ -19,6 +19,10 @@
 
 
 #ifdef WIN32
+
+#pragma warning(disable: 4244)
+#pragma warning(disable: 4305)
+
 // I need to figure out how to get libmagic compiled in Windows, or decide
 // to remove it from this project.  For now, create dummy prototypes so the
 // code compiles in Windows.  https://github.com/microsoft/vcpkg/issues/13528

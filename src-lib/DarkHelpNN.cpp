@@ -14,6 +14,12 @@
 #include <opencv2/cudawarping.hpp>
 #endif
 
+#ifdef WIN32
+#pragma warning(disable: 4267)
+#pragma warning(disable: 4244)
+#pragma warning(disable: 4305)
+#endif
+
 
 /* If you are using a recent version of Darknet there is no problem, and you can skip the rest of this comment.
  *

@@ -11,6 +11,10 @@
 #include "json.hpp"
 #include "filesystem.hpp"
 
+#ifdef WIN32
+#pragma warning(disable: 4244)
+#endif
+
 size_t total_number_of_images_processed	= 0;
 bool crop_and_save_detected_objects		= false;
 bool save_annotated_image				= false;

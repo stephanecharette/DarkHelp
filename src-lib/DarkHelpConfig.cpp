@@ -5,6 +5,10 @@
 
 #include <DarkHelp.hpp>
 
+#ifdef WIN32
+#pragma warning(disable: 4305)
+#endif
+
 
 DarkHelp::Config::~Config()
 {

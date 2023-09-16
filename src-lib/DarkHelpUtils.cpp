@@ -9,7 +9,11 @@
 
 // dup(), dup2(), and open() needed to redirect STDOUT and STDERR
 #include <fcntl.h>
+
 #ifdef WIN32
+#pragma warning(disable: 4244)
+#pragma warning(disable: 4267)
+#pragma warning(disable: 4305)
 #pragma warning(disable: 4996)
 #include <io.h>
 #else

@@ -15,13 +15,13 @@ FIND_PACKAGE ( Threads			REQUIRED	)
 FIND_PACKAGE ( OpenCV	CONFIG	REQUIRED	)
 INCLUDE_DIRECTORIES (${OpenCV_INCLUDE_DIRS}	)
 
+# On Linux, Darknet should be installed as /usr/lib/libdarknet.so.
+# On Windows, it is user-defined but probably is C:/Program Files/Darknet/lib/darknet.lib.
+# If that is not the case, be prepared to manually edit the CMake cache file.
+FIND_LIBRARY (Darknet darknet)
 IF (WIN32)
-	# Assume that vcpkg was used on Windows
-	FIND_PACKAGE (Darknet REQUIRED)
-	INCLUDE_DIRECTORIES (${Darknet_INCLUDE_DIR})
-	SET (Darknet Darknet::dark)
-ELSE ()
-	FIND_LIBRARY (Darknet darknet)
+	GET_FILENAME_COMPONENT(DARKNET_PARENT_DIR "${Darknet}" DIRECTORY)
+	INCLUDE_DIRECTORIES (${DARKNET_PARENT_DIR}/../include/)
 ENDIF ()
 
 SET (StdCppFS "")
