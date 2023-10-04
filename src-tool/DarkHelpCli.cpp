@@ -1087,7 +1087,7 @@ void process_image(Options & options)
 			if (options.image_type == "png")
 			{
 				output_filename /= (basename + ".png");
-				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
+				cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 1});
 			}
 			else
 			{
@@ -1258,7 +1258,7 @@ void process_image(Options & options)
 		if (options.image_type == "png")
 		{
 			output_filename /= "output.png";
-			cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 9});
+			cv::imwrite(output_filename.string(), output_image, {cv::IMWRITE_PNG_COMPRESSION, 1});
 		}
 		else
 		{

@@ -100,7 +100,7 @@ If you call @ref DarkHelp::NN::annotate() to get back a OpenCV @p cv::Mat object
 ~~~~{.cpp}
     nn.predict(argv[idx]);
     cv::Mat mat = nn.annotate();
-    cv::imwrite("output.png", mat, {CV_IMWRITE_PNG_COMPRESSION, 9});
+    cv::imwrite("output.png", mat, {CV_IMWRITE_PNG_COMPRESSION, 1});
 ~~~~
 
 The example call to @p cv::imwrite() in the previous example might give something similar to this image:
