@@ -67,6 +67,18 @@ namespace DarkHelp
 	 */
 	VColours get_default_annotation_colours();
 
+	/** Load a set of colors defined in the given text file. Unless commented with a #, each line overrides the
+	 * predifined colour. The colour code is expected in hex triples in RGB notion.
+	 * Example snippet:
+
+		# this setup overrides the first three default colours
+		# (Radical Red / Slimey Green / Sunglow)
+		1B 8B 0F	# class 1: dark green
+		1F A2 11	# class 2: green
+		27 C5 16	# class 3: light green
+	*/
+	void load_custom_annotation_colours(const std::string & filename);
+
 	/** Look at the names and/or the contents of all 3 files and swap the filenames around if necessary so the @p .cfg,
 	 * @p .weights, and @p .names are assigned where they should be.  This is necessary because darknet tends to segfault
 	 * if it is given the wrong filename.  (For example, if it mistakenly tries to parse the @p .weights file as a @p .cfg

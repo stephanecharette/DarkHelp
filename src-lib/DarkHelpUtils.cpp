@@ -46,40 +46,77 @@ std::string DarkHelp::duration_string(const std::chrono::high_resolution_clock::
 }
 
 
+const DarkHelp::VColours default_colours =
+{
+	// remember the OpenCV format is blue-green-red and not RGB!
+	{0x5E, 0x35, 0xFF},	// Radical Red
+	{0x17, 0x96, 0x29},	// Slimy Green
+	{0x33, 0xCC, 0xFF},	// Sunglow
+	{0x4D, 0x6E, 0xAF},	// Brown Sugar
+	{0xFF, 0x00, 0xFF},	// pure magenta
+	{0xE6, 0xBF, 0x50},	// Blizzard Blue
+	{0x00, 0xFF, 0xCC},	// Electric Lime
+	{0xFF, 0xFF, 0x00},	// pure cyan
+	{0x85, 0x4E, 0x8D},	// Razzmic Berry
+	{0xCC, 0x48, 0xFF},	// Purple Pizzazz
+	{0x00, 0xFF, 0x00},	// pure green
+	{0x00, 0xFF, 0xFF},	// pure yellow
+	{0xEC, 0xAD, 0x5D},	// Blue Jeans
+	{0xFF, 0x6E, 0xFF},	// Shocking Pink
+	{0xD1, 0xF0, 0xAA},	// Magic Mint
+	{0x00, 0xC0, 0xFF},	// orange
+	{0xB6, 0x51, 0x9C},	// Purple Plum
+	{0x33, 0x99, 0xFF},	// Neon Carrot
+	{0x66, 0xFF, 0x66},	// Screamin' Green
+	{0x00, 0x00, 0xFF},	// pure red
+	{0x82, 0x00, 0x4B},	// Indigo
+	{0x37, 0x60, 0xFF},	// Outrageous Orange
+	{0x66, 0xFF, 0xFF},	// Laser Lemon
+	{0x78, 0x5B, 0xFD},	// Wild Watermelon
+	{0xFF, 0x00, 0x00}	// pure blue
+};
+
+
+DarkHelp::VColours Colours { default_colours };
+
 DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 {
-	VColours colours =
-	{
-		// remember the OpenCV format is blue-green-red and not RGB!
-		{0x5E, 0x35, 0xFF},	// Radical Red
-		{0x17, 0x96, 0x29},	// Slimy Green
-		{0x33, 0xCC, 0xFF},	// Sunglow
-		{0x4D, 0x6E, 0xAF},	// Brown Sugar
-		{0xFF, 0x00, 0xFF},	// pure magenta
-		{0xE6, 0xBF, 0x50},	// Blizzard Blue
-		{0x00, 0xFF, 0xCC},	// Electric Lime
-		{0xFF, 0xFF, 0x00},	// pure cyan
-		{0x85, 0x4E, 0x8D},	// Razzmic Berry
-		{0xCC, 0x48, 0xFF},	// Purple Pizzazz
-		{0x00, 0xFF, 0x00},	// pure green
-		{0x00, 0xFF, 0xFF},	// pure yellow
-		{0xEC, 0xAD, 0x5D},	// Blue Jeans
-		{0xFF, 0x6E, 0xFF},	// Shocking Pink
-		{0xD1, 0xF0, 0xAA},	// Magic Mint
-		{0x00, 0xC0, 0xFF},	// orange
-		{0xB6, 0x51, 0x9C},	// Purple Plum
-		{0x33, 0x99, 0xFF},	// Neon Carrot
-		{0x66, 0xFF, 0x66},	// Screamin' Green
-		{0x00, 0x00, 0xFF},	// pure red
-		{0x82, 0x00, 0x4B},	// Indigo
-		{0x37, 0x60, 0xFF},	// Outrageous Orange
-		{0x66, 0xFF, 0xFF},	// Laser Lemon
-		{0x78, 0x5B, 0xFD},	// Wild Watermelon
-		{0xFF, 0x00, 0x00}	// pure blue
-	};
-
-	return colours;
+	return Colours;
 }
+
+void DarkHelp::load_custom_annotation_colours(const std::string & filename)
+{
+	Colours = default_colours;
+	std::ifstream ifs(filename);
+	std::string line;
+	std::size_t idx = 0;
+	while (idx < Colours.size() && std::getline(ifs, line))
+	{
+		auto pos = line.find_first_not_of(" \t");
+		std::string to_parse (line.c_str() + pos, line.length());
+		if (!to_parse.empty() && to_parse[0] != '#')
+		{
+			std::stringstream istr(to_parse);
+			auto get_val([&]()
+			{
+				std::string token;
+				istr >> token;
+				return std::stoul(token.c_str(), nullptr, 16);
+			});
+			try
+			{
+				auto r = get_val();
+				auto g = get_val();
+				auto b = get_val();
+				if (r or g or b)
+					Colours[idx] = cv::Scalar(b, g, r);
+			}
+			catch (const std::exception &e) {}
+			++idx;
+		}
+	}
+}
+
 
 
 DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std::string & weights_filename, std::string & names_filename)
@@ -118,7 +155,7 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 			else							names_filename		= iter.second;
 		}
 
-		// We *know* we have a cfg and weights, but the names is optional.  If we have a 3rd filename, then it must be the names,
+		// We *know* we have a cfg and weights, but the names is optional.	If we have a 3rd filename, then it must be the names,
 		// otherwise blank out the 3rd filename in case that field was used to pass in either the cfg or the weights.
 		if (names_filename == cfg_filename or names_filename == weights_filename)
 		{
@@ -130,8 +167,8 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 	{
 		// If we get here, then the filenames are not obvious just by looking at the extensions.
 		//
-		// Instead, we're going to use the size of the files to decide what is the .cfg, .weights, and .names.  The largest
-		// file (MiB) will always be the .weights.  The next one (KiB) will be the configuration.  And the names, if available,
+		// Instead, we're going to use the size of the files to decide what is the .cfg, .weights, and .names.	The largest
+		// file (MiB) will always be the .weights.	The next one (KiB) will be the configuration.  And the names, if available,
 		// is only a few bytes in size.  Because the order of magnitude is so large, the three files should never have the
 		// exact same size unless something has gone very wrong.
 
@@ -493,7 +530,7 @@ cv::Mat DarkHelp::resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desi
 	const double image_height		= static_cast<double>(mat.rows);
 	const double horizontal_factor	= image_width	/ static_cast<double>(desired_size.width);
 	const double vertical_factor	= image_height	/ static_cast<double>(desired_size.height);
-	const double largest_factor 	= std::max(horizontal_factor, vertical_factor);
+	const double largest_factor		= std::max(horizontal_factor, vertical_factor);
 	const double new_width			= image_width	/ largest_factor;
 	const double new_height			= image_height	/ largest_factor;
 	const cv::Size new_size(std::round(new_width), std::round(new_height));
