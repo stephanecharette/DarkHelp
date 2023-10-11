@@ -552,7 +552,7 @@ namespace DarkHelp
 			 */
 			float snapping_limit_grow;
 
-			/** Redirect Darknet output to @p /dev/null or @p NUL:.
+			/** Redirect Darknet output to @p /dev/null (Linux) or @p NUL: (Windows).
 			 *
 			 * Darknet by default generates a lot of output on both @p STDOUT and @p STDERR at startup.  When this option is set
 			 * to @p true, %DarkHelp will temporarily redirect both @p STDOUT and @p STDERR to discard that output while the network
