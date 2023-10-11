@@ -48,7 +48,7 @@ sudo dpkg -i darkhelp*.deb
 
 If desired, the doxygen documentation can be created with @p "make doc".  Of course, Doxygen must be installed.
 
-@section BuildingPackages Packages and the %DarkHelp API
+@section BuildingPackages Packages and the DarkHelp API
 
 To install %DarkHelp so the API can be used within your own C++ application, run @p "sudo dpkg -i darkhelp-*.deb" after having run @p "make package".
 
