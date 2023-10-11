@@ -497,7 +497,7 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::ValueArg<std::string> image_type			("Y", "type"		, "The image type to use when --keep has also been enabled. Can be \"png\" or \"jpg\". Default is \"png\"."	, false, "png"		, &image_type_constraint, cli);
 	TCLAP::ValueArg<std::string> out_dir			("", "outdir"		, "Output directory to use when --keep has also been enabled. Default is /tmp/."							, false, ""			, &dir_exist_constraint	, cli);
 	TCLAP::ValueArg<std::string> pixelate			("", "pixelate"		, "Determines if predictions are pixelated in the output annotation image. Default is false."				, false, "false"	, &allowed_booleans		, cli);
-	TCLAP::ValueArg<std::string> redirection		("", "redirection"	, "Determines if STDOUT and STDERR redirection will be performed when Darknet loads. Default is true."		, false, "true"		, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> redirection		("", "redirection"	, "Determines if STDOUT and STDERR redirection will be performed when Darknet loads. Default is false."		, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::SwitchArg suppress						("", "suppress"		, "Suppress all labels (bounding boxes are shown, but not the labels at the top of each bounding box)."													, cli, false );
 	TCLAP::ValueArg<std::string> tile_edge			("", "tile-edge"	, "How close objects must be to tile edges to be re-combined. Range is 0.01-1.0+. Default is 0.25."			, false, "0.25"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> tile_rect			("", "tile-rect"	, "How similarly objects must line up across tiles to be re-combined. Range is 1.0-2.0+. Default is 1.20."	, false, "1.2"		, &float_constraint		, cli);
