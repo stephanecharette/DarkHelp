@@ -27,7 +27,7 @@ Extremely simple tutorial on how to build Darknet, %DarkHelp, and <a target="_bl
 <iframe width="560" height="315" src="https://www.youtube.com/embed/WTT1s8JjLFk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 @endhtmlonly
 
-Building both Darknet and %DarkHelp on Linux should not take more than 5 minutes combined.
+Building both Darknet and %DarkHelp on Linux should not take more than 5 minutes combined.  See the instructions in @p readme.md:  https://github.com/stephanecharette/DarkHelp#building-darknet-linux
 
 Once Darknet is built @em and installed, <a target="_blank" href="https://github.com/stephanecharette/DarkHelp/">download the source code to %DarkHelp</a> and build like this:
 
@@ -48,10 +48,12 @@ sudo dpkg -i darkhelp*.deb
 
 If desired, the doxygen documentation can be created with @p "make doc".  Of course, Doxygen must be installed.
 
-@section BuildingPackages Packages
+@section BuildingPackages Packages and the %DarkHelp API
 
 To install %DarkHelp so the API can be used within your own C++ application, run @p "sudo dpkg -i darkhelp-*.deb" after having run @p "make package".
 
-Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against @p libdarkhelp.so, @p libdarknet.so, and the OpenCV libraries.
+Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against @p libdarkhelp.a, @p libdarknet.so, and the OpenCV libraries.
+
+An example showing how to do this is available in the github repo:  https://github.com/stephanecharette/DarkHelp/tree/master/example_project
 
 */
