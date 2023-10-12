@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <list>
 #include <opencv2/opencv.hpp>
 // More headers are included at the bottom of this file.
 
