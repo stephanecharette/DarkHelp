@@ -10,6 +10,7 @@
 #include <atomic>
 #include <map>
 #include <vector>
+#include <deque>
 #include <string>
 #include <ctime>
 #include <csignal>
