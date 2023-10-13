@@ -109,7 +109,9 @@ void DarkHelp::load_custom_annotation_colours(const std::string & filename)
 				auto g = get_val();
 				auto b = get_val();
 				if (r or g or b)
+                {
 					Colours[idx] = cv::Scalar(b, g, r);
+                }
 			}
 			catch (const std::exception &e) {}
 			++idx;
@@ -155,7 +157,7 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 			else							names_filename		= iter.second;
 		}
 
-		// We *know* we have a cfg and weights, but the names is optional.	If we have a 3rd filename, then it must be the names,
+		// We *know* we have a cfg and weights, but the names is optional.  If we have a 3rd filename, then it must be the names,
 		// otherwise blank out the 3rd filename in case that field was used to pass in either the cfg or the weights.
 		if (names_filename == cfg_filename or names_filename == weights_filename)
 		{
@@ -167,8 +169,8 @@ DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std:
 	{
 		// If we get here, then the filenames are not obvious just by looking at the extensions.
 		//
-		// Instead, we're going to use the size of the files to decide what is the .cfg, .weights, and .names.	The largest
-		// file (MiB) will always be the .weights.	The next one (KiB) will be the configuration.  And the names, if available,
+		// Instead, we're going to use the size of the files to decide what is the .cfg, .weights, and .names.  The largest
+		// file (MiB) will always be the .weights.  The next one (KiB) will be the configuration.  And the names, if available,
 		// is only a few bytes in size.  Because the order of magnitude is so large, the three files should never have the
 		// exact same size unless something has gone very wrong.
 
@@ -530,7 +532,7 @@ cv::Mat DarkHelp::resize_keeping_aspect_ratio(cv::Mat mat, const cv::Size & desi
 	const double image_height		= static_cast<double>(mat.rows);
 	const double horizontal_factor	= image_width	/ static_cast<double>(desired_size.width);
 	const double vertical_factor	= image_height	/ static_cast<double>(desired_size.height);
-	const double largest_factor		= std::max(horizontal_factor, vertical_factor);
+	const double largest_factor 	= std::max(horizontal_factor, vertical_factor);
 	const double new_width			= image_width	/ largest_factor;
 	const double new_height			= image_height	/ largest_factor;
 	const cv::Size new_size(std::round(new_width), std::round(new_height));
