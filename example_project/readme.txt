@@ -12,3 +12,12 @@ To build:
 	cd build
 	cmake ..
 	make
+
+
+To build using Visual Studio, below flag should be added in CmakeLists.txt;
+
+ADD_COMPILE_OPTIONS ( /permissive- )
+
+and below line should be removed, since it requires GNU GCC compiler;
+
+ADD_DEFINITIONS ("-Wall -Wextra -Werror -Wno-unused-parameter")
