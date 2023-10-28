@@ -84,6 +84,7 @@ DarkHelp::VColours DarkHelp::get_default_annotation_colours()
 	return Colours;
 }
 
+
 void DarkHelp::load_custom_annotation_colours(const std::string & filename)
 {
 	Colours = default_colours;
@@ -109,16 +110,15 @@ void DarkHelp::load_custom_annotation_colours(const std::string & filename)
 				auto g = get_val();
 				auto b = get_val();
 				if (r or g or b)
-                {
+				{
 					Colours[idx] = cv::Scalar(b, g, r);
-                }
+				}
 			}
 			catch (const std::exception &e) {}
 			++idx;
 		}
 	}
 }
-
 
 
 DarkHelp::MStr DarkHelp::verify_cfg_and_weights(std::string & cfg_filename, std::string & weights_filename, std::string & names_filename)
