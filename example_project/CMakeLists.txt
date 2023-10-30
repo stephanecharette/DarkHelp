@@ -6,7 +6,11 @@ SET (CMAKE_BUILD_TYPE Release)
 SET (CMAKE_CXX_STANDARD 17)
 SET (CMAKE_CXX_STANDARD_REQUIRED ON)
 
-ADD_DEFINITIONS ("-Wall -Wextra -Werror -Wno-unused-parameter")
+IF (WIN32)
+	ADD_COMPILE_OPTIONS ( /permissive- )	# stick to C++ standards (turn off Microsoft-specific extensions)
+ELSE ()
+	ADD_COMPILE_OPTIONS ( -Wall -Wextra -Werror -Wno-unused-parameter )
+ENDIF ()
 
 FIND_PACKAGE (Threads	REQUIRED)
 FIND_PACKAGE (OpenCV	REQUIRED)
@@ -20,4 +24,3 @@ LIST (SORT SOURCE)
 
 ADD_EXECUTABLE (example ${SOURCE})
 TARGET_LINK_LIBRARIES (example Threads::Threads ${DARKHELP} ${DARKNET} ${OpenCV_LIBS})
-
