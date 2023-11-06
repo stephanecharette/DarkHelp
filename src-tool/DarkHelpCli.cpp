@@ -492,6 +492,8 @@ void init(Options & options, int argc, char *argv[])
 	TCLAP::SwitchArg random							("r", "random"		, "Randomly shuffle the set of images."																													, cli, false );
 	TCLAP::SwitchArg slideshow						("s", "slideshow"	, "Show the images in a slideshow."																														, cli, false );
 	TCLAP::ValueArg<std::string> snapping			("S", "snapping"	, "Snap the annotations."																					, false, "false"	, &allowed_booleans		, cli);
+	TCLAP::ValueArg<std::string> snap_horizontal_tolerance	("", "snap-horizontal-tolerance", "Snap horizontal tolerance, in pixels. Only used when snapping is enabled. Default is 5."	, false, "5"	, &int_constraint		, cli);
+	TCLAP::ValueArg<std::string> snap_vertical_tolerance	("", "snap-vertical-tolerance"	, "Snap vertical tolerance, in pixels. Only used when snapping is enabled. Default is 5."	, false, "5"	, &int_constraint		, cli);
 	TCLAP::ValueArg<std::string> threshold			("t", "threshold"	, "The threshold to use when predicting with the neural net. Default is 0.5."								, false, "0.5"		, &float_constraint		, cli);
 	TCLAP::ValueArg<std::string> use_tiles			("T", "tiles"		, "Determines if large images are processed by breaking into tiles. Default is \"false\"."					, false, "false"	, &allowed_booleans		, cli);
 	TCLAP::ValueArg<std::string> hierarchy			("y", "hierarchy"	, "The hierarchy threshold to use when predicting. Default is 0.5."											, false, "0.5"		, &float_constraint		, cli);
@@ -649,6 +651,8 @@ void init(Options & options, int argc, char *argv[])
 	options.nn.config.tile_edge_factor					= std::stof(tile_edge.getValue());
 	options.nn.config.tile_rect_factor					= std::stof(tile_rect.getValue());
 	options.nn.config.snapping_enabled					= get_bool(snapping);
+	options.nn.config.snapping_horizontal_tolerance		= std::stoi(snap_horizontal_tolerance.getValue());
+	options.nn.config.snapping_vertical_tolerance		= std::stoi(snap_vertical_tolerance.getValue());
 	options.nn.config.annotation_pixelate_enabled		= get_bool(pixelate);
 	options.nn.config.redirect_darknet_output			= get_bool(redirection);
 
