@@ -77,30 +77,40 @@ Make sure you update the path to the toolchain file if you used a different dire
 
 DarkHelp has many optional settings that impact the output, especially [`DarkHelp::NN::annotate()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1NN.html#a718c604a24ffb20efca54bbd73d79de5).  See the documentation for [`DarkHelp::Config`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1Config.html#details) for details.
 
-To keep it simple this example code doesn't change any settings.  It uses the default values as it runs inference on several images and saves the output:
-
 ```cpp
-    // include DarkHelp.hpp and link against DarkHelp, Darknet, and OpenCV
+    // Include DarkHelp.hpp and link against DarkHelp, Darknet, and OpenCV.
 
     const auto samples_images = {"dog.jpg", "cat.jpg", "horse.jpg"};
 
-    // Only do this once.  You don't want to keep reloading the network inside
-    // the loop because loading the network is actually a long process.
+    // Only load the neural network once, prior to the loop.  You don't want
+    // to keep reloading the network inside the loop because loading the
+    // network is actually a long process.  Note the order in which the files
+    // are specified is not important.  DarkHelp should automatically detect
+    // the differences between the three file types.
     DarkHelp::NN nn("animals.cfg", "animals_best.weights", "animals.names");
+
+    // Customize several settings which alters the output of both Darknet and
+    // DarkHelp.  Note there are many other settings, this is just an example.
+    nn.config.annotation_line_thickness = 1;
+    nn.config.shade_predictions = 0.15;
+    nn.config.snapping_enabled = true;
+    nn.config.threshold = 0.25;
 
     for (const auto & filename : samples_images)
     {
-        // get the predictions; on a decent GPU this should take milliseconds,
-        // while on a CPU this will take longer
+        // Get the predictions.  On a decent GPU this should take milliseconds,
+        // while on a CPU this will take longer.
         const auto results = nn.predict(filename);
 
-        // the results is a std::vector, one entry per detected object, which
-        // can be easily displayed on the console, logged to a file, etc...
+        // The results are stored in a std::vector, with one entry for each
+        // detected object.  This can be easily displayed on the console or
+        // logged to a file.  Either loop through the vector one entry at a
+        // time, or use the operator<<() to send it to a stream.
         std::cout << results << std::endl;
 
-        // draw bounding boxes showing the detected objects and save to disk
+        // Draw bounding boxes showing the detected objects and save to disk.
         cv::Mat output = nn.annotate();
-        cv::imwrite("output_" + filename, output, {CV_IMWRITE_PNG_COMPRESSION, 9});
+        cv::imwrite("output_" + filename, output, {cv::ImwriteFlags::IMWRITE_PNG_COMPRESSION, 9});
     }
 ```
 
@@ -108,7 +118,7 @@ More examples showing how to work with both static images and videos can be foun
 
 # C++ API Doxygen Output
 
-The official DarkHelp documentation and web site is at <https://www.ccoderun.ca/darkhelp/>.
+The official DarkHelp documentation and web site is at <https://www.ccoderun.ca/darkhelp/api/namespaceDarkHelp.html>.
 
 Some links to specific useful pages:
 
