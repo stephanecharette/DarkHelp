@@ -12,3 +12,5 @@ To build:
 	cd build
 	cmake ..
 	make
+
+IMPORTANT!  See the other source code examples in ../src-apps/.
