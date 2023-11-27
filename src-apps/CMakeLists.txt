@@ -17,9 +17,3 @@ FOREACH ( filename IN LISTS SRC_APPS )
 	ADD_EXECUTABLE			( ${stem} ${filename} )
 	TARGET_LINK_LIBRARIES	( ${stem} PRIVATE Threads::Threads dh ${Darknet} ${OpenCV_LIBS} )
 ENDFOREACH ()
-
-
-#* process_many_images.cpp
-#* show_many_images.cpp
-#* process_video.cpp
-#* rotate the image

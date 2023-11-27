@@ -38,3 +38,7 @@ page_70.png prediction results: 10
 
 * `save_webcam_to_video.cpp` Similar to the previous app, but the output is saved back out to disk, named `out.mp4`.  Press `ESC` to stop recording and exit.
 	* Run:  `src-apps/save_webcam_to_video yolov4-tiny.cfg coco.names yolov4-tiny.weights`
+
+* `rotate_images.cpp` Detects image rotation, rotates the images back to level, and then re-runs the neural network to get more accurate detections.
+	* See:  <https://www.ccoderun.ca/programming/2023-11-26_YOLO_and_image_rotation/>
+	* Run:  `src-apps/rotate_image Perfs.cfg Perfs.names Perfs_best.weights ~/nn/Perfs/set_01/film*.jpg`
