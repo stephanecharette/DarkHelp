@@ -41,16 +41,18 @@ You must build Darknet first.  See the [Darknet repo](https://github.com/hank-ai
 
 Now that Darknet is built and installed, you can go ahead and build DarkHelp.  On Ubuntu:
 
-	sudo apt-get install build-essential libtclap-dev libmagic-dev libopencv-dev
-	cd ~/src
-	git clone https://github.com/stephanecharette/DarkHelp.git
-	cd DarkHelp
-	mkdir build
-	cd build
-	cmake -DCMAKE_BUILD_TYPE=Release ..
-	make
-	make package
-	sudo dpkg -i darkhelp*.deb
+```sh
+sudo apt-get install build-essential libtclap-dev libmagic-dev libopencv-dev
+cd ~/src
+git clone https://github.com/stephanecharette/DarkHelp.git
+cd DarkHelp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+make package
+sudo dpkg -i darkhelp*.deb
+```
 
 ## Building Darknet (Windows)
 
@@ -60,18 +62,26 @@ You must build Darknet first.  See the [Darknet repo](https://github.com/hank-ai
 
 Once you finish building Darknet, run the following commands in the "Developer Command Prompt for VS" to build DarkHelp:
 
-	cd c:\src\vcpkg
-	vcpkg.exe install tclap:x64-windows
-	cd c:\src
-	git clone https://github.com/stephanecharette/DarkHelp.git
-	cd darkhelp
-	mkdir build
-	cd build
-	cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
-	msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
-	msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
+```bat
+cd c:\src\vcpkg
+vcpkg.exe install tclap:x64-windows
+cd c:\src
+git clone https://github.com/stephanecharette/DarkHelp.git
+cd darkhelp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+msbuild.exe /property:Platform=x64;Configuration=Release /target:Build -maxCpuCount -verbosity:normal -detailedSummary DarkHelp.sln
+msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
+```
 
 Make sure you update the path to the toolchain file if you used a different directory.  Once that last command finishes, you should have a .exe file you can run to install DarkHelp on your system.
+
+> If the CMake command several lines above gives an error about not finding `Darknet`, and you're certain it is installed correctly, then you can specify the path where CMake can find it.  Try this:
+
+```bat
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DDarknet="C:/Program Files/Darknet/lib/darknet.lib" ..
+```
 
 # Example Code
 
