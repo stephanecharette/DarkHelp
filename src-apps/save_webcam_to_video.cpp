@@ -41,10 +41,10 @@ int main(int argc, char * argv[])
 		const double fps = cap.get(cv::CAP_PROP_FPS);
 		cv::VideoWriter out("out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps, frame.size());
 
-		/* The length of time we wait should be 1000 milliseconds divided by the FPS.  So for 30 FPS video, we would normally
-		 * wait 33.333 milliseconds between each frame.  But this example is very simple, and we're not getting the current
-		 * time to calibrate against to ensure each frame is shown for the right duration.  Plus we make no attempt in the
-		 * code below to take into account the time it takes to run nn.predict() and nn.annotate().
+		/* The length of time we wait should be 1000 milliseconds divided by the FPS.  So for 30 FPS video, we might wait
+		 * 33.333 milliseconds between each frame.  But this example is very simple, and we're not getting the current time
+		 * to calibrate against to ensure each frame is shown for the right duration.  Plus we make no attempt in the code
+		 * below to take into account the time it takes to run nn.predict() and nn.annotate().
 		 *
 		 * So as a simple solution for a simple app, let's divide the wait time in half.  This should give the HighGUI event
 		 * loop time to run, but shouldn't be too much where we introduce lag.

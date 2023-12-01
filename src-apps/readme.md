@@ -42,3 +42,10 @@ page_70.png prediction results: 10
 * `rotate_images.cpp` Detects image rotation, rotates the images back to level, and then re-runs the neural network to get more accurate detections.
 	* See:  <https://www.ccoderun.ca/programming/2023-11-26_YOLO_and_image_rotation/>
 	* Run:  `src-apps/rotate_image Perfs.cfg Perfs.names Perfs_best.weights ~/nn/Perfs/set_01/film*.jpg`
+
+* `video_display_realtime.cpp` Loads a video file and displays it at the exact speed it was recorded, running the neural network on each frame.
+	* Run:  `src-apps/video_display_realtime animals.cfg animals.names animals_best.weights zoo.m4v`
+
+* `video_object_counter.cpp` Combines predictions and object tracker to count the number of objects.
+	* See:  output should be similar to this:  <https://youtu.be/2biQpVRFhbk>
+	* Run:  `src-apps/video_object_counter pigs.cfg pigs.names pigs_best.weights farm.m4v`

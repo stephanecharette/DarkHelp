@@ -44,8 +44,16 @@ int main(int argc, char * argv[])
 			nn.predict(frame);
 			frame = nn.annotate();
 
+			/* This is an over-simplistic example, where the waitKey() timeout is hard-coded.  You want the timeout to be short
+			 * enough for the OpenCV HighGUI event loop to have time to process events, but not too long that the code doesn't
+			 * have time to keep up with new incoming video frames.
+			 *
+			 * An assumption is made that most webcams might default to 30 FPS, meaning 33.33333 milliseconds per frame.  Sleep
+			 * just half of that time to process HighGUI events, and instead spend the extra remaining time waiting for the next
+			 * frame to be extracted.
+			 */
 			cv::imshow("video", frame);
-			const auto key = cv::waitKey(20);
+			const auto key = cv::waitKey(15);
 			if (key == 27)
 			{
 				break;
