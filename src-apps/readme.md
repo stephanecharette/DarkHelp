@@ -4,12 +4,14 @@ These are a series of very simple single-purpose apps to show how to use the Dar
 
 Find the one that seems to do what you want, and modify it as needed.  The examples as shown below are typically done with [the Rolodex example dataset](https://www.ccoderun.ca/programming/2023-11-06_Rolodex/).
 
+> When running these example apps on Windows, note the DLL files in the `C:\Program Files\Darknet\bin\` and `C:\Program Files\DarkHelp\bin\` directories.  The examples in this directory will need access to the same dependencies (OpenCV, Darknet, possibly CUDA and cuDNN, etc).
+
 # App Descriptions
 
 * `process_single_image.cpp`  Loads a neural network, call `predict()` on a single image, and display the results on the console.  Should look similar to this:
 	* Run:  `src-apps/process_single_image Rolodex.cfg Rolodex.names Rolodex_best.weights page_70.png`
 	* Output should look similar to this:
-```bash
+```txt
 page_70.png prediction results: 10
 -> 1/10: "user level 2 100%" #7 prob=0.996683 x=236 y=421 w=15 h=23 oid=0 tile=0 entries=1
 -> 2/10: "date of birth 100%" #2 prob=0.999682 x=143 y=331 w=207 h=23 oid=0 tile=0 entries=1
