@@ -83,6 +83,13 @@ Make sure you update the path to the toolchain file if you used a different dire
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DDarknet="C:/Program Files/Darknet/lib/darknet.lib" ..
 ```
 
+> If you get an error about `Could not resolve runtime dependencies: darknet.dll`, then copy that DLL into the `src-tool` directory and re-run the command that failed:
+
+```bat
+copy "C:\Program Files\Darknet\bin\darknet.dll" src-tool\Release\
+msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
+```
+
 # Example Code
 
 DarkHelp has many optional settings that impact the output, especially [`DarkHelp::NN::annotate()`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1NN.html#a718c604a24ffb20efca54bbd73d79de5).  See the documentation for [`DarkHelp::Config`](https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1Config.html#details) for details.
