@@ -138,6 +138,9 @@ extern "C"
 		std::cout << std::endl << "-> WARNING: signal handler called for signal #" << sig << std::endl;
 		signal_raised = true;
 
+		// reset this signal to the default handler so we don't get stuck in a loop of reporting the same error
+		std::signal(sig, nullptr);
+
 		return;
 	}
 }
