@@ -18,15 +18,11 @@ SET_TARGET_PROPERTIES	( server PROPERTIES OUTPUT_NAME "DarkHelpServer" )
 TARGET_LINK_LIBRARIES	( server PRIVATE Threads::Threads dh ${Darknet} ${OpenCV_LIBS} ${Magic} ${StdCppFS} )
 
 
-IF ( WIN32 )
-	INSTALL ( FILES DarkHelp.ico DESTINATION bin )
-ENDIF ()
-
-
 IF (UNIX)
 	# non-Windows installation is very simple
 	INSTALL (TARGETS cli server DESTINATION bin)
 ELSE ()
+	INSTALL ( FILES DarkHelp.ico DESTINATION bin )
 	# more complicated install for Windows so we also get the .DLL files copied over from vcpkg
 	# https://stackoverflow.com/a/72088102/13022
 	# note you may also need to manually copy over darknet.dll!

@@ -91,7 +91,7 @@ namespace DarkHelp
 			 */
 			NN(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
 
-			/// Get a version string for the %DarkHelp library.  E.g., could be `1.0.0-123`.
+			/// Get a version string for the %DarkHelp library.  E.g., could be `1.5.13-1`.
 			static std::string version();
 
 			/** Initialize ("load") the darknet neural network.  If @p verify_files_first has been enabled (the default)
