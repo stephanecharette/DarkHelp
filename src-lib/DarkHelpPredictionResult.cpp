@@ -3,7 +3,7 @@
  * MIT license applies.  See "license.txt" for details.
  */
 
-#include <DarkHelp.hpp>
+#include "DarkHelp.hpp"
 
 
 std::ostream & DarkHelp::operator<<(std::ostream & os, const DarkHelp::PredictionResult & pred)

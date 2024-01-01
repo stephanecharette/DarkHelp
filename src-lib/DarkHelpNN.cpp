@@ -3,7 +3,8 @@
  * MIT license applies.  See "license.txt" for details.
  */
 
-#include <DarkHelp.hpp>
+#include "DarkHelp.hpp"
+
 #include <fstream>
 #include <regex>
 #include <cmath>

@@ -20,11 +20,11 @@
  *
  * @note The original darknet.h header file defines structures in the global namespace with names such as "image" and
  * "network" which are likely to cause problems in large existing projects.  For this reason, the DarkHelp class uses
- * a void* for the network and will only include darknet.h if explicitly told it can.
+ * a @p void* for the network and will only include darknet.h if explicitly told it can.
  *
- * Unless you are using darknet's "image" class directly in your application, it is probably best to NOT define this
- * macro, and not include darknet.h.  (The header is included by DarkHelp.cpp, so you definitely still need to have it,
- * but the scope of where it is needed is confined to that one .cpp file.)
+ * Unless you are using darknet's "image" class directly in your application, it is probably best to NOT define the
+ * @p DARKHELP_CAN_INCLUDE_DARKNET macro, and not include darknet.h.  (The header is included by DarkHelpNN.cpp, so
+ * you definitely still need to have it, but the scope of where it is needed is confined to that one .cpp file.)
  */
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
 #include <darknet.h>
@@ -117,8 +117,13 @@ namespace DarkHelp
 	};
 }
 
-#include <DarkHelpPredictionResult.hpp>
-#include <DarkHelpConfig.hpp>
-#include <DarkHelpNN.hpp>
-#include <DarkHelpUtils.hpp>
-#include <DarkHelpPositionTracker.hpp>
+#include "DarkHelpPredictionResult.hpp"
+#include "DarkHelpConfig.hpp"
+#include "DarkHelpNN.hpp"
+#include "DarkHelpUtils.hpp"
+#include "DarkHelpPositionTracker.hpp"
+
+/* The C API should not be required or necessary when using the C++ API,
+ * but may as well make everything as easy to use as possible.
+ */
+#include "DarkHelp_C_API.h"

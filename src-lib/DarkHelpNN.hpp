@@ -8,7 +8,7 @@
 // Do not include this header file directly.  Instead, your project should include DarkHelp.hpp
 // which will then include all of the necessary secondary headers in the correct order.
 
-#include <DarkHelp.hpp>
+#include "DarkHelp.hpp"
 
 /** @file
  * DarkHelp's @p NN class.  Prior to v1.4, this used to be called @p %DarkHelp.

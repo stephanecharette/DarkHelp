@@ -3,7 +3,7 @@
  * MIT license applies.  See "license.txt" for details.
  */
 
-#include <DarkHelp.hpp>
+#include "DarkHelp.hpp"
 
 #ifdef WIN32
 #pragma warning(disable: 4305)
