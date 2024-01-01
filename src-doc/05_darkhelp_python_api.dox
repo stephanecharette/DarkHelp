@@ -1,0 +1,26 @@
+/** @page PythonAPI %DarkHelp Python API
+
+@note 2024-01-01:  The %DarkHelp Python API is currently under development.
+
+<!--
+The %DarkHelp Python API uses the simplified @ref CAPI.
+
+@note The Python API does not expose 100% of what is available in the @ref API.
+
+See the example scripts in the @p src-python/ directory for details.
+
+The Python API uses the same backend as the @ref API.  Calls such as @p DarkHelp.EnableNamesIncludePercentage() map to @ref DarkHelp::Config::names_include_percentage.
+
+Example code:
+
+~~~~{.python}
+import DarkHelp
+
+dh = DarkHelp.CreateDarkHelpNN("cars.cfg".encode("utf-8"), "cars.names".encode("utf-8"), "cars.weights".encode("utf-8"))
+DarkHelp.SetThreshold(dh, 0.35)
+DarkHelp.PredictFN(dh, "car_01.jpg".encode("utf-8"))
+DarkHelp.DestroyDarkHelpNN(dh)
+~~~~
+-->
+
+*/

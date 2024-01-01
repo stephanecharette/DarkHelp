@@ -22,7 +22,7 @@ const std::string names_file	= argv[3];
 DarkHelp::NN nn(config_file, weights_file, names_file);
 ~~~~
 
-At this point, the neural network has been fully loaded and is ready to use.  But just prior to using it, if you have certain settings you'd like to tweak, now is the time.  Several examples:
+At this point, the neural network has been fully loaded and is ready to use.  But just prior to using it, if you have certain settings you'd like to tweak, see the @ref DarkHelp::Config class.  Several examples:
 
 ~~~~{.cpp}
 DarkHelp::NN nn(argv[1], argv[2], argv[3]);

@@ -5,9 +5,10 @@
 
 Most recent documentation for DarkHelp:  https://github.com/stephanecharette/DarkHelp/
 
-@warning These instructions are no longer up-to-date.  Using vcpkg was causing too many problems since it doesn't build
-OpenCV correctly.  (For example, vcpkg doesn't build highgui or the video plugins required to import video files.)  For
-this reason, building with vcpkg is no longer supported.  See the build instructions on the DarkHelp project page instead.
+@warning These instructions are no longer up-to-date.  Using vcpkg was causing too many problems since it doesn't
+build OpenCV correctly on Linux.  (For example, vcpkg doesn't build highgui or the video plugins required to import
+video files.)  For this reason, building with vcpkg is no longer supported.  See the build instructions on the
+DarkHelp project page instead.
 
 
 # -------------------------
@@ -92,6 +93,6 @@ Run the following commands:
 	make -j $(nproc)
 	make package
 
-This will build a static library named "libdarkhelp.a", and the "DarkHelp" command-line tool.
+This will build a shared library named "libdarkhelp.so", and the "DarkHelp" command-line tool.
 
 See build_linux.cmd which contains the steps from "BUILDING DARKHELP".

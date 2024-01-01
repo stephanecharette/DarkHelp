@@ -52,7 +52,7 @@ If desired, the doxygen documentation can be created with @p "make doc".  Of cou
 
 To install %DarkHelp so the API can be used within your own C++ application, run @p "sudo dpkg -i darkhelp-*.deb" after having run @p "make package".
 
-Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against @p libdarkhelp.a, @p libdarknet.so, and the OpenCV libraries.
+Now from within your application, you must @p "#include <DarkHelp.hpp>" and link against @p libdarkhelp.so, @p libdarknet.so, and the OpenCV libraries.
 
 An example showing how to do this is available in the github repo:  https://github.com/stephanecharette/DarkHelp/tree/master/example_project
 

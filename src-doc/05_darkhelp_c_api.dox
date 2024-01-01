@@ -1,0 +1,27 @@
+/** @page CAPI %DarkHelp C API
+
+@note 2024-01-01:  The %DarkHelp C API is currently under development.
+
+<!--
+The %DarkHelp C API is a simplified wrapper API for the C++ API.  It exists mostly so a Python interface could more easily be built.  (See @p src-python.)
+
+To use the %DarkHelp C API, you must include the project header file within your application:
+
+~~~~{.c}
+#include <DarkHelp_C_API.h>
+~~~~
+
+The C API requires that a @p void* object be allocated to represent the %DarkHelp object in C++.  That @p void* pointer is then passed in to all the function calls.
+
+~~~~{.c}
+DarkHelpPtr dh = CreateDarkHelpNN("cars.cfg", "cars.names", "cars_best.weights");
+
+PredictFN(dh, "test.jpg");
+
+DestroyDarkHelpNN(dh);
+~~~~
+
+See the @ref API for additional details on how to use %DarkHelp, including object tracking as well as working with videos.
+-->
+
+*/

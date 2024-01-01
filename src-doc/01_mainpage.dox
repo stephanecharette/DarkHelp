@@ -1,26 +1,28 @@
 /** @mainpage %DarkHelp
 
-The official web site for C Code Run's %DarkHelp is http://www.ccoderun.ca/. <br/>
+Official %DarkHelp documentation:  http://www.ccoderun.ca/DarkHelp/api/
+
+%DarkHelp is an API and related tools used to call Darknet's original @p C API.  The %DarkHelp CLI and API contains advanced features such as tiling and object tracking.  The %DarkHelp project is fully @ref License "open source" (MIT license).
+
+&nbsp;			| What																						| Where							| URL
+----------------|-------------------------------------------------------------------------------------------|-------------------------------|----
+GitHub			| The GitHub repo with the most recent source code for %DarkHelp							| &nbsp;						| https://github.com/stephanecharette/DarkHelp/
+@ref API		| The @ref DarkHelp C++ namespace, classes, headers, and functions.							| @p src-lib/ @p *.hpp			| https://github.com/stephanecharette/DarkHelp/tree/master/src-lib
+@ref CAPI		| The @p C API has limited functionality; it was created to help create a Python wrapper.	| @p src-lib/ @p *.h			| https://github.com/stephanecharette/DarkHelp/tree/master/src-lib
+@ref PythonAPI	| The @p Python API is similar to the @ref CAPI.											| @p src-python/				| https://github.com/stephanecharette/DarkHelp/tree/master/src-python
+@ref Tool		| The %DarkHelp CLI is a simple tool written using the @ref API.							| @p src-tool/ @p *Cli.cpp		| https://github.com/stephanecharette/DarkHelp/tree/master/src-tool
+@ref Server		| The %DarkHelp Server is similar to the CLI; it runs continuously and processes images.	| @p src-tool/ @p *Server.cpp	| https://github.com/stephanecharette/DarkHelp/tree/master/src-tool
+Sample Apps		| The sample applications provide additional example code showing how to use the API.		| @p src-apps/					| https://github.com/stephanecharette/DarkHelp/tree/master/src-apps
+
+%DarkHelp is written with and tested against this Darknet repo:  https://github.com/hank-ai/darknet.  There are 2 other historical repos for Darknet, by Joseph Redmon and Alexey Bochkovskiy.  However, both of those have been [abandoned for several years](https://www.ccoderun.ca/programming/yolo_faq/#which_repos_to_use_and_avoid).  Please use the more recent Hank.ai fork instead.
+
+@note %DarkHelp is @em not Darknet!  You must also install Darknet to use %DarkHelp.
 
 @htmlonly[block]
 <iframe width="560" height="315" src="https://www.youtube.com/embed/igpJMhIOKQE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 @endhtmlonly
 
-This documentation is available here:
-@li http://www.ccoderun.ca/DarkHelp/api/
-
-Source code for %DarkHelp is available at https://github.com/stephanecharette/DarkHelp/.<br/>
-
-@note %DarkHelp is @em not Darknet!  %DarkHelp is a C++ API layer and tools used to call Darknet's original C API.
-
-%DarkHelp contains the following:
-@li The @ref DarkHelp C++ namespace, classes, headers, and functions so you can use Darknet/YOLO in your C++ application.  This is known as the @ref API.
-@li The @ref Tool used to run inference on images or videos.  This CLI tool was written using the @ref API.
-@li The @ref Server CLI tool used to create a server that keeps running in a CLI window.  This CLI tool was also written using the @ref API.
-
-I recommend the Hank.ai fork of Darknet, available at https://github.com/hank-ai/darknet.
-
-There are 2 other popular repos for Darknet, by Joseph Redmon and Alexey Bochkovskiy.  However, both of those have been abandoned for several years.  Please use the Hank.ai fork instead.
+<br>
 
 <div style="padding:1em; margin:2em; border:1px solid black; display:inline-block;">
 %DarkHelp is written by <a target="_blank" href="https://www.ccoderun.ca/stephane/">Stéphane Charette d.b.a. C Code Run</a><br/>
