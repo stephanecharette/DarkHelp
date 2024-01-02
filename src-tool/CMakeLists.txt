@@ -30,7 +30,7 @@ ELSE ()
 		RUNTIME_DEPENDENCIES
 			PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "wpaxholder" "HvsiFileTrust" "PdmUtilities"
 			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-			DIRECTORIES ${CMAKE_BINARY_DIR}/bin
+			DIRECTORIES ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/src-lib/Release/
 		RUNTIME DESTINATION bin
 		)
 ENDIF ()
