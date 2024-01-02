@@ -105,7 +105,6 @@ int PredictFN(DarkHelpPtr ptr, const char * const image_filename)
 		std::cerr << e.what() << std::endl;
 	}
 
-	/// @todo what should this return?
 	return size;
 }
 
