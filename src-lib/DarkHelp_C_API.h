@@ -9,6 +9,19 @@
  * This is the @p C API for %DarkHelp.  It exists primarily to help with the Python bindings.  If you have a choice
  * between using the @p C API and the @p C++ one, note the @p C++ API has additional functionality that is not
  * exposed in the @p C or @p Python API.
+ *
+ * Using the @p C API is simple:
+ * ~~~~{.c}
+ * #include <DarkHelp_C_API.h>
+ * // ...
+ * DarkHelpPtr dh = CreateDarkHelpNN(argv[1], argv[2], argv[3]);
+ * SetThreshold(dh, 0.25);
+ * SetAnnotationLineThickness(dh, 1);
+ * PredictFN(dh, argv[4]);
+ * const char * json = GetPredictionResults(dh);
+ * Annotate(dh, "output.jpg");
+ * DestroyDarkHelpNN(dh);
+ * ~~~~
  */
 
 #ifdef __cplusplus
@@ -28,13 +41,13 @@ extern "C"
  */
 typedef void* DarkHelpPtr;
 
-/** Get the %DarkHelp version string.  @see @ref DarkHelp::version()
+/** Get the %DarkHelp version string, such as @p "1.6.1-2".  @see @ref DarkHelp::version()
  * @since December 2023
  * @note This is part of the @ref CAPI, which is a simplified interface to the full @ref API.
  */
 const char * DarkHelpVersion();
 
-/** Get the Darknet version string.  @see @ref DarkHelpVersion()
+/** Get the "short" Darknet version string, such as @p "2.0-78".  @see @ref DarkHelpVersion()
  * @since December 2023
  * @note This is part of the @ref CAPI, which is a simplified interface to the full @ref API.
  */
@@ -80,7 +93,7 @@ int Predict(DarkHelpPtr ptr, const int width, const int height, uint8_t * image,
 
 /** Get the last detection results from either @ref PredictFN() or @ref Predict().  The results will be formatted
  * as a JSON string.
- * @note The @p char* buffer used to return the JSON is static, so don't attempt to use this function call simultaneously
+ * @warning The @p char* buffer used to return the JSON is static, so don't attempt to use this function call simultaneously
  * from multiple threads, otherwise you risk corrupting the returned text or causing strange undefined behaviour.
  * @since December 2023
  * @note This is part of the @ref CAPI, which is a simplified interface to the full @ref API.

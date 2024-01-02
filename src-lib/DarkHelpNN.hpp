@@ -100,7 +100,10 @@ namespace DarkHelp
 			 */
 			NN & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
 
-			/// Initialize ("load") the darknet neural network.  This uses the values within @ref DarkHelp::NN::config.
+			/** Initialize ("load") the darknet neural network.  This uses the values within @ref DarkHelp::NN::config
+			 * and is called automatically if the network files have been specified to the constructor.  You only need
+			 * to manually call @p init() if the default constructor without filenames is used.
+			 */
 			NN & init();
 
 			/** The opposite of @ref DarkHelp::NN::init().  This is automatically called by the destructor.
@@ -109,9 +112,9 @@ namespace DarkHelp
 			NN & reset();
 
 			/** Clear out the images and the predictions stored internally within this object.  This makes it seem as if the
-			 * @p NN object has not yet been used to process any images.  Unlike @ref reset(), this does not change any settings,
-			 * it only clears the images and the predictions.  If a neural network has been loaded, calling @p clear() does not
-			 * unload that neural network, and @ref is_initialized() will continue to return @p true.
+			 * @p NN object has not yet been used to process any images.  Unlike @ref reset(), this does not change any
+			 * configuration settings, it only clears the images and the predictions.  If a neural network has been loaded,
+			 * calling @p clear() does not unload that neural network, and @ref is_initialized() will continue to return @p true.
 			 *
 			 * Calling this method between images is not necessary, but is included for completeness.
 			 */
@@ -192,7 +195,7 @@ namespace DarkHelp
 			 */
 			PredictionResults predict(cv::Mat mat, const float new_threshold = -1.0f);
 
-	#ifdef DARKHELP_CAN_INCLUDE_DARKNET
+#ifdef DARKHELP_CAN_INCLUDE_DARKNET
 			/** Use the neural network to predict what is contained in this image.    This results in a call to either
 			 * @ref DarkHelp::NN::predict_internal() or @ref DarkHelp::NN::predict_tile() depending on how
 			 * @ref DarkHelp::Config::enable_tiles has been set.
@@ -215,7 +218,7 @@ namespace DarkHelp
 			 * @see @ref DarkHelp::NN::duration
 			 */
 			PredictionResults predict(image img, const float new_threshold = -1.0f);
-	#endif
+#endif
 
 			/** Similar to @ref DarkHelp::NN::predict(), but automatically breaks the images down into individual tiles if
 			 * it is significantly larger than the network dimensions.  This is explained in details in @ref Tiling.
@@ -316,10 +319,10 @@ namespace DarkHelp
 			 */
 			void * darknet_net;
 
-	#ifdef HAVE_OPENCV_DNN_OBJDETECT
+#ifdef HAVE_OPENCV_DNN_OBJDETECT
 			/// The OpenCV network, when the driver has been set to @ref DarkHelp::EDriver::kOpenCV in @ref DarkHelp::NN::init().
 			cv::dnn::Net opencv_net;
-	#endif
+#endif
 
 			/** A vector of names corresponding to the identified classes.  This is typically setup in the constructor,
 			 * but can be manually set afterwards.
