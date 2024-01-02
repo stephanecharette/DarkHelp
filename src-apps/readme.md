@@ -51,3 +51,6 @@ page_70.png prediction results: 10
 * `video_object_counter.cpp` Combines predictions and object tracker to count the number of objects.
 	* See:  output should be similar to this:  <https://youtu.be/2biQpVRFhbk>
 	* Run:  `src-apps/video_object_counter pigs.cfg pigs.names pigs_best.weights farm.m4v`
+
+* `using_c_api.cpp` Demonstrates how to use the C API.
+	* Run:  `src-apps/using_c_api Rolodex.cfg Rolodex.names Rolodex_best.weights page_70.png`

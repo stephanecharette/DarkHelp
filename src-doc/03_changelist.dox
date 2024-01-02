@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.6.0-1		| 2024-01-02	| Added the @ref CAPI.
 1.5.13-1	| 2023-12-26	| Changed %DarkHelp build from static @p .a file to shared @p .so file.  You may need to delete your @p CMakeCache.txt file if you get an error about @p libdarkhelp.a since we now build @p libdarkhelp.so.
 1.5.5-1		| 2023-10-11	| Changed @ref DarkHelp::Config::redirect_darknet_output to default to @p FALSE when using the %DarkHelp CLI, since this was masking Darknet errors for new users.  (The API still defaults to @p TRUE.)
 1.5.2-1		| 2023-07-08	| Added @ref DarkHelp::Config::use_fast_image_resize and @ref DarkHelp::slow_resize_ignore_aspect_ratio().

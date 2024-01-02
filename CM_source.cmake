@@ -4,6 +4,7 @@
 
 
 INCLUDE_DIRECTORIES ( src-lib )
+INCLUDE_DIRECTORIES ( src-tool )
 
 ADD_SUBDIRECTORY ( src-lib )
 ADD_SUBDIRECTORY ( src-tool )

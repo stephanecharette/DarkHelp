@@ -83,10 +83,15 @@ Make sure you update the path to the toolchain file if you used a different dire
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DDarknet="C:/Program Files/Darknet/lib/darknet.lib" ..
 ```
 
-> If you get an error about `Could not resolve runtime dependencies: darknet.dll`, then copy that DLL into the `src-tool` directory and re-run the command that failed:
+> If you get an error about `Could not resolve runtime dependencies: darknet.dll`, then copy that DLL into the `src-tool` directory:
 
 ```bat
 copy "C:\Program Files\Darknet\bin\darknet.dll" src-tool\Release\
+```
+
+> ...and re-run the command that failed:
+
+```bat
 msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
 ```
 
@@ -159,4 +164,3 @@ Some links to specific useful pages:
 - [DarkHelp Server](https://www.ccoderun.ca/darkhelp/api/Server.html)
 
 ![tiled image example](src-doc/mailboxes_2x2_tiles_detection.png)
-

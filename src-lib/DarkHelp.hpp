@@ -126,4 +126,4 @@ namespace DarkHelp
 /* The C API should not be required or necessary when using the C++ API,
  * but may as well make everything as easy to use as possible.
  */
-//#include "DarkHelp_C_API.h"
+#include "DarkHelp_C_API.h"
