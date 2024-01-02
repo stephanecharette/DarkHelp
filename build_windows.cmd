@@ -1,12 +1,11 @@
 @echo off
 
-echo This script assumes you've already read through and run the steps described
-echo in readme_windows.txt!  The entire "build" directory will be deleted and
-echo re-created.
-pause
+if not exist build (
+        echo You need to manually run through the build steps at least once before you use this script.
+        echo Please see readme.md for details.
+        exit /b 1
+)
 
-rmdir /q /s build
-mkdir build
 cd build
 
 set ARCHITECTURE=x64
