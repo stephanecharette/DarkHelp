@@ -22,3 +22,9 @@ TARGET_LINK_LIBRARIES ( dh PRIVATE Threads::Threads ${Darknet} ${OpenCV_LIBS} )
 
 INSTALL ( FILES ${HEADERS}	DESTINATION include	)
 INSTALL ( TARGETS dh		DESTINATION lib		)
+
+IF (WIN32)
+	# Windows assumes the DLLs are installed with the executables,
+	# so put a copy of it here as well
+	INSTALL (TARGETS dh DESTINATION bin)
+ENDIF ()
