@@ -92,13 +92,13 @@ int PredictFN(DarkHelpPtr ptr, const char * const image_filename)
 		return -1;
 	}
 
-	size_t size = 0;
+	int size = 0;
 	try
 	{
 		DarkHelp::NN * nn = reinterpret_cast<DarkHelp::NN*>(ptr);
 
 		nn->predict(image_filename);
-		size = nn->prediction_results.size();
+		size = (int)nn->prediction_results.size();
 	}
 	catch (const std::exception & e)
 	{
@@ -153,7 +153,7 @@ int Predict(DarkHelpPtr ptr, const int width, const int height, uint8_t * image,
 
 		nn->predict(mat);
 
-		number_of_predictions = nn->prediction_results.size();
+		number_of_predictions = (int)nn->prediction_results.size();
 	}
 	catch (const std::exception & e)
 	{

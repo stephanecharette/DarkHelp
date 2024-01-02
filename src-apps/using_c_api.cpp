@@ -42,7 +42,7 @@ int main(int argc, char * argv[])
 		SetThreshold(ptr, 0.25);
 		EnableNamesIncludePercentage(ptr, true);
 		EnableAnnotationAutoHideLabels(ptr, false);
-		SetAnnotationShadePredictions(ptr, 0.15);
+		SetAnnotationShadePredictions(ptr, 0.15f);
 		SetAnnotationFontScale(ptr, 0.5);
 		SetAnnotationFontThickness(ptr, 1);
 		SetAnnotationLineThickness(ptr, 1);
