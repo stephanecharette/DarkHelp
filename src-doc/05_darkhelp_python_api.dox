@@ -4,9 +4,7 @@ The %DarkHelp @p Python API uses the simplified @ref CAPI.
 
 @note The Python API does not expose 100% of what is available in the @ref API.
 
-See the sample @p src-python/example.py showing how to use the API.
-
-Calls such as @p DarkHelp.EnableNamesIncludePercentage() map to @ref DarkHelp::Config::names_include_percentage.  Using this API, %DarkHelp can be used with advanced features such as tiling and snapping.
+Calls such as @p DarkHelp.EnableNamesIncludePercentage() map to the @p C API @ref EnableNamesIncludePercentage() which is documented as @ref DarkHelp::Config::names_include_percentage.  Using this API, %DarkHelp can be used with advanced features such as tiling and snapping.
 
 Example code:
 
@@ -31,5 +29,19 @@ DarkHelp.DestroyDarkHelpNN(dh)
 
 print(json.decode())
 ~~~~
+
+See the sample file @p src-python/example.py which shows how to use the @p Python API.
+
+Convenient links to some of the API call documentation to get started:
+
+@li @ref DarkHelpVersion()
+@li @ref CreateDarkHelpNN()
+@li @ref SetThreshold()
+@li @ref EnableTiles()
+@li @ref EnableSnapping()
+@li @ref SetAnnotationLineThickness()
+@li @ref PredictFN()
+@li @ref Annotate()
+@li @ref GetPredictionResults()
 
 */

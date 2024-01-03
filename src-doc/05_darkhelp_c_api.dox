@@ -22,4 +22,16 @@ DestroyDarkHelpNN(dh);
 
 See the example application @p src-apps/using_c_api.cpp for sample code showing how the @p C API can be used.
 
+Convenient links to some of the API call documentation to get started:
+
+@li @ref DarkHelpVersion()
+@li @ref CreateDarkHelpNN()
+@li @ref SetThreshold()
+@li @ref EnableTiles()
+@li @ref EnableSnapping()
+@li @ref SetAnnotationLineThickness()
+@li @ref PredictFN()
+@li @ref Annotate()
+@li @ref GetPredictionResults()
+
 */
