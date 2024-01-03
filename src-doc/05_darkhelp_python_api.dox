@@ -1,15 +1,12 @@
 /** @page PythonAPI %DarkHelp Python API
 
-@note 2024-01-01:  The %DarkHelp Python API is currently under development.
-
-<!--
-The %DarkHelp Python API uses the simplified @ref CAPI.
+The %DarkHelp @p Python API uses the simplified @ref CAPI.
 
 @note The Python API does not expose 100% of what is available in the @ref API.
 
-See the example scripts in the @p src-python/ directory for details.
+See the sample @p src-python/example.py showing how to use the API.
 
-The Python API uses the same backend as the @ref API.  Calls such as @p DarkHelp.EnableNamesIncludePercentage() map to @ref DarkHelp::Config::names_include_percentage.
+Calls such as @p DarkHelp.EnableNamesIncludePercentage() map to @ref DarkHelp::Config::names_include_percentage.  Using this API, %DarkHelp can be used with advanced features such as tiling and snapping.
 
 Example code:
 
@@ -17,10 +14,22 @@ Example code:
 import DarkHelp
 
 dh = DarkHelp.CreateDarkHelpNN("cars.cfg".encode("utf-8"), "cars.names".encode("utf-8"), "cars.weights".encode("utf-8"))
+
 DarkHelp.SetThreshold(dh, 0.35)
+DarkHelp.SetAnnotationLineThickness(dh, 1)
+DarkHelp.EnableTiles(dh, True)
+DarkHelp.EnableCombineTilePredictions(dh, True)
+DarkHelp.EnableOnlyCombineSimilarPredictions(dh, False)
+DarkHelp.SetTileEdgeFactor(dh, 0.18f)
+DarkHelp.SetTileRectFactor(dh, 1.22f)
+
 DarkHelp.PredictFN(dh, "car_01.jpg".encode("utf-8"))
+DarkHelp.Annotate(dh, "output.jpg".encode("utf-8"))
+json = DarkHelp.GetPredictionResults(dh)
+
 DarkHelp.DestroyDarkHelpNN(dh)
+
+print(json.decode())
 ~~~~
--->
 
 */

@@ -1,6 +1,6 @@
 /** @page CAPI %DarkHelp C API
 
-The %DarkHelp C API is a simplified wrapper API for the C++ API.
+The %DarkHelp @p C API is a simplified wrapper API for the C++ API.
 
 To use the %DarkHelp C API, you must include the project header file within your application:
 
@@ -20,6 +20,6 @@ Annotate(dh, "output.jpg");
 DestroyDarkHelpNN(dh);
 ~~~~
 
-See the @ref API for additional details on how to use %DarkHelp, including object tracking as well as working with videos.
+See the example application @p src-apps/using_c_api.cpp for sample code showing how the @p C API can be used.
 
 */
