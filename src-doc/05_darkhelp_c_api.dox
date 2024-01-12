@@ -20,7 +20,7 @@ Annotate(dh, "output.jpg");
 DestroyDarkHelpNN(dh);
 ~~~~
 
-See the example application @p src-apps/using_c_api.cpp for sample code showing how the @p C API can be used.
+See the example application @p src-apps/using_c_api.cpp for sample code which shows how to use the @p C API.
 
 Convenient links to some of the API call documentation to get started:
 

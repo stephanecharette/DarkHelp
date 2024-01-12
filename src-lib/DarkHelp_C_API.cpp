@@ -254,6 +254,16 @@ const char * GetPredictionResults(DarkHelpPtr ptr)
 
 void Annotate(DarkHelpPtr ptr, const char * const output_image_filename)
 {
+	/* Links to pages to dig into if we want to pass cv::Mat objects between C++ and Python:
+	 *
+	 * - PyBind11
+	 * - https://gist.github.com/Xonxt/26d2a9ac6c56505d0896822ede99a646
+	 * - https://stackoverflow.com/a/54788757/13022
+	 * - https://docs.opencv.org/4.x/da/d49/tutorial_py_bindings_basics.html
+	 * - https://stackoverflow.com/questions/28427849/python-get-cvmat-from-c-dll
+	 * - https://docs.python.org/3/library/ctypes.html
+	 */
+
 	if (ptr == nullptr)
 	{
 		std::cerr << "ignoring call to " << __func__ << " with a null pointer" << std::endl;
