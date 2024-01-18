@@ -212,7 +212,7 @@ void DarkHelp::parse(CamOptions & cam_options, DarkHelp::Config & config, int ar
 	auto WxH_constraint = WxHConstraint();
 	auto camera_constraint = CameraConstraint();
 
-	const std::vector<std::string> booleans = { "true", "false", "on", "off", "yes", "no", "t", "f", "y", "n", "1", "0" };
+	std::vector<std::string> booleans = { "true", "false", "on", "off", "yes", "no", "t", "f", "y", "n", "1", "0" };
 	auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
 
 	TCLAP::CmdLine cli("Load a darknet neural network and process frames from a camera (webcam).", ' ', DH_VERSION);
@@ -336,7 +336,7 @@ void DarkHelp::parse(CamOptions & cam_options, DarkHelp::Config & config, int ar
 	}
 	if (fps.isSet())
 	{
-		cam_options.fps_request = std::stod(fps);
+		cam_options.fps_request = std::stod(fps.getValue());
 	}
 
 	cam_options.size_request.width = std::stoi(width.getValue());

@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.7.1-1		| 2024-01-17	| Added the @ref Cam.
 1.6.2-1		| 2024-01-02	| Added the @ref PythonAPI.
 1.6.0-1		| 2024-01-02	| Added the @ref CAPI.
 1.5.13-1	| 2023-12-26	| Changed %DarkHelp build from static @p .a file to shared @p .so file.  You may need to delete your @p CMakeCache.txt file if you get an error about @p libdarkhelp.a since we now build @p libdarkhelp.so.

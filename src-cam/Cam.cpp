@@ -29,15 +29,19 @@ int main(int argc, char * argv[])
 		if (options.device_index >= 0)
 		{
 			std::cout << "-> opening camera device index #" << options.device_index << std::endl;
+#if 0 // not available until newer versions of OpenCV
 			DarkHelp::VInt v =
 			{
 				cv::CAP_PROP_BUFFERSIZE,		5,
-				cv::CAP_PROP_HW_ACCELERATION,	cv::VIDEO_ACCELERATION_ANY,
+//				cv::CAP_PROP_HW_ACCELERATION,	cv::VIDEO_ACCELERATION_ANY,
 				cv::CAP_PROP_FRAME_WIDTH,		options.size_request.width,
 				cv::CAP_PROP_FRAME_HEIGHT,		options.size_request.height,
 				cv::CAP_PROP_FPS,				static_cast<int>(std::round(options.fps_request)),
 			};
 			cap.open(options.device_index, options.device_backend, v);
+#else
+			cap.open(options.device_index, options.device_backend);
+#endif
 			if (not cap.isOpened())
 			{
 				throw std::runtime_error("failed to open camera index #" + std::to_string(options.device_index));
