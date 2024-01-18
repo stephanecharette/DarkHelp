@@ -93,7 +93,7 @@ int main(int argc, char * argv[])
 
 			// see if we can confirm the FPS since either V4L2 or OpenCV seems to get that wrong most of the time
 			bool ok = true;
-			int read_this_many_frames = std::max(10.0, std::ceil(options.fps_actual));
+			int read_this_many_frames = static_cast<int>(std::max(10.0, std::ceil(options.fps_actual)));
 			const auto timestamp_start = std::chrono::high_resolution_clock::now();
 			for (int idx = 0; idx < read_this_many_frames; idx ++)
 			{
@@ -114,7 +114,7 @@ int main(int argc, char * argv[])
 			{
 				// 1 second = 1,000,000,000 nanoseconds
 				const auto duration = timestamp_end - timestamp_start;
-				const double length_in_nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+				const double length_in_nanoseconds = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count());
 				const double real_fps = 1000000000.0 / length_in_nanoseconds * read_this_many_frames;
 
 				std::cout << "-> took " << DarkHelp::duration_string(duration) << " to read " << read_this_many_frames << " frames, giving us " << real_fps << " FPS" << std::endl;
@@ -125,7 +125,7 @@ int main(int argc, char * argv[])
 					options.fps_actual = real_fps;
 				}
 			}
-			milliseconds_to_wait = std::max(5.0, std::min(10.0, std::round(1000.0 / 2.0 / options.fps_actual)));
+			milliseconds_to_wait = static_cast<int>(std::max(5.0, std::min(10.0, std::round(1000.0 / 2.0 / options.fps_actual))));
 			std::cout << "-> HighGUI event timeout is set to " << milliseconds_to_wait << " milliseconds which is good up to " << std::floor(1000.0 / milliseconds_to_wait) << " FPS" << std::endl;
 		}
 
@@ -184,13 +184,13 @@ int main(int argc, char * argv[])
 		size_t max_frame_counter = 0;
 		if (options.capture_seconds > 0)
 		{
-			max_frame_counter = options.fps_actual * options.capture_seconds;
+			max_frame_counter = static_cast<size_t>(options.fps_actual * options.capture_seconds);
 			std::cout << "-> max frame counter is set to " << max_frame_counter << " (" << (max_frame_counter / options.fps_actual) << " seconds)" << std::endl;
 		}
 
 		// if we got here, then assume that everything is good
 		rc = 0;
-		const int fps_rounded = std::round(options.fps_actual);
+		const int fps_rounded = static_cast<int>(std::round(options.fps_actual));
 		if (options.show_gui)
 		{
 			std::cout << "-> press ESC to stop" << std::endl;
