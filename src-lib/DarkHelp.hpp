@@ -85,8 +85,6 @@ namespace DarkHelp
 	 *
 	 * @see @ref DarkHelp::NN::init()
 	 *
-	 * @note Setting the driver to any value other than @p kDarknet will result in the execution of experimental code.
-	 *
 	 * If using @p kOpenCV or @p kOpenCVCPU you can customize the backend and target after DarkHelp::init() is called.  For example:
 	 * ~~~~
 	 * DarkHelp::NN nn;

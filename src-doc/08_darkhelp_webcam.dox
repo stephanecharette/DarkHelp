@@ -1,0 +1,34 @@
+/** @page Cam %DarkHelp Camera
+
+The %DarkHelp Camera is a command-line tool that loads a neural network and applies it to every frame read from a webcam.  The output is then shown on the screen and saved to disk as a video.
+
+Similar functionality is available in the example applications.  See the code in @p process_video_webcam.cpp and @p save_webcam_to_video.cpp.  But the %DarkHelp Cam tool contains many additional and advanced features, such as tiling, snapping, threshold, and font settings.  It is meant to be a useful command-line tool, while the code in the @p src-apps directory is meant to be example source code.
+
+<b>To get a full list of parameters with a brief explanation of each one, run @p "DarkHelp_cam --help".</b>  Most of the parameters are very similar to the %DarkHelp CLI.
+
+Here is an example showing how the @p DarkHelp_cam tool can be used to load the MSCOCO pre-trained weights:
+
+~~~~{.sh}
+DarkHelp_cam \
+  --camera 2 \
+  --autohide off \
+  --duration off \
+  --redirection on \
+  --threshold 0.25 \
+  --size 800x600 \
+  --fps 30 \
+  --pixelate on \
+  mscoco.names \
+  mscoco-yolov4-tiny.cfg \
+  mscoco-yolov4-tiny.weights
+~~~~
+
+This opens the @p /dev/video2 device, configures the webcam to use 800x600 @ 30 FPS, uses a Darknet threshold of 0.25, and pixelates all of the detected objects.  With those example parameters, the @p .mp4 video that is generated as output might look similar to this frame:
+
+@image html darkhelp_cam.jpg
+
+To test the @p DarkHelp_cam command, you'll need some neural network files -- the @p .cfg, @p .names, and @p .weights files.
+
+@note If you've not yet trained a custom network, you can download the MSCOCO pre-trained weights from the repo:  https://github.com/hank-ai/darknet#mscoco-pre-trained-weights
+
+*/

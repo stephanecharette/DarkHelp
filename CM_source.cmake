@@ -3,10 +3,11 @@
 # MIT license applies.  See "license.txt" for details.
 
 
-INCLUDE_DIRECTORIES ( src-lib )
-INCLUDE_DIRECTORIES ( src-tool )
+INCLUDE_DIRECTORIES (src-lib)
+INCLUDE_DIRECTORIES (src-tool)
 
-ADD_SUBDIRECTORY ( src-lib )
-ADD_SUBDIRECTORY ( src-tool )
-ADD_SUBDIRECTORY ( src-apps )
-ADD_SUBDIRECTORY ( src-doc )
+ADD_SUBDIRECTORY (src-lib)
+ADD_SUBDIRECTORY (src-tool)
+ADD_SUBDIRECTORY (src-apps)
+ADD_SUBDIRECTORY (src-cam)
+ADD_SUBDIRECTORY (src-doc)

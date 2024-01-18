@@ -594,8 +594,8 @@ void init(Options & options, int argc, char *argv[])
 	std::cout
 		<< "-> driver:       "
 		<< (darkhelp_driver == DarkHelp::EDriver::kDarknet ? "Darknetd" :
-			darkhelp_driver == DarkHelp::EDriver::kOpenCV ? "OpenCV DNN  ***EXPERIMENTAL***" :
-			darkhelp_driver == DarkHelp::EDriver::kOpenCVCPU ? "OpenCV DNN (CPU only)  ***EXPERIMENTAL***" :
+			darkhelp_driver == DarkHelp::EDriver::kOpenCV ? "OpenCV DNN" :
+			darkhelp_driver == DarkHelp::EDriver::kOpenCVCPU ? "OpenCV DNN (CPU only)" :
 			"UNKNOWN")
 		<< std::endl;
 
