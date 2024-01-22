@@ -5,6 +5,14 @@
 
 Most recent documentation for DarkHelp:  https://github.com/stephanecharette/DarkHelp/
 
+# --------
+# WARNING!
+# --------
+
+These instructions are no longer up-to-date.  I strongly recommend you do NOT
+install things this way.  See the build instructions on the DarkHelp project
+page instead (readme.md) for the installation steps.
+
 
 # -------------------------
 # SETTING UP PRE-REQUISITES
