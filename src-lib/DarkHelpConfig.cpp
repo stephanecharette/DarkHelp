@@ -89,7 +89,7 @@ DarkHelp::Config & DarkHelp::Config::reset()
 	snapping_vertical_tolerance			= 5;
 	snapping_limit_shrink				= 0.4;
 	snapping_limit_grow					= 1.25;
-	redirect_darknet_output				= true;
+	redirect_darknet_output				= false; // don't default this to TRUE, it becomes too easy to hide errors!
 	use_fast_image_resize				= true;
 
 	return *this;

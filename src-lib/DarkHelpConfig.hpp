@@ -558,8 +558,7 @@ namespace DarkHelp
 			 * to @p true, %DarkHelp will temporarily redirect both @p STDOUT and @p STDERR to discard that output while the network
 			 * is loading.  Once all the network layers are loaded, both @p STDOUT and @p STDERR are restored.
 			 *
-			 * @li When using the CLI, the default is @p false (meaning Darknet's output will be shown).
-			 * @li When using the API, the default is @p true (meaning Darknet's output will be hidden).
+			 * The default is @p false (meaning Darknet's output will be shown).
 			 *
 			 * @see @ref DarkHelp::toggle_output_redirection()
 			 *

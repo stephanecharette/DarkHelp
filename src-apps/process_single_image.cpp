@@ -25,11 +25,7 @@ int main(int argc, char * argv[])
 		std::string image = argv[4];
 
 		// Load the neural network.  The order of the 3 files does not matter, DarkHelp should figure out which file is which.
-		DarkHelp::Config config(fn1, fn2, fn3);
-		// Specifically disable redirection which gives us the full darknet output in case something goes wrong.
-		config.redirect_darknet_output = false;
-		// You can set many more DarkHelp config options here.  See the DarkHelp C++ API documentation for details.
-		DarkHelp::NN nn(config);
+		DarkHelp::NN nn(fn1, fn2, fn3);
 
 		// Call on the neural network to process the given filename
 		const auto results = nn.predict(image);
