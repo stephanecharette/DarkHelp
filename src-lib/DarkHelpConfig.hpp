@@ -96,7 +96,7 @@ namespace DarkHelp
 			 * @see @ref DarkHelp::NN::predict()
 			 *
 			 * Quote: <blockquote> [...] nms works by looking at all bounding boxes that made it past the 'objectness' threshold
-			 * and removes the least confident ​of the boxes that overlap with each other above a certain IOU threshold
+			 * and removes the least confident of the boxes that overlap with each other above a certain IOU threshold
 			 * [<a href="https://github.com/philipperemy/yolo-9000/issues/3#issuecomment-304208297">source</a>]
 			 * </blockquote>
 			 *
