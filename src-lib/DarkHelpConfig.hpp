@@ -264,12 +264,22 @@ namespace DarkHelp
 			 */
 			std::set<int> annotation_pixelate_classes;
 
-			/** Darknet sometimes will return values that are out-of-bound, especially when working with low thresholds.
+			/** Darknet sometimes will return values that are out-of-bound, especially with objects near the edges of the image,
+			 * or when low detection thresholds.
+			 *
 			 * For example, the @p X or @p Y coordinates might be less than zero, or the @p width and @p height might extend
 			 * beyond the edges of the image.  When @p %fix_out_of_bound_values is set to @p true (the default) then the
 			 * results (@ref DarkHelp::NN::prediction_results) after calling @ref DarkHelp::NN::predict() will be capped so all
 			 * values are positive and do not extend beyond the edges of the image.  When set to @p false, the exact values as
 			 * returned by darknet will be used.  Defaults to @p true.
+			 *
+			 * For example:
+			 *
+			 * Image											| Configuration						| JSON output | comment
+			 * -------------------------------------------------|-----------------------------------|-------------|--------
+			 * @image html mailbox_13.png						| &nbsp;							| &nbsp;													| Left portion of the original image.  Note the number @p 13.
+			 * @image html mailbox_13_invalid_coordinates.png	| @p fix_out_of_bound_values=false	| "rect": {"height": 25, "width": 21, "x": -1, "y": 220}	| The @p X coordinate is @em invalid!
+			 * @image html mailbox_13_annotated.png				| @p fix_out_of_bound_values=true	| "rect": {"height": 25, "width": 20, "x": 0, "y": 220}		| Both the @p X and @p width have been "fixed".
 			 */
 			bool fix_out_of_bound_values;
 
