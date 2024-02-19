@@ -158,13 +158,13 @@ namespace DarkHelp
 			 *
 			 * Examples:
 			 *
-			 * Setting						| Image
-			 * -----------------------------|------
-			 * @p shade_predictions=0.0		| @image html shade_0pcnt.png
-			 * @p shade_predictions=0.25	| @image html shade_25pcnt.png
-			 * @p shade_predictions=0.50	| @image html shade_50pcnt.png
-			 * @p shade_predictions=0.75	| @image html shade_75pcnt.png
-			 * @p shade_predictions=1.0		| @image html shade_100pcnt.png
+			 * Setting								| Image
+			 * -------------------------------------|------
+			 * @p annotation_shade_predictions=0.0	| @image html shade_0pcnt.png
+			 * @p annotation_shade_predictions=0.25	| @image html shade_25pcnt.png
+			 * @p annotation_shade_predictions=0.50	| @image html shade_50pcnt.png
+			 * @p annotation_shade_predictions=0.75	| @image html shade_75pcnt.png
+			 * @p annotation_shade_predictions=1.0	| @image html shade_100pcnt.png
 			 */
 			float annotation_shade_predictions;
 
