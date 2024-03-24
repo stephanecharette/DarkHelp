@@ -3,10 +3,6 @@
 # MIT license applies.  See "license.txt" for details.
 
 
-# the library is C++11, but this app uses C++17
-SET (CMAKE_CXX_STANDARD				17)
-SET (CMAKE_CXX_STANDARD_REQUIRED	ON)
-
 FILE (GLOB SRC_CAM *.cpp)
 LIST (SORT SRC_CAM)
 

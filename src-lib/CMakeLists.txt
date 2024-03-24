@@ -3,9 +3,6 @@
 # MIT license applies.  See "license.txt" for details.
 
 
-# the library is C++11, but the CLI tool uses std::filesystem from C++17
-SET ( CMAKE_CXX_STANDARD				11 )
-SET ( CMAKE_CXX_STANDARD_REQUIRED		ON )
 SET ( CMAKE_POSITION_INDEPENDENT_CODE	ON )
 SET ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS	ON )
 SET ( BUILD_SHARED_LIBS					TRUE )

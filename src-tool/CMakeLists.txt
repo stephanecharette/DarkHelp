@@ -3,11 +3,6 @@
 # MIT license applies.  See "license.txt" for details.
 
 
-# the library is C++11, but the CLI tool uses std::filesystem from C++17
-SET ( CMAKE_CXX_STANDARD				17 )
-SET ( CMAKE_CXX_STANDARD_REQUIRED		ON )
-
-
 ADD_EXECUTABLE			( cli DarkHelpCli.cpp DarkHelp.rc )
 SET_TARGET_PROPERTIES	( cli PROPERTIES OUTPUT_NAME "DarkHelp" )
 TARGET_LINK_LIBRARIES	( cli PRIVATE Threads::Threads dh ${Darknet} ${OpenCV_LIBS} ${Magic} ${StdCppFS} )

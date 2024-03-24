@@ -3,11 +3,6 @@
 # MIT license applies.  See "license.txt" for details.
 
 
-# the library is C++11, but the sample apps uses std::filesystem from C++17
-SET ( CMAKE_CXX_STANDARD			17 )
-SET ( CMAKE_CXX_STANDARD_REQUIRED	ON )
-
-
 IF ( WIN32 )
 	ADD_COMPILE_DEFINITIONS ( _USE_MATH_DEFINES )
 	ADD_COMPILE_OPTIONS ( /wd4244 ) # conversion between types
