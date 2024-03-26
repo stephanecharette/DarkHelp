@@ -15,7 +15,7 @@
 
 
 /** @file
- * DarkHelp is a C++ helper layer for accessing Darknet.  It was developed and tested with AlexeyAB's fork of the
+ * %DarkHelp is a C++ helper layer for accessing Darknet.  It was developed and tested with AlexeyAB's fork of the
  * popular Darknet project, which is now maintained by Hank.ai:  https://github.com/hank-ai/darknet
  *
  * @note The original darknet.h header file defines structures in the global namespace with names such as "image" and

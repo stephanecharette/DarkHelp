@@ -11,7 +11,7 @@
 #include "DarkHelp.hpp"
 
 /** @file
- * DarkHelp's configuration class.
+ * %DarkHelp's configuration class.
  */
 
 

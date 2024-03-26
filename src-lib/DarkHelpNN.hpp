@@ -11,7 +11,7 @@
 #include "DarkHelp.hpp"
 
 /** @file
- * DarkHelp's @p NN class.  Prior to v1.4, this used to be called @p %DarkHelp.
+ * %DarkHelp's @p NN class.  Prior to v1.4, this used to be called @p %DarkHelp.
  */
 
 
