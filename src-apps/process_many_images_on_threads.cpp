@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
 		// these are just a few of the DarkHelp settings that can be set
 		// for additional examples, see https://www.ccoderun.ca/darkhelp/api/classDarkHelp_1_1Config.html#details
 		DarkHelp::Config cfg(argv[1], argv[2], argv[3]);
-		cfg.threshold						= 0.2;
+		cfg.threshold						= 0.2f;
 		cfg.enable_tiles					= false;
 		cfg.snapping_enabled				= false;
 		cfg.annotation_auto_hide_labels		= false;

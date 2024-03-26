@@ -279,7 +279,7 @@ void DarkHelp::DHThreads::run(const size_t id)
 				if (annotate_output_images)
 				{
 					const auto annotated_image_fn = output_dir / (std::filesystem::path(fn).stem().string() + ".jpg");
-					cv::imwrite(annotated_image_fn, nn.annotate(), {cv::IMWRITE_JPEG_QUALITY, 75});
+					cv::imwrite(annotated_image_fn.string(), nn.annotate(), {cv::IMWRITE_JPEG_QUALITY, 75});
 				}
 
 				if (detele_input_file_after_processing)
