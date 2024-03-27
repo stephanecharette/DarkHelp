@@ -1,8 +1,8 @@
 /** @mainpage %DarkHelp
 
-Official %DarkHelp documentation:  http://www.ccoderun.ca/DarkHelp/api/
+Official %DarkHelp documentation:  <a href="http://www.ccoderun.ca/DarkHelp/api/">http://www.ccoderun.ca/DarkHelp/api/</a>
 
-&sp;
+&nbsp;
 
 %DarkHelp is an API and related tools used to call Darknet's original @p C API.  The %DarkHelp CLI and API contains advanced features such as tiling and object tracking.  The %DarkHelp project is fully @ref License "open source" (MIT license).
 
