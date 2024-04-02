@@ -36,27 +36,24 @@ int main(int argc, char * argv[])
 
 		DarkHelp::DHThreads dht(cfg, number_of_threads_to_start, "/tmp/output/");
 
-#if 1
-		// wait until all the networks are loaded, then record a timestamp so we can determine how long it takes to process all the images
-		while (dht.networks_loaded() < number_of_threads_to_start)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		}
-		const auto timestamp_start = std::chrono::high_resolution_clock::now();
-#endif
-
+#if 0
+		// test adding a bunch of image filenames
 		for (int i = 4; i < argc; i ++)
 		{
 			// call this as many times as necessary, with either a subdirectory name or a specific image filename
 			dht.add_images(argv[i]);
 		}
+#else
+		// test adding a bunch of *images* (not filenames)
+		for (int i = 4 ; i < argc; i ++)
+		{
+			// hopefully for this example all of the these are image files and not directory names
+			cv::Mat mat = cv::imread(argv[i]);
+			dht.add_image(mat);
+		}
+#endif
 
 		const auto results = dht.wait_for_results();
-
-#if 1
-		const auto timestamp_end = std::chrono::high_resolution_clock::now();
-		std::cout << "TIME: " << DarkHelp::duration_string(timestamp_end - timestamp_start) << std::endl;
-#endif
 
 		// display all of the filenames and the results for each one
 		for (const auto & [key, val] : results)

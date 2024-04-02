@@ -36,15 +36,26 @@ namespace DarkHelp
 	 *
 	 * Note this header file is not included by @p DarkHelp.hpp.  To use this functionality you'll need to explicitely
 	 * include this header file.
+	 *
+	 * @since 2024-03-26
 	 */
 	class DHThreads final
 	{
 		public:
 
-			/// The key is the input image filename, while the value contains a copy of the prediction results.
+			/** The key is the input image filename, while the value contains a copy of the prediction results.
+			 *
+			 * @see @ref DarkHelp::PredictionResults (a vector of results)
+			 * @see @ref DarkHelp::PredictionResult (an individual result)
+			 *
+			 * @since 2024-03-26
+			 */
 			using ResultsMap = std::map<std::string, DarkHelp::PredictionResults>;
 
-			/// Constructor.  No worker threads are started with this constructor.  You'll need to manually call @ref init().
+			/** Constructor.  No worker threads are started with this constructor.  You'll need to manually call @ref init().
+			 *
+			 * @since 2024-03-26
+			 */
 			DHThreads();
 
 			/** Constructor.
@@ -60,51 +71,101 @@ namespace DarkHelp
 			 * The @p %DHThreads constructor will automatically call @ref init() to ensure all the threads and the neural networks
 			 * are running.
 			 *
-			 * Call @ref add_images() to get the threads to start processing images.  Then call @ref wait_for_results() or
-			 * @ref get_results().
+			 * Call @ref add_image() or @ref add_images() to get the threads to start processing images.  Then call
+			 * @ref wait_for_results() or @ref get_results().
+			 *
+			 * @since 2024-03-26
 			 */
 			DHThreads(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path output_directory = ".");
 
 			/// Destructor.
 			~DHThreads();
 
-			/// Mostly for use with the default constructor.  Parameters are the same as the other constructor.
+			/** Mostly for use with the default constructor.  Parameters are the same as the other constructor.
+			 *
+			 * @since 2024-03-26
+			 */
 			DHThreads & init(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path output_directory = ".");
 
 			/** Starts all of the processing threads.  This is automatically called by @ref init(), but may also be called
 			 * manually if @ref stop() was called.  Calling @p restart() when the threads are already running will cause the
 			 * existing threads to stop, input files to be cleared, and existing results to be reset.  @see @ref init()
+			 *
+			 * @since 2024-03-26
 			 */
 			DHThreads & restart();
 
 			/** Causes the threads to stop processing and exit.  All results and input files are cleared.  Does not return until
 			 * all threads have joined.  Worker threads can be restarted by calling either @ref init() or @ref restart().
 			 * @see @ref purge()
+			 *
+			 * @since 2024-03-26
 			 */
 			DHThreads & stop();
+
+			/** Reset to zero the image index used by @ref add_image() to generate the image filename.
+			 *
+			 * @since 2024-04-01
+			 */
+			DHThreads & reset_image_index();
+
+			/** Add a single image to be processed.  Unlike @ref add_images(), this does not require the image to be written to
+			 * disk.  The @p cv::Mat must be in standard OpenCV @p BGR format, and the lifetime of the image data must extend to
+			 * when the image will be picked up and processed by one of the worker threads executing @ref run().
+			 *
+			 * @return A "virtual" filename will be created and returned to represent the OpenCV image.  This filename is
+			 * needed to correctly interpret the results from @ref wait_for_results().  The filename generated contains a
+			 * numerical value which is assigned in increasing sequential order, until one of @ref purge(), @ref restart()
+			 * or @ref reset_image_index() are called.
+			 *
+			 * @note Images added via @ref add_image() will be processed before filenames added via @ref add_images().  This
+			 * is done to ensure that memory is freed up as quickly as possible (filenames barely take any memory).
+			 *
+			 * @see @ref add_images()
+			 * @see @ref reset_image_index()
+			 *
+			 * @since 2024-04-01
+			 */
+			std::string add_image(cv::Mat image);
 
 			/** Can be used to add a single image, or a subdirectory.  If a subdirectory, then recurse looking for all images.
 			 * Call this as many times as necessary until all images have been added.  Image processing by the worker threads
 			 * will start immediately.  Additional images can be added at any time, even while the worker threads have already
 			 * started processing the first set of images.
+			 *
+			 * @note Images added via @ref add_image() will be processed before filenames added via @ref add_images().  This
+			 * is done to ensure that memory is freed up as quickly as possible.
+			 *
+			 * @see @ref add_image()
+			 *
+			 * @since 2024-03-26
 			 */
 			DHThreads & add_images(const std::filesystem::path & dir);
 
-			/** Removes all input files, waits for all worker threads to finish processing, and clears out any results.
-			 * Unlike the call to @ref stop() this does not terminate the worker threads or unload the neural networks,
-			 * so you can again call @ref add_images() immediately afterwards without needing to @ref restart().
+			/** Removes all input files, waits for all worker threads to finish processing, clears out any results, and resets
+			 * the image index (similar to @ref reset_image_index()).
+			 *
+			 * Unlike the call to @ref stop(), calling @ref purge() does not terminate the worker threads or unload the neural
+			 * networks, so you can immediately call @ref add_image() or @ref add_images() without needing to @ref restart().
+			 *
+			 * @since 2024-03-26
 			 */
 			DHThreads & purge();
 
-			/** Get the number of files that have not yet been processed.  This is the number of unprocessed files plus the
-			 * files which are in the middle of being processed.
+			/** Get the number of images and files that have not yet been processed.  This is the number of unprocessed images
+			 * and files combined, plus the images which are in the middle of being processed.
+			 *
+			 * @since 2024-03-26
 			 */
 			size_t files_remaining() const
 			{
-				return input_files.size() + files_processing;
+				return input_images.size() + input_files.size() + files_processing;
 			}
 
-			/// Get the number of worker threads which have loaded a copy of the neural network.
+			/** Get the number of worker threads which have loaded a copy of the neural network.
+			 *
+			 * @since 2024-03-26
+			 */
 			size_t networks_loaded() const
 			{
 				return threads_ready;
@@ -116,34 +177,50 @@ namespace DarkHelp
 			 * The difference between @ref wait_for_results() and @ref get_results() is that @p wait_for_results() will
 			 * wait until @em all the results are available, while @p get_results() will immediately return with whatever
 			 * results are available at this point in time.
+			 *
+			 * @since 2024-03-26
 			 */
 			ResultsMap wait_for_results();
 
 			/** Gain access to the neural network for the given worker thread.  This will return @p nullptr if the given worker
 			 * thread has not loaded a neural network.
+			 *
+			 * @since 2024-03-26
 			 */
 			DarkHelp::NN * get_nn(const size_t idx);
 
 			/** Get all of the available prediction results.  You may call this as often you like to get intermediate results
-			 * (if any are available), or you can indirectly call this via @ref wait_for_results().  Note that once the results
-			 * are read and returned, the structure in which the results are stored internally is cleared.
+			 * (if any are available), or you can indirectly call this via @ref wait_for_results().
+			 *
+			 * @note Once the results are read and returned, the structure in which the results are stored internally is cleared.
 			 *
 			 * The difference between @ref wait_for_results() and @ref get_results() is that @p wait_for_results() will
 			 * wait until @em all the results are available, while @p get_results() will immediately return with whatever
-			 * results are available at this point in time.
+			 * results are available, even if the results are empty.
+			 *
+			 * @since 2024-03-26
 			 */
 			ResultsMap get_results();
 
-			/** A copy of the configuration to use when instantiating each of the DarkHelp objects.  This is only referenced by
-			 * @ref restart().  Meaning if you change @p cfg after the @ref DHThreads() consructor or @ref init(), you'll need to
-			 * call @ref stop() and @ref restart().
+			/** A copy of the configuration to use when instantiating each of the @ref DarkHelp::NN objects.  This is only
+			 * referenced by @ref restart().  Meaning if you change @p cfg after the @ref DHThreads() consructor or @ref init(),
+			 * you'll need to call @ref stop() or @ref restart().
+			 *
+			 * @since 2024-03-26
 			 */
 			DarkHelp::Config cfg;
 
-			/// Determines whether the input images are deleted once they are processed.  Default value is @p false, meaning files are not deleted.
+			/** Determines whether the input images are deleted once they are processed.  Default value is @p false, meaning
+			 * files are not deleted.
+			 *
+			 * @since 2024-03-26
+			 */
 			std::atomic<bool> detele_input_file_after_processing;
 
-			/// Determines if annotated output images are created.  Default value is @p false.
+			/** Determines if annotated output images are created.  Default value is @p false.
+			 *
+			 * @since 2024-03-26
+			 */
 			std::atomic<bool> annotate_output_images;
 
 		private:
@@ -171,10 +248,25 @@ namespace DarkHelp
 			std::mutex trigger_lock;
 			/// @}
 
-			/// @{ Used to keep track of all the input files remaining to be processed.  @see @ref add_images()
+			/** Used to keep track of all the input @em files remaining to be processed.
+			 * @see @ref add_image()
+			 * @see @ref add_images()
+			 * @see @ref input_image_and_file_lock
+			 */
 			std::deque<std::string> input_files;
-			std::mutex input_files_lock;
-			/// @}
+
+			/** Used to keep track of all the input @em images remaining to be processed.
+			 * @see @ref add_image()
+			 * @see @ref add_images()
+			 * @see @ref input_image_and_file_lock
+			 */
+			std::map<std::string, cv::Mat> input_images;
+
+			/// Used by @ref add_image() to generate an image filename.
+			std::atomic<size_t> input_image_index;
+
+			/// Lock used to protect access to @em both @ref input_files and @ref input_images.
+			std::mutex input_image_and_file_lock;
 
 			/// @{ The prediction results for all the image file which have been processed.  @see @ref get_results()
 			ResultsMap all_results;

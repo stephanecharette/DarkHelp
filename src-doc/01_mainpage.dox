@@ -13,6 +13,8 @@ GitHub			| The GitHub repo with the most recent source code for %DarkHelp							
 @ref CAPI		| The @p C API has limited functionality; it was created to help create a Python wrapper.	| @p src-lib/ @p *.h			| https://github.com/stephanecharette/DarkHelp/tree/master/src-lib
 @ref PythonAPI	| The @p Python API is similar to the @ref CAPI.											| @p src-python/				| https://github.com/stephanecharette/DarkHelp/tree/master/src-python
 @ref Tool		| The %DarkHelp CLI is a simple tool written using the @ref API.							| @p src-tool/ @p *Cli.cpp		| https://github.com/stephanecharette/DarkHelp/tree/master/src-tool
+@ref DarkHelp::PositionTracker::PositionTracker() | The %DarkHelp object tracker.							| @p src-lib/ @p DarkHelpPositionTracker.hpp | https://github.com/stephanecharette/DarkHelp/tree/master/src-lib
+@ref DarkHelp::DHThreads::DHThreads() | Load several %DarkHelp neural networks at once using worker threads.	| @p src-lib/ @p DarkHelpThreads.hpp | https://github.com/stephanecharette/DarkHelp/tree/master/src-lib
 @ref Server		| The %DarkHelp Server is similar to the CLI; it runs continuously and processes images.	| @p src-tool/ @p *Server.cpp	| https://github.com/stephanecharette/DarkHelp/tree/master/src-tool
 Sample Apps		| The sample applications provide additional example code showing how to use the API.		| @p src-apps/					| https://github.com/stephanecharette/DarkHelp/tree/master/src-apps
 

@@ -10,6 +10,7 @@ DarkHelp::DHThreads::DHThreads() :
 	detele_input_file_after_processing(false),
 	annotate_output_images(false),
 	worker_threads_to_start(0),
+	input_image_index(0),
 	threads_ready(0),
 	files_processing(0)
 {
@@ -78,6 +79,7 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::restart()
 {
 	stop();
 
+	input_image_index = 0;
 	stop_requested = false;
 	threads.reserve(worker_threads_to_start);
 	networks.reserve(worker_threads_to_start);
@@ -108,11 +110,44 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::stop()
 	threads				.clear();
 	networks			.clear();
 	input_files			.clear();
+	input_images		.clear();
 	all_results			.clear();
 	threads_ready		= 0;
 	files_processing	= 0;
+	input_image_index	= 0;
 
 	return *this;
+}
+
+
+DarkHelp::DHThreads & DarkHelp::DHThreads::reset_image_index()
+{
+	// this already is std::atomic
+	input_image_index = 0;
+
+	return *this;
+}
+
+
+std::string DarkHelp::DHThreads::add_image(cv::Mat image)
+{
+	if (image.empty())
+	{
+		throw std::invalid_argument("cannot add empty image");
+	}
+
+	const std::string filename = "image_" + std::to_string(input_image_index++);
+//	std::cout << "adding OpenCV image as " << filename << std::endl;
+
+	if (true)
+	{
+		std::scoped_lock lock(input_image_and_file_lock);
+		input_images[filename] = image;
+	}
+
+	trigger.notify_all();
+
+	return filename;
 }
 
 
@@ -120,7 +155,7 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::add_images(const std::filesystem::pat
 {
 	if (worker_threads_to_start < 1)
 	{
-		std::logic_error("DHThreads worker threads and neural networks have not yet been initialized");
+		throw std::logic_error("DHThreads worker threads and neural networks have not yet been initialized");
 	}
 
 	const auto path = std::filesystem::canonical(dir);
@@ -128,8 +163,11 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::add_images(const std::filesystem::pat
 
 	if (std::filesystem::is_regular_file(path))
 	{
-		std::scoped_lock lock(input_files_lock);
-		input_files.push_back(path.string());
+		if (true)
+		{
+			std::scoped_lock lock(input_image_and_file_lock);
+			input_files.push_back(path.string());
+		}
 		trigger.notify_all();
 	}
 	else if (std::filesystem::is_directory(path))
@@ -148,14 +186,17 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::add_images(const std::filesystem::pat
 
 			const auto ext = entry.path().extension().string();
 			if (ext == ".jpeg"	or
-				ext == ".jpg"	or
-				ext == ".png"	or
 				ext == ".JPEG"	or
+				ext == ".jpg"	or
 				ext == ".JPG"	or
+				ext == ".png"	or
 				ext == ".PNG"	)
 			{
-				std::scoped_lock lock(input_files_lock);
-				input_files.push_back(entry.path().string());
+				if (true)
+				{
+					std::scoped_lock lock(input_image_and_file_lock);
+					input_files.push_back(entry.path().string());
+				}
 				trigger.notify_all();
 			}
 		}
@@ -169,12 +210,16 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::purge()
 {
 	if (worker_threads_to_start < 1)
 	{
-		std::logic_error("DHThreads worker threads and neural networks have not yet been initialized");
+		throw std::logic_error("DHThreads worker threads and neural networks have not yet been initialized");
 	}
 
-	if (not input_files.empty())
+	if (not input_images.empty() or not input_files.empty())
 	{
-		std::scoped_lock lock(input_files_lock);
+		std::scoped_lock lock(input_image_and_file_lock);
+
+		input_images.clear();
+		input_image_index = 0;
+
 		input_files.clear();
 	}
 
@@ -188,7 +233,7 @@ DarkHelp::DHThreads::ResultsMap DarkHelp::DHThreads::wait_for_results()
 {
 	if (worker_threads_to_start < 1)
 	{
-		std::logic_error("DHThreads worker threads and neural networks have not yet been initialized");
+		throw std::logic_error("DHThreads worker threads and neural networks have not yet been initialized");
 	}
 
 	while (not stop_requested)
@@ -239,42 +284,64 @@ void DarkHelp::DHThreads::run(const size_t id)
 
 		while (not stop_requested)
 		{
-			if (input_files.empty())
+			if (input_files.empty() and input_images.empty())
 			{
 				std::unique_lock lock(trigger_lock);
 				trigger.wait_for(lock, std::chrono::seconds(2));
 			}
 
-			if (input_files.size() == 0)
+			if (input_files.size() == 0 and input_images.size() == 0)
 			{
 				continue;
 			}
 
+			cv::Mat mat;
 			std::string fn;
-			if (not stop_requested)
-			{
-				// see if we can get a file to process from the input set
-				std::scoped_lock lock(input_files_lock);
 
-				if (not input_files.empty())
+			if (not stop_requested and not input_images.empty())
+			{
+				// get an OpenCV image
+
+				std::scoped_lock lock(input_image_and_file_lock);
+				if (input_images.empty() == false)
+				{
+					fn = input_images.begin()->first;
+					mat = input_images[fn];
+					input_images.erase(fn);
+					files_processing ++;
+				}
+			}
+			else if (not stop_requested and not input_files.empty())
+			{
+				// get an image filename
+
+				std::scoped_lock lock(input_image_and_file_lock);
+				if (input_files.empty() == false)
 				{
 					fn = input_files.front();
 					input_files.pop_front();
 					files_processing ++;
-
-					if (not input_files.empty())
-					{
-						// let another thread know there are still some input files that remain
-						trigger.notify_all();
-					}
 				}
+			}
+
+			if (not input_images.empty() or not input_files.empty())
+			{
+				// let another thread know there are still some input files that remain
+				trigger.notify_all();
 			}
 
 			if (not fn.empty())
 			{
-//				std::cout << id << ": processing " << fn << std::endl;
-				const auto results = nn.predict(fn);
-//				std::cout << id << ": " << results << std::endl;
+				DarkHelp::PredictionResults results;
+
+				if (mat.empty())
+				{
+					results = nn.predict(fn);
+				}
+				else
+				{
+					results = nn.predict(mat);
+				}
 
 				if (annotate_output_images)
 				{
@@ -282,7 +349,7 @@ void DarkHelp::DHThreads::run(const size_t id)
 					cv::imwrite(annotated_image_fn.string(), nn.annotate(), {cv::IMWRITE_JPEG_QUALITY, 75});
 				}
 
-				if (detele_input_file_after_processing)
+				if (mat.empty() and detele_input_file_after_processing)
 				{
 					std::filesystem::remove(fn);
 				}
@@ -295,7 +362,7 @@ void DarkHelp::DHThreads::run(const size_t id)
 
 				files_processing --;
 
-				// in case wait() has been called, we want to notify so it can return once all images are done
+				// in case wait_for_results() has been called, we want to notify so it can return once all images are done
 				trigger.notify_all();
 			}
 		}
@@ -305,7 +372,7 @@ void DarkHelp::DHThreads::run(const size_t id)
 		std::cout << id << ": caught exception: " << e.what() << std::endl;
 	}
 
-	std::cout << id << ": ending thread" << std::endl;
+//	std::cout << id << ": ending thread" << std::endl;
 	networks[id] = nullptr;
 	threads_ready --;
 
