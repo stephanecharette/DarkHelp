@@ -55,5 +55,8 @@ page_70.png prediction results: 10
 * `using_c_api.cpp` Demonstrates how to use the C API.
 	* Run:  `src-apps/using_c_api Rolodex.cfg Rolodex.names Rolodex_best.weights page_70.png`
 
-* `process_many_images_on_threads` Demonstrates how to use the DHThreads class to load multiple copies of a neural network to process many image files at once.
+* `process_many_images_on_threads.cpp` Demonstrates how to use the DHThreads class to load multiple copies of a neural network to process many image files at once.
 	* Run:  `src-apps/process_many_images_on_threads yolov4-tiny.cfg coco.names yolov4-tiny.weights images/`
+
+* `display_using_bundle.cpp` Demonstrates how to use a .dh combined bundle file with DarkHelp.  Run `DarkHelpCombine` to create the .dh file.  Compare this code against `display_single_image.cpp`.
+    * Run:  `DarkHelpCombine password Rolodex.cfg Rolodex.names Rolodex_best.weights` followed by `display_using_bundle Rolodex.dh password page_70.png`

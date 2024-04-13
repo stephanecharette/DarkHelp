@@ -118,6 +118,43 @@ DarkHelp::NN::NN(const std::string & cfg_filename, const std::string & weights_f
 }
 
 
+DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::string filename, const std::string & key, const EDriver d) :
+	NN()
+{
+	std::filesystem::path cfg_filename;
+	std::filesystem::path names_filename;
+	std::filesystem::path weights_filename;
+
+	auto cleanup = [&]()
+	{
+		if (not cfg_filename	.empty()) std::filesystem::remove(cfg_filename);
+		if (not names_filename	.empty()) std::filesystem::remove(names_filename);
+		if (not weights_filename.empty()) std::filesystem::remove(weights_filename);
+
+		if (delete_combined_bundle_once_loaded)
+		{
+			std::filesystem::remove(filename);
+		}
+	};
+
+	try
+	{
+		DarkHelp::extract(key, filename, cfg_filename, names_filename, weights_filename);
+		init(cfg_filename, weights_filename, names_filename, false, d);
+	}
+	catch (const std::exception & e)
+	{
+		cleanup();
+
+		throw;
+	}
+
+	cleanup();
+
+	return;
+}
+
+
 DarkHelp::NN & DarkHelp::NN::init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename, const bool verify_files_first, const EDriver d)
 {
 	config.cfg_filename		= cfg_filename;

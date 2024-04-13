@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.8.0-1		| 2024-04-13	| Added the @p DarkHelpCombine CLI tool to combine @p .cfg, @p .names, and @p .weights into a single file that %DarkHelp can load.
 1.7.10-1	| 2024-03-26	| Added @ref DarkHelp::DHThreads to load multiple neural networks at once to process many images on threads.
 1.7.7-1		| 2024-03-24	| Move entire project from requiring C++11 to C++17.
 1.7.1-1		| 2024-01-17	| Added the @ref Cam.

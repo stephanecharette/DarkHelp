@@ -86,10 +86,41 @@ namespace DarkHelp
 			 * @note The order in which you pass the various filenames is @em not important if @p verify_files_first is set to
 			 * @p true (the default value).  This is because @ref DarkHelp::NN::init() will call @ref DarkHelp::verify_cfg_and_weights()
 			 * to correctly determine which is the @p .cfg, @p .weights, and @p .names file, and swap the names around as necessary
-			 * so Darknet
-			 * is given the correct filenames.
+			 * so Darknet is given the correct filenames.
 			 */
 			NN(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
+
+			/** Constructor.  This constructor takes a bundle that has been prepared with the @p DarkHelpCombine command-line
+			 * tool.  That tool will combine the @p .cfg file, the @p .names file, and the @p .weights file into a single bundle.
+			 * Optionally, an obfuscation key may also be required to extract the 3 files.
+			 *
+			 * @note This is obfuscation, @em not file encryption.
+			 *
+			 * @param [in] delete_combined_bundle_once_loaded If this is set to @p true then the combined bundle filename will
+			 * be @em deleted from the drive once the neural network is loaded.  If you don't want the bundle file to be deleted
+			 * you must pass @p false for this parameter.
+			 *
+			 * @param [in] filename This is the file that was previously created using the @p DarkHelpCombine command-line tool.
+			 * It can have any name.  By default, this file was created with a @p .dh file extension, though you can rename it.
+			 *
+			 * @param [in] key This is the passphrase key that was used when you ran the @p DarkHelpCombine command-line tool.
+			 * If the key is empty, then no obfuscation was done on the file.
+			 *
+			 * @param [in] driver Determines the backend driver to use.  See @ref EDriver for details.  Default is to use Darknet.
+			 *
+			 * For example, to create a bundle file that can be used with this constructor, you could run the following in the CLI:
+			 * ```{.sh}
+			 * DarkHelpCombine "this is my pass phrase" Rolodex.cfg Rolodex.names Rolodex_best.weights
+			 * ```
+			 *
+			 * To create a bundle file that is not obfuscated, you'd use an empty passphrase key:
+			 * ```{.sh}
+			 * DarkHelpCombine "" Rolodex.cfg Rolodex.names Rolodex_best.weights
+			 * ```
+			 *
+			 * @since 2024-04-13
+			 */
+			NN(const bool delete_combined_bundle_once_loaded, const std::string filename, const std::string & key = "", const EDriver driver = EDriver::kDarknet);
 
 			/// Get a version string for the %DarkHelp library.  E.g., could be `1.5.13-1`.
 			static std::string version();
@@ -179,7 +210,7 @@ namespace DarkHelp
 			 * @param [in] mat A OpenCV2 image which has already been loaded and which needs to be analyzed.  The member
 			 * @ref DarkHelp::NN::original_image will be set to this image.  If the image is larger or smaller than the dimensions of
 			 * the neural network, then Darknet will stretch the image to match the exact size of the neural network.  Stretching
-			 * the image does <em>not</em> maintain the the aspect ratio.
+			 * the image does @em not maintain the the aspect ratio.
 			 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 			 * If >= 0, then @ref DarkHelp::Config::threshold will be set to this new value.  The threshold must be either -1,
 			 * or a value between 0.0 and 1.0 meaning 0% to 100%.
@@ -202,7 +233,7 @@ namespace DarkHelp
 			 * @param [in] mat A Darknet-style image object which has already been loaded and which needs to be analyzed.
 			 * The member @ref DarkHelp::NN::original_image will be set to this image.  If the image is larger or smaller than the
 			 * dimensions of the neural network, then Darknet will stretch the image to match the exact size of the neural network.
-			 * Stretching the image does <em>not</em> maintain the the aspect ratio.
+			 * Stretching the image does @em not maintain the the aspect ratio.
 			 * @param [in] new_threshold Which threshold to use.  If less than zero, the previous threshold will be applied.
 			 * If >= 0, then @ref DarkHelp::Config::threshold will be set to this new value.  The threshold must be either -1,
 			 * or a value between 0.0 and 1.0 meaning 0% to 100%.

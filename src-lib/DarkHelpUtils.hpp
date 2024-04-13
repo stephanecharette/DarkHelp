@@ -267,4 +267,26 @@ namespace DarkHelp
 	 */
 	void toggle_output_redirection();
 
+	/** Combine together the 3 files that make up a neural network, and obfuscate them using the given key phrase.
+	 *
+	 * @note This is not encryption.  It only performs obfuscation if the key is not empty.  If the key is empty, then no
+	 * obfuscation is performed.
+	 *
+	 * Once you have a @p .dh combined file after running @p DarkHelpCombine, you can load it into %DarkHelp using the
+	 * @ref DarkHelp::NN::NN() constructor that takes a bundle filename and the key phrase.
+	 *
+	 * @since 2024-04-13
+	 */
+	std::filesystem::path combine(const std::string & key, const std::filesystem::path & cfg_filename, const std::filesystem::path & names_filename, const std::filesystem::path & weights_filename);
+
+	/** Extract the 3 files that make up a neural network.
+	 *
+	 * @note Usually, this does not need to be called directly.  Instead, see the @ref DarkHelp::NN::NN() constructor
+	 * which takes the bundle filename and the key phrase.
+	 *
+	 * @see @ref combine()
+	 *
+	 * @since 2024-04-13
+	 */
+	void extract(const std::string & key, const std::filesystem::path & bundle, std::filesystem::path & cfg_filename, std::filesystem::path & names_filename, std::filesystem::path & weights_filename);
 };

@@ -894,3 +894,233 @@ void DarkHelp::toggle_output_redirection()
 
 	return;
 }
+
+
+namespace
+{
+	#pragma pack(push, 1)
+	struct Head
+	{
+		uint8_t header[4]; // short name + version
+		// uint16_t gives us a max file size of 64 KiB - 1, while most config files are a few KiB in size
+		uint16_t padding_size;
+		uint16_t cfg_size;
+		uint16_t names_size;
+		// uint32_t gives us a max file size of 4 GiB - 1, while most neural networks are a few MiB in size
+		uint32_t weights_size;
+	};
+	#pragma pack(pop)
+	static_assert(sizeof(Head) == 4 + 2 + 2 + 2 + 4); // 14 bytes
+}
+
+
+std::filesystem::path DarkHelp::combine(const std::string & key, const std::filesystem::path & cfg_filename, const std::filesystem::path & names_filename, const std::filesystem::path & weights_filename)
+{
+	if (not std::filesystem::exists(cfg_filename) or
+		not std::filesystem::exists(names_filename) or
+		not std::filesystem::exists(weights_filename) or
+		not std::filesystem::is_regular_file(cfg_filename) or
+		not std::filesystem::is_regular_file(names_filename) or
+		not std::filesystem::is_regular_file(weights_filename))
+	{
+		throw std::invalid_argument("files must exist and be regular files");
+	}
+
+	std::string cfg		= cfg_filename.string();
+	std::string names	= names_filename.string();
+	std::string weights	= weights_filename.string();
+
+	verify_cfg_and_weights(cfg, weights, names);
+
+	if (std::filesystem::file_size(cfg) > std::numeric_limits<decltype(Head::cfg_size)>::max())
+	{
+		throw std::logic_error("configuration file exceeds the size limit");
+	}
+	if (std::filesystem::file_size(names) > std::numeric_limits<decltype(Head::names_size)>::max())
+	{
+		throw std::logic_error("names file exceeds the size limit");
+	}
+	if (std::filesystem::file_size(weights) > std::numeric_limits<decltype(Head::weights_size)>::max())
+	{
+		throw std::logic_error("weights file exceeds the size limit");
+	}
+
+	Head head;
+	head.header[0]		= 'D';	// "DH" = "DarkHelp"
+	head.header[1]		= 'H';
+	head.header[2]		= 0;		// major version
+	head.header[3]		= 1;		// minor version
+	head.padding_size	= 10 + (std::rand() % 200);
+	head.cfg_size		= std::filesystem::file_size(cfg);
+	head.names_size		= std::filesystem::file_size(names);
+	head.weights_size	= std::filesystem::file_size(weights);
+
+	if (key.empty())
+	{
+		std::cout << "-> no obfuscation key" << std::endl;
+		head.padding_size = 0;
+	}
+
+	std::vector<uint8_t> buffer(2048, '\0'); // process 2 KiB chunks at a time
+	char * ptr = reinterpret_cast<char*>(buffer.data());
+	std::memcpy(ptr, &head, sizeof(head));
+
+	// skip the first 4 bytes (DH01) and obfuscate the rest of the head structure
+	if (not key.empty())
+	{
+		for (size_t idx = 4; idx < sizeof(head); idx ++)
+		{
+			ptr[idx] ^= key[idx % key.size()];
+		}
+	}
+
+	std::filesystem::path output_filename = std::filesystem::path(cfg).replace_extension(".dh");
+	std::ofstream ofs(output_filename, std::ofstream::binary | std::ofstream::trunc);
+	ofs.write(ptr, sizeof(head));
+
+	// next we generate and write the padding bytes
+	for (size_t idx = 0; idx < head.padding_size; idx ++)
+	{
+		ptr[idx] = std::rand() % 256;
+	}
+	ofs.write(ptr, head.padding_size);
+
+	// next comes the 3 files
+	for (const auto & filename : {cfg, names, weights})
+	{
+		std::cout << "-> adding " << filename << std::endl;
+
+		size_t total_bytes_read = 0;
+		std::ifstream ifs(filename);
+		while (ifs)
+		{
+			ifs.read(ptr, buffer.size());
+			const size_t count = ifs.gcount();
+
+			if (not key.empty())
+			{
+				for (size_t idx = 0; idx < count; idx ++)
+				{
+					ptr[idx] ^= key[(total_bytes_read + idx) % key.size()];
+				}
+			}
+
+			ofs.write(ptr, count);
+			total_bytes_read += count;
+		}
+
+		if (total_bytes_read != std::filesystem::file_size(filename))
+		{
+			throw std::logic_error("expected " + filename + " to be " + std::to_string(std::filesystem::file_size(filename)) + " but processed " + std::to_string(total_bytes_read) + " bytes");
+		}
+	}
+
+	return output_filename;
+}
+
+
+void DarkHelp::extract(const std::string & key, const std::filesystem::path & bundle, std::filesystem::path & cfg_filename, std::filesystem::path & names_filename, std::filesystem::path & weights_filename)
+{
+	if (not std::filesystem::exists(bundle) or
+		not std::filesystem::is_regular_file(bundle))
+	{
+		throw std::invalid_argument("DarkHelp bundle does not exist or is not a regular file (" + bundle.string() + ")");
+	}
+
+	cfg_filename	.clear();
+	names_filename	.clear();
+	weights_filename.clear();
+
+	std::ifstream ifs(bundle.string(), std::ifstream::binary | std::ofstream::in);
+
+	Head head;
+	char * ptr = reinterpret_cast<char*>(&head);
+	ifs.read(ptr, sizeof(Head));
+	if (head.header[0] != 'D'	or
+		head.header[1] != 'H'	or
+		head.header[2] != 0		or
+		head.header[3] != 1		)
+	{
+		throw std::invalid_argument("invalid DarkHelp bundle (version mismatch): " + bundle.string());
+	}
+
+	// see if the rest of the header makes sense
+	if (not key.empty())
+	{
+		for (size_t idx = 4; idx < sizeof(head); idx ++)
+		{
+			ptr[idx] ^= key[idx % key.size()];
+		}
+	}
+
+	const size_t expected_filesize = sizeof(Head) + head.padding_size + head.cfg_size + head.names_size + head.weights_size;
+	const size_t actual_filesize = std::filesystem::file_size(bundle);
+	if (expected_filesize != actual_filesize)
+	{
+		throw std::invalid_argument("invalid DarkHelp bundle (size mismatch): " + bundle.string());
+	}
+
+	// once we get here, assume that everything will be OK
+
+	auto generate_tmp_filename = []() -> std::filesystem::path
+	{
+		std::filesystem::path path;
+
+		const auto tmp = std::filesystem::temp_directory_path();
+		const std::string alphabet =
+				"0123456789"
+				"abcdefghijklmnopqrstuvwxyz"
+				"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+		std::string txt;
+		while (txt.size() < 20 or std::filesystem::exists(tmp / txt) == true)
+		{
+			txt += alphabet.at(std::rand() % alphabet.size());
+		}
+
+		path = tmp / txt;
+
+		return path;
+	};
+
+	// generate 3 random filenames we can use to store the extracted files
+	cfg_filename		= generate_tmp_filename().replace_extension(".cfg");
+	names_filename		= generate_tmp_filename().replace_extension(".names");
+	weights_filename	= generate_tmp_filename().replace_extension(".weights");
+
+	std::vector<uint8_t> buffer(2048, '\0'); // process 2 KiB chunks at a time
+	ptr = reinterpret_cast<char*>(buffer.data());
+
+	auto extract_file = [&](const size_t offset, const size_t len, const std::filesystem::path filename)
+	{
+//		std::cout << "-> saving " << len << " bytes to " << filename.string() << std::endl;
+
+		ifs.seekg(offset);
+
+		size_t bytes_processed = 0;
+		std::ofstream ofs(filename, std::ofstream::binary | std::ofstream::trunc);
+		while (ifs and bytes_processed < len)
+		{
+			const size_t bytes_remaining = len - bytes_processed;
+			ifs.read(ptr, std::min(bytes_remaining, buffer.size()));
+			const size_t count = ifs.gcount();
+
+			if (not key.empty())
+			{
+				for (size_t idx = 0; idx < count; idx ++)
+				{
+					ptr[idx] ^= key[(bytes_processed + idx) % key.size()];
+				}
+			}
+
+			ofs.write(ptr, count);
+			bytes_processed += count;
+		}
+	};
+
+	extract_file(sizeof(Head) + head.padding_size,										head.cfg_size,		cfg_filename		);
+	extract_file(sizeof(Head) + head.padding_size + head.cfg_size,						head.names_size,	names_filename		);
+	extract_file(sizeof(Head) + head.padding_size + head.cfg_size + head.names_size,	head.weights_size,	weights_filename	);
+
+	return;
+}
