@@ -120,7 +120,7 @@ namespace DarkHelp
 			 *
 			 * @since 2024-04-13
 			 */
-			NN(const bool delete_combined_bundle_once_loaded, const std::string filename, const std::string & key = "", const EDriver driver = EDriver::kDarknet);
+			NN(const bool delete_combined_bundle_once_loaded, const std::string & filename, const std::string & key = "", const EDriver driver = EDriver::kDarknet);
 
 			/// Get a version string for the %DarkHelp library.  E.g., could be `1.5.13-1`.
 			static std::string version();

@@ -118,7 +118,7 @@ DarkHelp::NN::NN(const std::string & cfg_filename, const std::string & weights_f
 }
 
 
-DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::string filename, const std::string & key, const EDriver d) :
+DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::string & filename, const std::string & key, const EDriver d) :
 	NN()
 {
 	std::filesystem::path cfg_filename;
