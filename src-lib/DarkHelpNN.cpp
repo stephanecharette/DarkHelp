@@ -140,9 +140,9 @@ DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::strin
 	try
 	{
 		DarkHelp::extract(key, filename, cfg_filename, names_filename, weights_filename);
-		init(cfg_filename, weights_filename, names_filename, false, d);
+		init(cfg_filename.string(), weights_filename.string(), names_filename.string(), false, d);
 	}
-	catch (const std::exception & e)
+	catch (...)
 	{
 		cleanup();
 
