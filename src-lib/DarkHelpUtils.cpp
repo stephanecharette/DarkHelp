@@ -991,7 +991,8 @@ std::filesystem::path DarkHelp::combine(const std::string & key, const std::file
 		std::cout << "-> adding " << filename << std::endl;
 
 		size_t total_bytes_read = 0;
-		std::ifstream ifs(filename);
+		std::ifstream ifs(filename, std::ifstream::in | std::ifstream::binary);
+
 		while (ifs)
 		{
 			ifs.read(ptr, buffer.size());
@@ -1031,7 +1032,7 @@ void DarkHelp::extract(const std::string & key, const std::filesystem::path & bu
 	names_filename	.clear();
 	weights_filename.clear();
 
-	std::ifstream ifs(bundle.string(), std::ifstream::binary | std::ofstream::in);
+	std::ifstream ifs(bundle.string(), std::ifstream::binary | std::ifstream::in);
 
 	Head head;
 	char * ptr = reinterpret_cast<char*>(&head);
