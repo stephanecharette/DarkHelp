@@ -76,7 +76,15 @@ namespace DarkHelp
 			 *
 			 * @since 2024-03-26
 			 */
-			DHThreads(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path output_directory = ".");
+			DHThreads(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path & output_directory = ".");
+
+			/** Constructor.
+			 *
+			 * This is similar to the other constructor, but uses the name of the "bundle" file introduced in %DarkHelp v1.8.
+			 *
+			 * @since 2024-04-16
+			 */
+			DHThreads(const std::filesystem::path & filename, const std::string & key, const size_t workers, const std::filesystem::path & output_directory = ".", const DarkHelp::EDriver & driver = DarkHelp::EDriver::kDarknet);
 
 			/// Destructor.
 			~DHThreads();
@@ -85,11 +93,24 @@ namespace DarkHelp
 			 *
 			 * @since 2024-03-26
 			 */
-			DHThreads & init(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path output_directory = ".");
+			DHThreads & init(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path & output_directory = ".");
+
+			/** Similar to the other @ref init() call, but uses the name of the "bundle" file introduced in %DarkHelp v1.8.
+			 *
+			 * @note This will @em not delete the obfuscated bundle file from disk.
+			 *
+			 * @since 2024-04-16
+			 */
+			DHThreads & init(const std::filesystem::path & filename, const std::string & key, const size_t workers, const std::filesystem::path & output_directory = ".", const DarkHelp::EDriver & driver = DarkHelp::EDriver::kDarknet);
 
 			/** Starts all of the processing threads.  This is automatically called by @ref init(), but may also be called
 			 * manually if @ref stop() was called.  Calling @p restart() when the threads are already running will cause the
-			 * existing threads to stop, input files to be cleared, and existing results to be reset.  @see @ref init()
+			 * existing threads to stop, input files to be cleared, and existing results to be reset.
+			 *
+			 * @warning If a "bundle" file was used when loading the neural network, then the @p .cfg, @p .names, and @p .weights
+			 * files do not exist on disk and the call to @p restart() will fail since the neural network cannot be loaded.
+			 *
+			 * @see @ref init()
 			 *
 			 * @since 2024-03-26
 			 */

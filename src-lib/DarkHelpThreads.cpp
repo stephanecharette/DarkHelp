@@ -18,10 +18,19 @@ DarkHelp::DHThreads::DHThreads() :
 }
 
 
-DarkHelp::DHThreads::DHThreads(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path output_directory) :
+DarkHelp::DHThreads::DHThreads(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path & output_directory) :
 		DHThreads()
 {
 	init(c, workers, output_directory);
+
+	return;
+}
+
+
+DarkHelp::DHThreads::DHThreads(const std::filesystem::path & filename, const std::string & key, const size_t workers, const std::filesystem::path & output_directory, const DarkHelp::EDriver & driver) :
+		DHThreads()
+{
+	init(filename, key, workers, output_directory, driver);
 
 	return;
 }
@@ -35,7 +44,7 @@ DarkHelp::DHThreads::~DHThreads()
 }
 
 
-DarkHelp::DHThreads & DarkHelp::DHThreads::init(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path output_directory)
+DarkHelp::DHThreads & DarkHelp::DHThreads::init(const DarkHelp::Config & c, const size_t workers, const std::filesystem::path & output_directory)
 {
 	stop();
 
@@ -70,6 +79,70 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::init(const DarkHelp::Config & c, cons
 
 	// start all of the necessary threads
 	restart();
+
+	return *this;
+}
+
+
+DarkHelp::DHThreads & DarkHelp::DHThreads::init(const std::filesystem::path & filename, const std::string & key, const size_t workers, const std::filesystem::path & output_directory, const DarkHelp::EDriver & driver)
+{
+	std::filesystem::path cfg_filename;
+	std::filesystem::path names_filename;
+	std::filesystem::path weights_filename;
+
+	auto cleanup = [&]()
+	{
+		if (not cfg_filename	.empty()) std::filesystem::remove(cfg_filename);
+		if (not names_filename	.empty()) std::filesystem::remove(names_filename);
+		if (not weights_filename.empty()) std::filesystem::remove(weights_filename);
+	};
+
+	try
+	{
+		DarkHelp::extract(key, filename, cfg_filename, names_filename, weights_filename);
+		DarkHelp::Config cfg(cfg_filename.string(), weights_filename.string(), names_filename.string(), false, driver);
+
+		init(cfg, workers, output_directory);
+
+		// wait until all the threads have finished loading the neural network before we delete the files
+		// ...but in case a worker thread throws an exception and we never reach the desired number, we
+		// also need to be ready to bail out after a certain amount of time so we don't "hang" everything
+		auto time_last_change_was_detected = std::chrono::high_resolution_clock::now();
+		size_t previous_number_of_networks_loaded = 0;
+		while (true)
+		{
+			const auto number_of_networks_loaded = networks_loaded();
+			const auto now = std::chrono::high_resolution_clock::now();
+
+			if (number_of_networks_loaded >= workers)
+			{
+				break;
+			}
+
+			if (number_of_networks_loaded != previous_number_of_networks_loaded)
+			{
+				previous_number_of_networks_loaded = number_of_networks_loaded;
+				time_last_change_was_detected = now;
+			}
+
+			if (now > time_last_change_was_detected + std::chrono::seconds(60))
+			{
+				// nothing has changed in 60 seconds...!?
+				std::cout << "timeout waiting for network to load (" << number_of_networks_loaded << "/" << workers << ")" << std::endl;
+				break;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+
+		cleanup();
+	}
+	catch (...)
+	{
+		cleanup();
+
+		throw;
+	}
 
 	return *this;
 }
