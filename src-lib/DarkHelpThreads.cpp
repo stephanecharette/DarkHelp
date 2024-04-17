@@ -100,9 +100,9 @@ DarkHelp::DHThreads & DarkHelp::DHThreads::init(const std::filesystem::path & fi
 	try
 	{
 		DarkHelp::extract(key, filename, cfg_filename, names_filename, weights_filename);
-		DarkHelp::Config cfg(cfg_filename.string(), weights_filename.string(), names_filename.string(), false, driver);
+		DarkHelp::Config config(cfg_filename.string(), weights_filename.string(), names_filename.string(), false, driver);
 
-		init(cfg, workers, output_directory);
+		init(config, workers, output_directory);
 
 		// wait until all the threads have finished loading the neural network before we delete the files
 		// ...but in case a worker thread throws an exception and we never reach the desired number, we
