@@ -48,9 +48,9 @@ int main(int argc, char * argv[])
 		const auto results = dht.wait_for_results();
 
 		// display all of the filenames and the results for each one
-		for (const auto & [key, val] : results)
+		for (const auto & [fn, predictions] : results)
 		{
-			std::cout << key << ": " << val << std::endl;
+			std::cout << fn << ": " << predictions << std::endl;
 		}
 
 	}
