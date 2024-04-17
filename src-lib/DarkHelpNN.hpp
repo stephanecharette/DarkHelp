@@ -131,6 +131,13 @@ namespace DarkHelp
 			 */
 			NN & init(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
 
+			/** Initialize ("load") the darknet neural network using a "bundle" @p .dh file created using the @p DarkHelpCombine
+			 * command-line tool.
+			 *
+			 * @since 2024-04-16
+			 */
+			NN & init(const bool delete_combined_bundle_once_loaded, const std::string & filename, const std::string & key = "", const EDriver driver = EDriver::kDarknet);
+
 			/** Initialize ("load") the darknet neural network.  This uses the values within @ref DarkHelp::NN::config
 			 * and is called automatically if the network files have been specified to the constructor.  You only need
 			 * to manually call @p init() if the default constructor without filenames is used.

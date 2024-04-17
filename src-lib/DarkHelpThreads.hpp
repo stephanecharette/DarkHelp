@@ -81,12 +81,18 @@ namespace DarkHelp
 			/** Constructor.
 			 *
 			 * This is similar to the other constructor, but uses the name of the "bundle" file introduced in %DarkHelp v1.8.
+			 * Run the CLI tool @p DarkHelpCombine to create a @p .dh bundle file.
+			 *
+			 * Unlike the other @p DHThreads constructor, this one will wait until all the worker threads have fully loaded the
+			 * neural network before returning to the caller.  (This is required due to the use of the obfuscated bundle file.)
+			 *
+			 * @see @ref DarkHelp::combine()
 			 *
 			 * @since 2024-04-16
 			 */
 			DHThreads(const std::filesystem::path & filename, const std::string & key, const size_t workers, const std::filesystem::path & output_directory = ".", const DarkHelp::EDriver & driver = DarkHelp::EDriver::kDarknet);
 
-			/// Destructor.
+			/// Destructor.  This will immediately stop all the worker threads and discard any results.
 			~DHThreads();
 
 			/** Mostly for use with the default constructor.  Parameters are the same as the other constructor.

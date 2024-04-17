@@ -121,6 +121,14 @@ DarkHelp::NN::NN(const std::string & cfg_filename, const std::string & weights_f
 DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::string & filename, const std::string & key, const EDriver d) :
 	NN()
 {
+	init(delete_combined_bundle_once_loaded, filename, key, d);
+
+	return;
+}
+
+
+DarkHelp::NN & DarkHelp::NN::init(const bool delete_combined_bundle_once_loaded, const std::string & filename, const std::string & key, const EDriver driver)
+{
 	std::filesystem::path cfg_filename;
 	std::filesystem::path names_filename;
 	std::filesystem::path weights_filename;
@@ -140,7 +148,7 @@ DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::strin
 	try
 	{
 		DarkHelp::extract(key, filename, cfg_filename, names_filename, weights_filename);
-		init(cfg_filename.string(), weights_filename.string(), names_filename.string(), false, d);
+		init(cfg_filename.string(), weights_filename.string(), names_filename.string(), false, driver);
 
 		cleanup();
 	}
@@ -151,7 +159,7 @@ DarkHelp::NN::NN(const bool delete_combined_bundle_once_loaded, const std::strin
 		throw;
 	}
 
-	return;
+	return *this;
 }
 
 

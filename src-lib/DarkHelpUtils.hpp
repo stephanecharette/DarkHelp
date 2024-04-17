@@ -268,12 +268,14 @@ namespace DarkHelp
 	void toggle_output_redirection();
 
 	/** Combine together the 3 files that make up a neural network, and obfuscate them using the given key phrase.
+	 * Normally, this is done using the @p DarkHelpCombine command line tool.
 	 *
 	 * @note This is not encryption.  It only performs obfuscation if the key is not empty.  If the key is empty, then no
-	 * obfuscation is performed.
+	 * obfuscation is performed but the 3 files are still bundled together.
 	 *
-	 * Once you have a @p .dh combined file after running @p DarkHelpCombine, you can load it into %DarkHelp using the
-	 * @ref DarkHelp::NN::NN() constructor that takes a bundle filename and the key phrase.
+	 * Once you have a @p .dh bundle file (the output of running @p DarkHelpCombine) you can load it into %DarkHelp using
+	 * either the @ref DarkHelp::NN::NN() or @ref DarkHelp::DHThreads::DHThreads() constructors that takes a bundle
+	 * filename and the key phrase.
 	 *
 	 * @since 2024-04-13
 	 */

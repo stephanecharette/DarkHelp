@@ -34,6 +34,8 @@ nlohmann::json create_darkhelp_defaults()
 	j["darkhelp"]["lib"]["network"]["cfg"											] = "example.cfg";
 	j["darkhelp"]["lib"]["network"]["names"											] = "example.names";
 	j["darkhelp"]["lib"]["network"]["weights"										] = "example_best.weights";
+	j["darkhelp"]["lib"]["network"]["bundle"										] = "";
+	j["darkhelp"]["lib"]["network"]["bundle_key"									] = "";
 
 	j["darkhelp"]["lib"]["settings"]["general"]["debug"								] = false;
 	j["darkhelp"]["lib"]["settings"]["general"]["driver"							] = "darknet";
@@ -109,12 +111,19 @@ void configure(DarkHelp::NN & nn, const nlohmann::json & j)
 		throw std::invalid_argument("driver name \"" + driver_name + "\" is invalid");
 	}
 
-	nn.init(
-		j["darkhelp"]["lib"]["network"]["cfg"		],
-		j["darkhelp"]["lib"]["network"]["weights"	],
-		j["darkhelp"]["lib"]["network"]["names"		],
-		true,
-		driver);
+	if (j["darkhelp"]["lib"]["network"]["bundle"].empty())
+	{
+		nn.init(
+			j["darkhelp"]["lib"]["network"]["cfg"		],
+			j["darkhelp"]["lib"]["network"]["weights"	],
+			j["darkhelp"]["lib"]["network"]["names"		],
+			true,
+			driver);
+	}
+	else
+	{
+		nn.init(false, j["darkhelp"]["lib"]["network"]["bundle"], j["darkhelp"]["lib"]["network"]["bundle_key"], driver);
+	}
 
 	if (j["darkhelp"]["lib"]["settings"]["general"]["debug"])
 	{
