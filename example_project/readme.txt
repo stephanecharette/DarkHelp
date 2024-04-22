@@ -15,10 +15,10 @@ To build on Linux:
 
 To build on Windows (you may need to adjust, similar commands as the ones you used to build Darknet and DarkHelp):
 
-    mkdir build
-    cd build
-    cmake -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
-    msbuild.exe ...etc... or use Visual Studio
+	mkdir build
+	cd build
+	cmake -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+	msbuild.exe ...etc... or use Visual Studio
 
 IMPORTANT!  See the other source code examples in ../src-apps/.
 
