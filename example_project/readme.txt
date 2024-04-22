@@ -17,7 +17,7 @@ To build on Windows (you may need to adjust, similar commands as the ones you us
 
 	mkdir build
 	cd build
-	cmake -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+	cmake -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DDARKNET="C:/Program Files/Darknet/lib/darknet.lib" -DDARKHELP="C:/Program Files/DarkHelp/lib/darkhelp.lib" ..
 	msbuild.exe ...etc... or use Visual Studio
 
 IMPORTANT!  See the other source code examples in ../src-apps/.
