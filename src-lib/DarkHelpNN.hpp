@@ -118,6 +118,8 @@ namespace DarkHelp
 			 * DarkHelpCombine "" Rolodex.cfg Rolodex.names Rolodex_best.weights
 			 * ```
 			 *
+			 * @see @ref DarkHelp::combine()
+			 *
 			 * @since 2024-04-13
 			 */
 			NN(const bool delete_combined_bundle_once_loaded, const std::string & filename, const std::string & key = "", const EDriver driver = EDriver::kDarknet);
@@ -133,6 +135,20 @@ namespace DarkHelp
 
 			/** Initialize ("load") the darknet neural network using a "bundle" @p .dh file created using the @p DarkHelpCombine
 			 * command-line tool.
+			 *
+			 * @param [in] delete_combined_bundle_once_loaded If this is set to @p true then the combined bundle filename will
+			 * be @em deleted from the drive once the neural network is loaded.  If you don't want the bundle file to be deleted
+			 * you must pass @p false for this parameter.
+			 *
+			 * @param [in] filename This is the file that was previously created using the @p DarkHelpCombine command-line tool.
+			 * It can have any name.  By default, this file was created with a @p .dh file extension, though you can rename it.
+			 *
+			 * @param [in] key This is the passphrase key that was used when you ran the @p DarkHelpCombine command-line tool.
+			 * If the key is empty, then no obfuscation was done on the file.
+			 *
+			 * @param [in] driver Determines the backend driver to use.  See @ref EDriver for details.  Default is to use Darknet.
+			 *
+			 * @see @ref DarkHelp::combine()
 			 *
 			 * @since 2024-04-16
 			 */

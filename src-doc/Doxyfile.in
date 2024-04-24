@@ -830,10 +830,10 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = ${CMAKE_HOME_DIRECTORY}/src-doc \
-                         ${CMAKE_HOME_DIRECTORY}/src-lib
+                         ${CMAKE_HOME_DIRECTORY}/src-lib \
+                         ${CMAKE_HOME_DIRECTORY}/src-tool \
+                         ${CMAKE_HOME_DIRECTORY}/src-apps
 #                         ${CMAKE_HOME_DIRECTORY}/src-python
-#                         ${CMAKE_HOME_DIRECTORY}/src-tool \
-#                         ${CMAKE_HOME_DIRECTORY}/src-apps \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

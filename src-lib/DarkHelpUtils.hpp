@@ -273,6 +273,11 @@ namespace DarkHelp
 	 * @note This is not encryption.  It only performs obfuscation if the key is not empty.  If the key is empty, then no
 	 * obfuscation is performed but the 3 files are still bundled together.
 	 *
+	 * Command-line example:
+	 * ```{.sh}
+	 * DarkHelpCombine "this is my passkey phrase" animals.cfg animals.names animals_best.weights
+	 * ```
+	 *
 	 * Once you have a @p .dh bundle file (the output of running @p DarkHelpCombine) you can load it into %DarkHelp using
 	 * either the @ref DarkHelp::NN::NN() or @ref DarkHelp::DHThreads::DHThreads() constructors that takes a bundle
 	 * filename and the key phrase.
@@ -286,7 +291,7 @@ namespace DarkHelp
 	 * @note Usually, this does not need to be called directly.  Instead, see the @ref DarkHelp::NN::NN() constructor
 	 * which takes the bundle filename and the key phrase.
 	 *
-	 * @see @ref combine()
+	 * @see @ref DarkHelp::combine()
 	 *
 	 * @since 2024-04-13
 	 */
