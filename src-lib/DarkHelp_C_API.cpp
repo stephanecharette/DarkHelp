@@ -50,7 +50,10 @@ DarkHelpPtr CreateDarkHelpNN(const char * const fn1, const char * const fn2, con
 	DarkHelpPtr ptr = nullptr;
 	try
 	{
-		ptr = reinterpret_cast<DarkHelpPtr>(new DarkHelp::NN(fn1, fn2, fn3));
+		std::string s1 = fn1;
+		std::string s2 = fn2;
+		std::string s3 = fn3;
+		ptr = reinterpret_cast<DarkHelpPtr>(new DarkHelp::NN(s1, s2, s3));
 	}
 	catch (const std::exception & e)
 	{
