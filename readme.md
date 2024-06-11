@@ -35,7 +35,7 @@ DarkHelp requires that [Darknet](https://github.com/hank-ai/darknet) has already
 
 ## Building Darknet (Linux)
 
-You must build Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#linux-cmake-method) for details.
+You must build and install Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#linux-cmake-method) for details.
 
 ## Building DarkHelp (Linux)
 
@@ -56,11 +56,11 @@ sudo dpkg -i darkhelp*.deb
 
 ## Building Darknet (Windows)
 
-You must build Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#windows-cmake-method) for details.
+You must build and install Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#windows-cmake-method) for details.
 
 ## Building DarkHelp (Windows)
 
-Once you finish building Darknet, run the following commands in the "Developer Command Prompt for VS" to build DarkHelp:
+Once you finish building and installing Darknet, run the following commands in the "Developer Command Prompt for VS" to build DarkHelp:
 
 ```bat
 cd c:\src\vcpkg
