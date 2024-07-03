@@ -14,8 +14,8 @@ int main(int argc, char * argv[])
 		if (argc != 4)
 		{
 			std::cout
-			<< "Usage:" << std::endl
-			<< argv[0] << " <filename.cfg> <filename.names> <filename.weights>" << std::endl;
+				<< "Usage:" << std::endl
+				<< argv[0] << " <filename.cfg> <filename.names> <filename.weights>" << std::endl;
 			throw std::invalid_argument("wrong number of arguments");
 		}
 

@@ -90,6 +90,11 @@ namespace DarkHelp
 			 */
 			NN(const std::string & cfg_filename, const std::string & weights_filename, const std::string & names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
 
+			/** Constructor.  Similar with the previous constructor, but takes @p char* instead of @p std::string to prevent them
+			 * from being converted to a @p bool and causing the "bundle" constructor from being called.
+			 */
+			NN(const char * cfg_filename, const char * weights_filename, const char * names_filename = "", const bool verify_files_first = true, const EDriver driver = EDriver::kDarknet);
+
 			/** Constructor.  This constructor takes a bundle that has been prepared with the @p DarkHelpCombine command-line
 			 * tool.  That tool will combine the @p .cfg file, the @p .names file, and the @p .weights file into a single bundle.
 			 * Optionally, an obfuscation key may also be required to extract the 3 files.
