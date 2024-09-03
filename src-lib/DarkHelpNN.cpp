@@ -3,6 +3,9 @@
  * MIT license applies.  See "license.txt" for details.
  */
 
+#define DARKNET_INCLUDE_ORIGINAL_API
+#include <darknet.hpp>
+
 #include "DarkHelp.hpp"
 
 #include <fstream>
@@ -248,10 +251,10 @@ DarkHelp::NN & DarkHelp::NN::init()
 			throw std::runtime_error("darknet failed to load the configuration, the weights, or both");
 		}
 
-		network * nw = reinterpret_cast<network*>(darknet_net);
+		Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
 
 		// what does this call do?
-		calculate_binary_weights(*nw);
+		calculate_binary_weights(nw);
 	}
 #if CV_VERSION_MAJOR >= 4 && defined(HAVE_OPENCV_DNN_OBJDETECT)
 	else
@@ -383,8 +386,8 @@ DarkHelp::NN & DarkHelp::NN::reset()
 {
 	if (darknet_net)
 	{
-		network * nw = reinterpret_cast<network*>(darknet_net);
-		free_network(*nw);
+		Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
+		free_network_ptr(nw);
 		free(darknet_net); // this was calloc()'d in load_network_custom()
 		darknet_net = nullptr;
 	}
@@ -1055,7 +1058,7 @@ DarkHelp::PredictionResults DarkHelp::NN::predict_internal(cv::Mat mat, const fl
 
 void DarkHelp::NN::predict_internal_darknet()
 {
-	network * nw = reinterpret_cast<network*>(darknet_net);
+	Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
 
 	cv::Mat resized_image;
 	if (config.use_fast_image_resize)
@@ -1068,9 +1071,9 @@ void DarkHelp::NN::predict_internal_darknet()
 	}
 
 	tile_size = network_dimensions;
-	image img = convert_opencv_mat_to_darknet_image(resized_image);
+	DarknetImage img = convert_opencv_mat_to_darknet_image(resized_image);
 
-	network_predict(*nw, img.data);
+	network_predict_ptr(nw, img.data);
 
 	int nboxes = 0;
 	const int use_letterbox = 0;
@@ -1078,8 +1081,7 @@ void DarkHelp::NN::predict_internal_darknet()
 
 	if (config.non_maximal_suppression_threshold)
 	{
-		auto nw_layer = nw->layers[nw->n - 1];
-		do_nms_sort(darknet_results, nboxes, nw_layer.classes, config.non_maximal_suppression_threshold);
+		do_nms_sort(darknet_results, nboxes, names.size(), config.non_maximal_suppression_threshold);
 	}
 
 	for (int detection_idx = 0; detection_idx < nboxes; detection_idx ++)

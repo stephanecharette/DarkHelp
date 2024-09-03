@@ -373,8 +373,8 @@ namespace DarkHelp
 			 */
 			NN & snap_annotation(PredictionResult & pred);
 
-			/** The Darknet network, but stored as a void* pointer so we don't have to include darknet.h.
-			 * This will only be set when the driver is @ref DarkHelp::EDriver::kDarknet in @ref DarkHelp::NN::init().
+			/** The Darknet network pointer will only be set when the driver is @ref DarkHelp::EDriver::kDarknet
+			 * in @ref DarkHelp::NN::init().
 			 */
 			void * darknet_net;
 

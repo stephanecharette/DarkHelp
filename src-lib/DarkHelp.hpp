@@ -28,6 +28,7 @@
  * you definitely still need to have it, but the scope of where it is needed is confined to that one .cpp file.)
  */
 #ifdef DARKHELP_CAN_INCLUDE_DARKNET
+#define DARKNET_INCLUDE_ORIGINAL_API
 #include <darknet.h>
 #endif
 

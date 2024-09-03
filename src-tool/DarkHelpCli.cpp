@@ -866,7 +866,7 @@ void process_video(Options & options)
 			std::to_string(static_cast<size_t>(seconds / 60)) + "m " +
 			std::to_string(static_cast<size_t>(seconds) % 60) + "s";
 
-	std::cout << input_fps << " FPS, " << input_frames << " frames, " << input_width << "x" << input_height << " -> " << output_width << "x" << output_height << ", " << length_str << std::endl;
+	std::cout << input_fps << " FPS, " << static_cast<size_t>(input_frames) << " frames, " << static_cast<size_t>(input_width) << "x" << static_cast<size_t>(input_height) << " -> " << output_width << "x" << output_height << ", " << length_str << std::endl;
 
 	/* For videos, having the duration flash at every frame is next to useless.  Instead, we're going to do a running average
 	 * over the last few seconds.  We'll calculate the average and overwrite the value inside the DarkHelp object prior to
@@ -976,7 +976,7 @@ void process_video(Options & options)
 				ss2 << "                     "; // must be long enough to overwrite the "done in X seconds" message
 			}
 
-			std::cout << "\rprocessing frame " << number_of_frames << "/" << input_frames << " (" << std::round(100.0 * percentage_done) << "%" << ss1.str() << ")" << ss2.str() << std::flush;
+			std::cout << "\rprocessing frame " << number_of_frames << "/" << static_cast<size_t>(input_frames) << " (" << static_cast<int>(std::round(100.0 * percentage_done)) << "%" << ss1.str() << ")" << ss2.str() << std::flush;
 
 			if (show_video)
 			{
