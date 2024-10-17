@@ -60,3 +60,6 @@ page_70.png prediction results: 10
 
 * `display_using_bundle.cpp` Demonstrates how to use a .dh combined bundle file with DarkHelp.  Run `DarkHelpCombine` to create the .dh file.  Compare this code against `display_single_image.cpp`.
     * Run:  `DarkHelpCombine password Rolodex.cfg Rolodex.names Rolodex_best.weights` followed by `display_using_bundle Rolodex.dh password page_70.png`
+
+* `resize_corners.cpp` Looks for classes named "TL", "TR", "BR", "BL" and resizes those annotations to a fixed size.
+	* Run:  `src-apps/resize_corners ~/nn/animals/animals.names`

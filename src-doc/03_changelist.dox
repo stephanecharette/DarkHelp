@@ -2,6 +2,7 @@
 
 Release		| Date			| Description
 ------------|---------------|------------
+1.9.1-1		| 2024-10-17	| Added tool to resize TL, TR, BR, BL corner annotations to a fixed size.
 1.9.0-1		| 2024-08-18	| DarkHelp now uses the API defined in Darknet V3.
 1.8.8-2		| 2024-07-03	| The last version compatible with the old Darknet V2 API.  (Git hash d0ac620ac5ee260d2c5fa8bc2e605e9e744c6c15)
 1.8.0-1		| 2024-04-13	| Added the @p DarkHelpCombine CLI tool to combine @p .cfg, @p .names, and @p .weights into a single obfuscated file that %DarkHelp can load.  @ref DarkHelp::combine()
