@@ -303,8 +303,13 @@ size_t DarkHelp::edit_cfg_file(const std::string & cfg_filename, DarkHelp::MStr 
 	std::string cfg_line;
 	while (std::getline(ifs, cfg_line))
 	{
-		// if the .cfg has DOS-style \r\n line endings and we're reading
-		// the file in linux, then expect the string to be "[net]\r"
+		// strip whitespace at the end of line so we don't have problems between \n on Linux and \r\n on Windows
+		const size_t pos = cfg_line.find_last_not_of(" \t\r\n");
+		if (pos != std::string::npos)
+		{
+			cfg_line.erase(pos + 1);
+		}
+
 		if (cfg_line.size() >= 5 and cfg_line.substr(0, 5) == "[net]")
 		{
 			net_idx_start	= v.size();
