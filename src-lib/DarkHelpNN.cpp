@@ -1606,3 +1606,35 @@ DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 
 	return *this;
 }
+
+
+cv::Mat DarkHelp::NN::heatmap_combined(const float sigma)
+{
+	cv::Mat mat;
+
+	if (config.driver == EDriver::kDarknet and darknet_net)
+	{
+		Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
+
+		auto mm = Darknet::create_yolo_heatmaps(nw, sigma);
+
+		mat = mm[-1];
+	}
+
+	return mat;
+}
+
+
+DarkHelp::MMats DarkHelp::NN::heatmaps_all(const float sigma)
+{
+	MMats mm;
+
+	if (config.driver == EDriver::kDarknet and darknet_net)
+	{
+		Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
+
+		mm = Darknet::create_yolo_heatmaps(nw, sigma);
+	}
+
+	return mm;
+}

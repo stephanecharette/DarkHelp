@@ -373,6 +373,28 @@ namespace DarkHelp
 			 */
 			NN & snap_annotation(PredictionResult & pred);
 
+			/** Get a heatmap that combines all of the classes into a single image.  The heatmap is for the image that was
+			 * last examined by either @ref DarkHelp::NN::predict() or @ref DarkHelp::NN::predict_tile().  To turn the heatmap
+			 * into an image, call @p Darknet::visualize_heatmap().
+			 *
+			 * @note This only applies when @ref DarkHelp::Config::driver is set to @ref EDriver::kDarknet.  The OpenCV DNN
+			 * module does not provide heatmaps.
+			 *
+			 * @since 2024-11-27
+			 */
+			cv::Mat heatmap_combined(const float sigma = 15.0f);
+
+			/** Get all the heatmaps.  This will return the same heatmap as @ref heatmap_combined(), as well as the individual
+			 * heatmaps for each class.  The heatmap is for the image that was last examined by either @ref DarkHelp::NN::predict()
+			 * or @ref DarkHelp::NN::predict_tile().  To turn the heatmap into an image, call @p Darknet::visualize_heatmap().
+			 *
+			 * @note This only applies when @ref DarkHelp::Config::driver is set to @ref EDriver::kDarknet.  The OpenCV DNN
+			 * module does not provide heatmaps.
+			 *
+			 * @since 2024-11-27
+			 */
+			MMats heatmaps_all(const float sigma = 15.0f);
+
 			/** The Darknet network pointer will only be set when the driver is @ref DarkHelp::EDriver::kDarknet
 			 * in @ref DarkHelp::NN::init().
 			 */

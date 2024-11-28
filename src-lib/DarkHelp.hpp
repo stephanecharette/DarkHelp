@@ -81,6 +81,9 @@ namespace DarkHelp
 	/// Similar to @ref DarkHelp::VRect, but the rectangle uses @p double instead of @p int.
 	using VRect2d = std::vector<cv::Rect2d>;
 
+	/// Used to return multiple OpenCV images (@p cv::Mat) indexed using an integer as a key.
+	using MMats = std::map<int, cv::Mat>;
+
 	/** %DarkHelp can utilise either @p libdarknet.so or OpenCV's DNN module to load the neural network and run inference.
 	 * OpenCV is much faster, but support for it is relatively new in %DarkHelp and support for newer models like YOLOv4
 	 * requires @em very recent versions of OpenCV.  The default is @p kDarknet.
