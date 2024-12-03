@@ -377,23 +377,31 @@ namespace DarkHelp
 			 * last examined by either @ref DarkHelp::NN::predict() or @ref DarkHelp::NN::predict_tile().  To turn the heatmap
 			 * into an image, call @p Darknet::visualize_heatmap().
 			 *
+			 * The length of time it takes to generate the heatmap is determined by the network dimensions, the number of YOLO
+			 * layers in a network, and the threshold value.  For example, a threshold of @p 0.01f will take much longer than a
+			 * threshold of @p 0.5f.
+			 *
 			 * @note This only applies when @ref DarkHelp::Config::driver is set to @ref EDriver::kDarknet.  The OpenCV DNN
 			 * module does not provide heatmaps.
 			 *
 			 * @since 2024-11-27
 			 */
-			cv::Mat heatmap_combined(const float sigma = 15.0f);
+			cv::Mat heatmap_combined(const float threshold = 0.1f);
 
 			/** Get all the heatmaps.  This will return the same heatmap as @ref heatmap_combined(), as well as the individual
 			 * heatmaps for each class.  The heatmap is for the image that was last examined by either @ref DarkHelp::NN::predict()
 			 * or @ref DarkHelp::NN::predict_tile().  To turn the heatmap into an image, call @p Darknet::visualize_heatmap().
 			 *
+			 * The length of time it takes to generate the heatmaps is determined by the network dimensions, the number of YOLO
+			 * layers in a network, and the threshold value.  For example, a threshold of @p 0.01f will take much longer than a
+			 * threshold of @p 0.5f.
+			 *
 			 * @note This only applies when @ref DarkHelp::Config::driver is set to @ref EDriver::kDarknet.  The OpenCV DNN
 			 * module does not provide heatmaps.
 			 *
 			 * @since 2024-11-27
 			 */
-			MMats heatmaps_all(const float sigma = 15.0f);
+			MMats heatmaps_all(const float threshold = 0.1f);
 
 			/** The Darknet network pointer will only be set when the driver is @ref DarkHelp::EDriver::kDarknet
 			 * in @ref DarkHelp::NN::init().

@@ -1608,7 +1608,7 @@ DarkHelp::NN & DarkHelp::NN::snap_annotation(DarkHelp::PredictionResult & pred)
 }
 
 
-cv::Mat DarkHelp::NN::heatmap_combined(const float sigma)
+cv::Mat DarkHelp::NN::heatmap_combined(const float threshold)
 {
 	cv::Mat mat;
 
@@ -1616,7 +1616,7 @@ cv::Mat DarkHelp::NN::heatmap_combined(const float sigma)
 	{
 		Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
 
-		auto mm = Darknet::create_yolo_heatmaps(nw, sigma);
+		auto mm = Darknet::create_yolo_heatmaps(nw, threshold);
 
 		mat = mm[-1];
 	}
@@ -1625,7 +1625,7 @@ cv::Mat DarkHelp::NN::heatmap_combined(const float sigma)
 }
 
 
-DarkHelp::MMats DarkHelp::NN::heatmaps_all(const float sigma)
+DarkHelp::MMats DarkHelp::NN::heatmaps_all(const float threshold)
 {
 	MMats mm;
 
@@ -1633,7 +1633,7 @@ DarkHelp::MMats DarkHelp::NN::heatmaps_all(const float sigma)
 	{
 		Darknet::NetworkPtr nw = reinterpret_cast<Darknet::NetworkPtr>(darknet_net);
 
-		mm = Darknet::create_yolo_heatmaps(nw, sigma);
+		mm = Darknet::create_yolo_heatmaps(nw, threshold);
 	}
 
 	return mm;
