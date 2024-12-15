@@ -16,6 +16,7 @@
 #include <csignal>
 #include <tclap/CmdLine.h>	// "sudo apt-get install libtclap-dev"
 #include "json.hpp"
+#include <darknet.hpp>
 
 
 #ifdef WIN32
@@ -458,11 +459,37 @@ class DriverConstraint : public TCLAP::Constraint<std::string>
 };
 
 
+class Output : public TCLAP::StdOutput
+{
+	public:
+
+		virtual void version(TCLAP::CmdLineInterface & c)
+		{
+			std::cout
+				<< "DarkHelp v"	<< DarkHelpVersion()	<< std::endl
+				<< "Darknet v"	<< DarknetVersion()		<< std::endl;
+
+			if (DarkHelpVersion() != std::string(DH_VERSION))
+			{
+				std::cout << "ERROR!  DarkHelp version string mismatch in header:  " << DH_VERSION << std::endl;
+			}
+			if (DarknetVersion() != std::string(DARKNET_VERSION_SHORT))
+			{
+				std::cout << "ERROR!  Darknet version string mismatch in header:  " << DARKNET_VERSION_SHORT << std::endl;
+			}
+			std::cout << std::endl;
+
+			Darknet::show_version_info();
+		}
+};
+
+
 void init(Options & options, int argc, char *argv[])
 {
 	std::srand(std::time(nullptr)); // seed random number generator
 
 	TCLAP::CmdLine cli("Load a darknet neural network and run prediction on the given image file(s).", ' ', DH_VERSION);
+	cli.setOutput(new Output); // small leak:  this class instance is never freed
 
 	std::vector<std::string> booleans = { "true", "false", "on", "off", "yes", "no", "t", "f", "y", "n", "1", "0" };
 	auto allowed_booleans = TCLAP::ValuesConstraint<std::string>(booleans);
