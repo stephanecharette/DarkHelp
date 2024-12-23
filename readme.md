@@ -54,6 +54,8 @@ make package
 sudo dpkg -i darkhelp*.deb
 ```
 
+**If you are using Docker to generate an image** you'll need to modify the line 25 of the file `CM_package.cmake` before you can run the `cmake` command above, by replacing `ON` to `OFF` in the `CPACK_DEBIAN_PACKAGE_SHLIBDEPS` field.
+
 ## Building Darknet (Windows)
 
 You must build and install Darknet first.  See the [Darknet repo](https://github.com/hank-ai/darknet#windows-cmake-method) for details.
