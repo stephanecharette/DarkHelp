@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <regex>
 #include <set>
 #include <sstream>
 #include <string>
@@ -21,7 +22,9 @@
  */
 
 
-/// Size to use for corner rectangles.
+/** Size to use for corner rectangles.  This size is in pixels **AFTER** the image has been resized to the neural
+ * network dimensions!  But the only way to do this is to parse the .cfg file for the width and height of the network.
+ */
 const int corner_size = 16;
 
 
@@ -31,6 +34,10 @@ std::map<std::string, int> indexes;
 
 /// Annotation indexes, such as 0 -> "tl", 1 -> "tr", ...
 std::map<int, std::string> corners;
+
+
+/// The size of the network will be parsed from the width=... and height=... lines in the .cfg file.
+cv::Size network_dimensions(-1, -1);
 
 
 /// These are all of the images with annotations that we need to process.  @see @ref find_all_images()
@@ -87,6 +94,66 @@ void parse_names_file(const std::filesystem::path & names_file)
 	if (indexes.size() != 2 and indexes.size() != 4)
 	{
 		throw std::logic_error("expected either 2 or 4 corner type indexes, but found " + std::to_string(indexes.size()));
+	}
+
+	return;
+}
+
+
+/// Find the width=... and height=... values from the .cfg file.
+void parse_cfg_file(const std::filesystem::path & cfg_file)
+{
+	std::cout << "Input .cfg file .... " << cfg_file.string() << std::endl;
+
+	const std::regex rx(
+		"^"				// start of line
+		"[ \t]*"		// optional whitespace
+		"("				// group #1
+		"[^#= \t]+"		// key (everything up to #, =, or whitespace)
+		")"				// end of group #1
+		"[ \t]*"		// optional whitespace
+		"="				// =
+		"[ \t]*"		// optional whitespace
+		"("				// group #2
+		"[^#]+"			// value (everything up to #)
+		")"				// end of group #2
+	);
+
+	std::ifstream ifs(cfg_file);
+	std::string line;
+
+	while (std::getline(ifs, line))
+	{
+		line = lowercase(line);
+
+		std::smatch matches;
+		if (std::regex_search(line, matches, rx))
+		{
+			// line is a key-value pair
+			const auto key = matches.str(1);
+			const auto val = matches.str(2);
+
+			if (key == "width")
+			{
+				network_dimensions.width = std::stoi(val);
+			}
+			else if (key == "height")
+			{
+				network_dimensions.height = std::stoi(val);
+			}
+
+			if (network_dimensions.width > 0 and network_dimensions.height > 0)
+			{
+				break;
+			}
+		}
+	}
+
+	std::cout << "Network dimensions . " << network_dimensions.width << " x " << network_dimensions.height << std::endl;
+
+	if (network_dimensions.width < 32 or network_dimensions.height < 32)
+	{
+		throw std::runtime_error("invalid network dimensions");
 	}
 
 	return;
@@ -170,6 +237,8 @@ void process_images()
 
 	for (const auto & fn : annotated_image_filenames)
 	{
+		images_processed ++;
+
 		std::cout
 			<< "\rProcessing images .. "
 			<< static_cast<int>(std::round(images_processed * 100.0f / images_to_process))
@@ -177,6 +246,7 @@ void process_images()
 
 		const auto annotation_filename = std::filesystem::path(fn).replace_extension(".txt");
 
+#if 0 // don't bother reading the image, use the network dimensions instead
 		cv::Mat mat = cv::imread(fn);
 		if (mat.empty())
 		{
@@ -184,9 +254,13 @@ void process_images()
 		}
 		const double width	= mat.cols;
 		const double height	= mat.rows;
+#else
+		const double width	= network_dimensions.width;
+		const double height	= network_dimensions.height;
+#endif
 
 		std::stringstream ss;
-		ss << std::fixed << std::setprecision(9);
+		ss << std::fixed << std::setprecision(10);
 
 		bool modified = false;
 		std::ifstream ifs(annotation_filename);
@@ -285,8 +359,6 @@ void process_images()
 				std::filesystem::remove(json_filename);
 			}
 		}
-
-		images_processed ++;
 	}
 
 	std::cout
@@ -314,35 +386,45 @@ int main(int argc, char * argv[])
 		if (argc != 2)
 		{
 			std::cout
-				<< "Usage:"													<< std::endl
-				<< ""														<< std::endl
-				<< "\t" << argv[0] << " <filename>"							<< std::endl
-				<< ""														<< std::endl
-				<< "Specify the .names file of the Darknet/YOLO project."	<< std::endl
-				<< ""														<< std::endl
-				<< "WARNING:"												<< std::endl
-				<< ""														<< std::endl
-				<< "This tool will re-write your annotations!  Make sure"	<< std::endl
-				<< "you have a backup of your data before you run it."		<< std::endl
-				<< ""														<< std::endl;
+				<< "Usage:"																		<< std::endl
+				<< ""																			<< std::endl
+				<< "\t" << argv[0] << " <filename>"												<< std::endl
+				<< ""																			<< std::endl
+				<< "Specify either the .cfg or the .names file of the Darknet/YOLO project."	<< std::endl
+				<< "(It is assumed the project uses .cfg and .names as file extensions.)"		<< std::endl
+				<< ""																			<< std::endl
+				<< "WARNING:"																	<< std::endl
+				<< ""																			<< std::endl
+				<< "This tool will re-write your annotations!  Make sure"						<< std::endl
+				<< "you have a backup of your data before you run it."							<< std::endl
+				<< ""																			<< std::endl;
 
 			throw std::invalid_argument("invalid parameter");
 		}
 
-		std::filesystem::path names_file(argv[1]);
-		if (not std::filesystem::exists(names_file))
+		std::filesystem::path names_filename	= std::filesystem::path(argv[1]).replace_extension(".names");
+		std::filesystem::path cfg_filename		= std::filesystem::path(argv[1]).replace_extension(".cfg");
+
+		for (const auto & fn : {names_filename, cfg_filename})
 		{
-			throw std::invalid_argument("file does not exist: " + names_file.string());
-		}
-		names_file = std::filesystem::canonical(names_file);
-		if (not std::filesystem::is_regular_file(names_file))
-		{
-			throw std::invalid_argument("was expecting the .names file to be a regular file: " + names_file.string());
+			if (not std::filesystem::exists(fn))
+			{
+				throw std::invalid_argument("expected file does not exist: " + fn.string());
+			}
+
+			if (not std::filesystem::is_regular_file(fn))
+			{
+				throw std::invalid_argument("expected file to be a regular file: " + fn.string());
+			}
 		}
 
-		parse_names_file(names_file);
+		names_filename	= std::filesystem::canonical(names_filename);
+		cfg_filename	= std::filesystem::canonical(cfg_filename);
 
-		std::filesystem::path root_directory = names_file.parent_path();
+		parse_names_file(names_filename);
+		parse_cfg_file(cfg_filename);
+
+		std::filesystem::path root_directory = names_filename.parent_path();
 		find_all_images(root_directory);
 
 		process_images();
