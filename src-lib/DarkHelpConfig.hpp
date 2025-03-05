@@ -573,6 +573,10 @@ namespace DarkHelp
 			 * @see @ref DarkHelp::toggle_output_redirection()
 			 *
 			 * @since 2022-08-30
+			 *
+			 * @note When using Darknet V4 ("Slate", March 2025) or newer, this API is no longer necessary.
+			 * The newer versions of Darknet have a better call to redirect @em all output to a log file instead.
+			 * See @p Darknet::set_output_stream() for details.
 			 */
 			bool redirect_darknet_output;
 
