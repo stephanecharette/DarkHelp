@@ -86,7 +86,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/src/vcpkg/scripts/bui
 > If you get an error about `Could not resolve runtime dependencies: darknet.dll`, then copy that DLL into the `src-tool` directory:
 
 ```bat
-copy "C:\Program Files\Darknet\bin\darknet.dll" src-tool\Release\
+copy "C:\Program Files\Darknet\bin\darknet.dll" c:\src\DarkHelp\build\src-tool\Release\
 ```
 
 > ...and re-run the command that failed:
@@ -98,8 +98,8 @@ msbuild.exe /property:Platform=x64;Configuration=Release PACKAGE.vcxproj
 > Similarly, if you get an error about missing either the CUDA or cuDNN DLLs, then you must copy them like what was done when building Darknet.  For example:
 
 ```bat
-copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin\*.dll" src-tool\Release\
-copy "C:\Program Files\NVIDIA\CUDNN\v8.x\bin\cudnn64_8.dll" src-tool\Release\
+copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin\*.dll" c:\src\DarkHelp\build\src-tool\Release\
+copy "C:\Program Files\NVIDIA\CUDNN\v8.x\bin\cudnn64_8.dll" c:\src\DarkHelp\build\src-tool\Release\
 ```
 
 > Once the files have been copied, re-run the last `msbuild.exe` command to generate the NSIS installation package:

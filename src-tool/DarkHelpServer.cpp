@@ -111,7 +111,8 @@ void configure(DarkHelp::NN & nn, const nlohmann::json & j)
 		throw std::invalid_argument("driver name \"" + driver_name + "\" is invalid");
 	}
 
-	if (j["darkhelp"]["lib"]["network"]["bundle"].empty())
+	const std::string bundle = j["darkhelp"]["lib"]["network"]["bundle"];
+	if (bundle.empty() or bundle == "\"\"")
 	{
 		nn.init(
 			j["darkhelp"]["lib"]["network"]["cfg"		],
@@ -122,7 +123,11 @@ void configure(DarkHelp::NN & nn, const nlohmann::json & j)
 	}
 	else
 	{
-		nn.init(false, j["darkhelp"]["lib"]["network"]["bundle"], j["darkhelp"]["lib"]["network"]["bundle_key"], driver);
+		nn.init(
+			false,
+			j["darkhelp"]["lib"]["network"]["bundle"],
+			j["darkhelp"]["lib"]["network"]["bundle_key"],
+			driver);
 	}
 
 	if (j["darkhelp"]["lib"]["settings"]["general"]["debug"])
